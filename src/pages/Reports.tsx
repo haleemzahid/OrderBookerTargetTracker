@@ -216,7 +216,7 @@ const Reports: React.FC = () => {
         <div>
           <div style={{ fontWeight: 'medium' }}>{name}</div>
           <Text type="secondary" style={{ fontSize: '12px' }}>
-            {record.orderBooker.territory}
+            {record.orderBooker.name}
           </Text>
         </div>
       ),
@@ -598,19 +598,19 @@ const Reports: React.FC = () => {
                       title: 'Sales',
                       dataIndex: 'totalSales',
                       key: 'totalSales',
-                      render: (value: number) => `Rs.Rs.{value.toLocaleString()}`,
+                      render: (value: number) => `Rs.${value.toLocaleString()}`,
                     },
                     {
                       title: 'Net Sales',
                       dataIndex: 'netSales',
                       key: 'netSales',
-                      render: (value: number) => `Rs.Rs.{value.toLocaleString()}`,
+                      render: (value: number) => `Rs.${value.toLocaleString()}`,
                     },
                     {
                       title: 'Target',
                       dataIndex: 'targetAmount',
                       key: 'targetAmount',
-                      render: (value: number) => `Rs.Rs.{value.toLocaleString()}`,
+                      render: (value: number) => `Rs.${value.toLocaleString()}`,
                     },
                     {
                       title: 'Achievement',
