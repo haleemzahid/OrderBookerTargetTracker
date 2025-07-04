@@ -8,7 +8,7 @@ import {
   UserOutlined 
 } from '@ant-design/icons';
 import { useApp } from '../../contexts/AppContext';
-import type { Language } from '../../types';
+import { useI18n } from '../../hooks/useI18n';
 
 const { Header: AntHeader } = Layout;
 const { Text } = Typography;
@@ -19,33 +19,34 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({ collapsed, onToggle }) => {
-  const { theme, language, toggleTheme, setLanguage } = useApp();
+  const { theme, toggleTheme } = useApp();
+  const { currentLanguage, changeLanguage, common } = useI18n();
 
   const languageItems = [
     {
       key: 'en',
       label: 'English',
-      onClick: () => setLanguage('en' as Language),
+      onClick: () => changeLanguage('en'),
     },
     {
       key: 'ur',
       label: 'اردو',
-      onClick: () => setLanguage('ur' as Language),
+      onClick: () => changeLanguage('ur'),
     },
   ];
 
   const userMenuItems = [
     {
       key: 'profile',
-      label: 'Profile',
+      label: common('profile'),
     },
     {
       key: 'settings',
-      label: 'Settings',
+      label: common('settings'),
     },
     {
       key: 'logout',
-      label: 'Logout',
+      label: common('logout'),
     },
   ];
 
@@ -72,7 +73,7 @@ const Header: React.FC<HeaderProps> = ({ collapsed, onToggle }) => {
           }}
         />
         <Text strong style={{ fontSize: '18px' }}>
-          {language === 'ur' ? 'آرڈر بکر ٹارگٹ ٹریکر' : 'Order Booker Target Tracker'}
+          {currentLanguage === 'ur' ? 'آرڈر بکر ٹارگٹ ٹریکر' : 'Order Booker Target Tracker'}
         </Text>
       </Space>
 
@@ -88,13 +89,13 @@ const Header: React.FC<HeaderProps> = ({ collapsed, onToggle }) => {
         
         <Dropdown menu={{ items: languageItems }} placement="bottomRight">
           <Button type="text" icon={<GlobalOutlined />}>
-            {language === 'ur' ? 'اردو' : 'English'}
+            {currentLanguage === 'ur' ? 'اردو' : 'English'}
           </Button>
         </Dropdown>
 
         <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
           <Button type="text" icon={<UserOutlined />}>
-            {language === 'ur' ? 'صارف' : 'User'}
+            {currentLanguage === 'ur' ? 'صارف' : 'User'}
           </Button>
         </Dropdown>
       </Space>

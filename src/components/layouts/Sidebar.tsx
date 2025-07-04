@@ -19,7 +19,7 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ collapsed, selectedKey, onMenuSelect }) => {
-  const { language } = useApp();
+  const { language, direction } = useApp();
 
   const menuItems = [
     {
@@ -63,7 +63,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, selectedKey, onMenuSelect 
         overflow: 'auto',
         height: '100vh',
         position: 'fixed',
-        left: 0,
+        [direction === 'rtl' ? 'right' : 'left']: 0,
         top: 0,
         bottom: 0,
       }}

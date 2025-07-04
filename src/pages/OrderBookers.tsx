@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 import { Card, Table, Button, Space, Modal, Form, Input, Switch, message, Tag } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, PhoneOutlined, MailOutlined } from '@ant-design/icons';
 import { useOrderBookers, useCreateOrderBooker, useUpdateOrderBooker, useDeleteOrderBooker } from '../hooks/useOrderBookers';
-import { useApp } from '../contexts/AppContext';
+import { useI18n } from '../hooks/useI18n';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import type { OrderBooker, CreateOrderBookerRequest, UpdateOrderBookerRequest } from '../types';
 
 const OrderBookers: React.FC = () => {
-  const { language } = useApp();
+  const { orderBookers: t, common } = useI18n();
   const [form] = Form.useForm();
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingOrderBooker, setEditingOrderBooker] = useState<OrderBooker | null>(null);
@@ -39,19 +39,17 @@ const OrderBookers: React.FC = () => {
 
   const handleDelete = (orderBooker: OrderBooker) => {
     Modal.confirm({
-      title: language === 'ur' ? 'آرڈر بکر کو ڈیلیٹ کریں' : 'Delete Order Booker',
-      content: language === 'ur' 
-        ? `کیا آپ واقعی ${orderBooker.name} کو ڈیلیٹ کرنا چاہتے ہیں؟`
-        : `Are you sure you want to delete ${orderBooker.name}?`,
-      okText: language === 'ur' ? 'ہاں' : 'Yes',
-      cancelText: language === 'ur' ? 'نہیں' : 'No',
+      title: t('deleteOrderBooker'),
+      content: t('confirmDelete', { name: orderBooker.name }),
+      okText: common('yes'),
+      cancelText: common('no'),
       onOk: () => {
         deleteMutation.mutate(orderBooker.id, {
           onSuccess: () => {
-            message.success(language === 'ur' ? 'آرڈر بکر کامیابی سے ڈیلیٹ ہو گیا' : 'Order booker deleted successfully');
+            message.success(t('deleteSuccess'));
           },
           onError: () => {
-            message.error(language === 'ur' ? 'آرڈر بکر ڈیلیٹ کرنے میں ناکامی' : 'Failed to delete order booker');
+            message.error(t('deleteError'));
           },
         });
       },
@@ -71,7 +69,7 @@ const OrderBookers: React.FC = () => {
           isActive: values.isActive,
         };
         await updateMutation.mutateAsync({ id: editingOrderBooker.id, data: updateData });
-        message.success(language === 'ur' ? 'آرڈر بکر کامیابی سے اپ ڈیٹ ہو گیا' : 'Order booker updated successfully');
+        message.success(t('updateSuccess'));
       } else {
         const createData: CreateOrderBookerRequest = {
           name: values.name,
@@ -82,18 +80,18 @@ const OrderBookers: React.FC = () => {
           monthlyTarget: values.monthlyTarget,
         };
         await createMutation.mutateAsync(createData);
-        message.success(language === 'ur' ? 'آرڈر بکر کامیابی سے شامل ہو گیا' : 'Order booker created successfully');
+        message.success(t('createSuccess'));
       }
       setIsModalVisible(false);
       form.resetFields();
     } catch (error) {
-      message.error(language === 'ur' ? 'آپریشن ناکام' : 'Operation failed');
+      message.error(t('operationFailed'));
     }
   };
 
   const columns = [
     {
-      title: language === 'ur' ? 'نام' : 'Name',
+      title: t('name'),
       dataIndex: 'name',
       key: 'name',
       render: (text: string, record: OrderBooker) => (
@@ -104,7 +102,7 @@ const OrderBookers: React.FC = () => {
       ),
     },
     {
-      title: language === 'ur' ? 'رابطہ' : 'Contact',
+      title: t('contact'),
       key: 'contact',
       render: (record: OrderBooker) => (
         <div>
@@ -120,29 +118,29 @@ const OrderBookers: React.FC = () => {
       ),
     },
     {
-      title: language === 'ur' ? 'علاقہ' : 'Territory',
+      title: t('territory'),
       dataIndex: 'territory',
       key: 'territory',
       render: (text: string) => text || '-',
     },
     {
-      title: language === 'ur' ? 'ماہانہ ٹارگٹ' : 'Monthly Target',
+      title: t('monthlyTarget'),
       dataIndex: 'monthlyTarget',
       key: 'monthlyTarget',
       render: (amount: number) => `${amount}`,
     },
     {
-      title: language === 'ur' ? 'حالت' : 'Status',
+      title: t('status'),
       dataIndex: 'isActive',
       key: 'isActive',
       render: (isActive: boolean) => (
         <Tag color={isActive ? 'green' : 'red'}>
-          {isActive ? (language === 'ur' ? 'فعال' : 'Active') : (language === 'ur' ? 'غیر فعال' : 'Inactive')}
+          {isActive ? t('active') : t('inactive')}
         </Tag>
       ),
     },
     {
-      title: language === 'ur' ? 'عمل' : 'Actions',
+      title: t('actions'),
       key: 'actions',
       render: (record: OrderBooker) => (
         <Space>
@@ -152,7 +150,7 @@ const OrderBookers: React.FC = () => {
             icon={<EditOutlined />}
             onClick={() => handleEdit(record)}
           >
-            {language === 'ur' ? 'تبدیل کریں' : 'Edit'}
+            {t('edit')}
           </Button>
           <Button
             type="primary"
@@ -161,7 +159,7 @@ const OrderBookers: React.FC = () => {
             icon={<DeleteOutlined />}
             onClick={() => handleDelete(record)}
           >
-            {language === 'ur' ? 'ڈیلیٹ' : 'Delete'}
+            {t('delete')}
           </Button>
         </Space>
       ),
@@ -169,14 +167,14 @@ const OrderBookers: React.FC = () => {
   ];
 
   if (isLoading) {
-    return <LoadingSpinner tip={language === 'ur' ? 'ڈیٹا لوڈ ہو رہا ہے...' : 'Loading data...'} />;
+    return <LoadingSpinner tip={common('loading')} />;
   }
 
   if (error) {
     return (
       <div style={{ padding: '20px', textAlign: 'center' }}>
-        <h3>{language === 'ur' ? 'خرابی' : 'Error'}</h3>
-        <p>{language === 'ur' ? 'ڈیٹا لوڈ کرنے میں ناکامی' : 'Failed to load data'}</p>
+        <h3>{common('error')}</h3>
+        <p>{common('failedToLoadData')}</p>
       </div>
     );
   }
@@ -184,14 +182,14 @@ const OrderBookers: React.FC = () => {
   return (
     <div>
       <Card
-        title={language === 'ur' ? 'آرڈر بکر منیجمنٹ' : 'Order Booker Management'}
+        title={t('title')}
         extra={
           <Button
             type="primary"
             icon={<PlusOutlined />}
             onClick={handleAdd}
           >
-            {language === 'ur' ? 'نیا آرڈر بکر' : 'Add Order Booker'}
+            {t('addOrderBooker')}
           </Button>
         }
       >
@@ -204,18 +202,13 @@ const OrderBookers: React.FC = () => {
             showSizeChanger: true,
             showQuickJumper: true,
             showTotal: (total, range) =>
-              language === 'ur'
-                ? `${range[0]}-${range[1]} کل ${total} میں سے`
-                : `${range[0]}-${range[1]} of ${total} items`,
+              `${range[0]}-${range[1]} ${t('of')} ${total} ${t('items')}`,
           }}
         />
       </Card>
 
       <Modal
-        title={editingOrderBooker 
-          ? (language === 'ur' ? 'آرڈر بکر تبدیل کریں' : 'Edit Order Booker')
-          : (language === 'ur' ? 'نیا آرڈر بکر شامل کریں' : 'Add New Order Booker')
-        }
+        title={editingOrderBooker ? t('editOrderBooker') : t('addNewOrderBooker')}
         open={isModalVisible}
         onCancel={() => setIsModalVisible(false)}
         footer={null}
@@ -227,55 +220,55 @@ const OrderBookers: React.FC = () => {
           onFinish={handleSubmit}
         >
           <Form.Item
-            label={language === 'ur' ? 'نام' : 'Name'}
+            label={t('name')}
             name="name"
-            rules={[{ required: true, message: language === 'ur' ? 'نام درکار ہے' : 'Name is required' }]}
+            rules={[{ required: true, message: t('nameRequired') }]}
           >
             <Input />
           </Form.Item>
 
           <Form.Item
-            label={language === 'ur' ? 'اردو نام' : 'Name in Urdu'}
+            label={t('nameUrdu')}
             name="nameUrdu"
-            rules={[{ required: true, message: language === 'ur' ? 'اردو نام درکار ہے' : 'Urdu name is required' }]}
+            rules={[{ required: true, message: t('nameUrduRequired') }]}
           >
             <Input />
           </Form.Item>
 
           <Form.Item
-            label={language === 'ur' ? 'فون نمبر' : 'Phone Number'}
+            label={t('phoneNumber')}
             name="phone"
-            rules={[{ required: true, message: language === 'ur' ? 'فون نمبر درکار ہے' : 'Phone number is required' }]}
+            rules={[{ required: true, message: t('phoneRequired') }]}
           >
             <Input />
           </Form.Item>
 
           <Form.Item
-            label={language === 'ur' ? 'ای میل' : 'Email'}
+            label={t('email')}
             name="email"
-            rules={[{ type: 'email', message: language === 'ur' ? 'درست ای میل درج کریں' : 'Invalid email format' }]}
+            rules={[{ type: 'email', message: t('emailInvalid') }]}
           >
             <Input />
           </Form.Item>
 
           <Form.Item
-            label={language === 'ur' ? 'علاقہ' : 'Territory'}
+            label={t('territory')}
             name="territory"
           >
             <Input />
           </Form.Item>
 
           <Form.Item
-            label={language === 'ur' ? 'ماہانہ ٹارگٹ' : 'Monthly Target'}
+            label={t('monthlyTarget')}
             name="monthlyTarget"
-            rules={[{ required: true, message: language === 'ur' ? 'ماہانہ ٹارگٹ درکار ہے' : 'Monthly target is required' }]}
+            rules={[{ required: true, message: t('monthlyTargetRequired') }]}
           >
             <Input type="number" />
           </Form.Item>
 
           {editingOrderBooker && (
             <Form.Item
-              label={language === 'ur' ? 'فعال' : 'Active'}
+              label={t('active')}
               name="isActive"
               valuePropName="checked"
             >
@@ -286,13 +279,10 @@ const OrderBookers: React.FC = () => {
           <Form.Item>
             <Space>
               <Button type="primary" htmlType="submit" loading={createMutation.isPending || updateMutation.isPending}>
-                {editingOrderBooker 
-                  ? (language === 'ur' ? 'اپ ڈیٹ کریں' : 'Update')
-                  : (language === 'ur' ? 'شامل کریں' : 'Add')
-                }
+                {editingOrderBooker ? t('update') : t('add')}
               </Button>
               <Button onClick={() => setIsModalVisible(false)}>
-                {language === 'ur' ? 'منسوخ' : 'Cancel'}
+                {t('cancel')}
               </Button>
             </Space>
           </Form.Item>

@@ -1,15 +1,15 @@
-import React, { createContext, useContext, useState, useMemo, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useMemo, ReactNode, useEffect } from 'react';
 import { ConfigProvider, theme } from 'antd';
-import enUS from 'antd/locale/en_US';
-import urPK from 'antd/locale/ur_PK';
-import type { Language, Theme, Direction } from '../types';
+import { useTranslation } from 'react-i18next';
+import { localeConfig } from '../config/locales';
+import type { Theme, Direction } from '../types';
 
 interface AppContextType {
   theme: Theme;
-  language: Language;
+  language: string;
   direction: Direction;
   toggleTheme: () => void;
-  setLanguage: (lang: Language) => void;
+  setLanguage: (lang: string) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -19,21 +19,39 @@ interface AppProviderProps {
 }
 
 export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
+  const { i18n } = useTranslation();
   const [appTheme, setAppTheme] = useState<Theme>('light');
-  const [language, setLanguage] = useState<Language>('en');
+  const [language, setLanguage] = useState<string>(i18n.language);
 
-  const direction: Direction = language === 'ur' ? 'rtl' : 'ltr';
+  const currentLocale = localeConfig[language] || localeConfig.en;
+  const direction: Direction = currentLocale.direction;
 
   const toggleTheme = () => {
     setAppTheme(prev => prev === 'light' ? 'dark' : 'light');
   };
+
+  const handleLanguageChange = (lang: string) => {
+    i18n.changeLanguage(lang);
+    setLanguage(lang);
+  };
+
+  useEffect(() => {
+    const handleLanguageChanged = (lng: string) => {
+      setLanguage(lng);
+    };
+
+    i18n.on('languageChanged', handleLanguageChanged);
+    return () => {
+      i18n.off('languageChanged', handleLanguageChanged);
+    };
+  }, [i18n]);
 
   const value = useMemo(() => ({
     theme: appTheme,
     language,
     direction,
     toggleTheme,
-    setLanguage,
+    setLanguage: handleLanguageChange,
   }), [appTheme, language, direction]);
 
   return (
@@ -43,7 +61,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
           algorithm: appTheme === 'dark' ? theme.darkAlgorithm : theme.defaultAlgorithm,
         }}
         direction={direction}
-        locale={language === 'ur' ? urPK : enUS}
+        locale={currentLocale.antdLocale}
       >
         {children}
       </ConfigProvider>
