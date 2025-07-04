@@ -1,19 +1,34 @@
 import React from 'react';
-import { Card, Row, Col, Statistic, Typography, Space } from 'antd';
+import { Card, Row, Col, Statistic, Typography, Space, Spin, Alert } from 'antd';
 import { ArrowUpOutlined, ArrowDownOutlined, TeamOutlined, DollarOutlined } from '@ant-design/icons';
 import { useI18n } from '../hooks/useI18n';
+import { useDashboard } from '../hooks/useDashboard';
 
 const { Title } = Typography;
 
 const Dashboard: React.FC = () => {
   const { dashboard } = useI18n();
+  const { data: dashboardData, isLoading, error } = useDashboard();
 
-  const mockData = {
-    totalOrderBookers: 25,
-    activeSales: 150000,
-    monthlyReturns: 5000,
-    targetAchievement: 85,
-  };
+  if (isLoading) {
+    return (
+      <div style={{ textAlign: 'center', padding: '50px' }}>
+        <Spin size="large" />
+        <p style={{ marginTop: '16px' }}>Loading dashboard data...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert
+        message="Error loading dashboard data"
+        description="Unable to load dashboard statistics. Please try again."
+        type="error"
+        showIcon
+      />
+    );
+  }
 
   return (
     <div>
@@ -26,7 +41,7 @@ const Dashboard: React.FC = () => {
           <Card>
             <Statistic
               title={dashboard('totalOrderBookers')}
-              value={mockData.totalOrderBookers}
+              value={dashboardData.totalOrderBookers}
               prefix={<TeamOutlined />}
               valueStyle={{ color: '#3f8600' }}
             />
@@ -37,10 +52,11 @@ const Dashboard: React.FC = () => {
           <Card>
             <Statistic
               title={dashboard('thisMonthSales')}
-              value={mockData.activeSales}
+              value={dashboardData.thisMonthSales}
               prefix={<DollarOutlined />}
               suffix={<ArrowUpOutlined style={{ color: '#3f8600' }} />}
               valueStyle={{ color: '#3f8600' }}
+              precision={0}
             />
           </Card>
         </Col>
@@ -49,10 +65,11 @@ const Dashboard: React.FC = () => {
           <Card>
             <Statistic
               title={dashboard('thisMonthReturns')}
-              value={mockData.monthlyReturns}
+              value={dashboardData.thisMonthReturns}
               prefix={<DollarOutlined />}
               suffix={<ArrowDownOutlined style={{ color: '#cf1322' }} />}
               valueStyle={{ color: '#cf1322' }}
+              precision={0}
             />
           </Card>
         </Col>
@@ -61,9 +78,10 @@ const Dashboard: React.FC = () => {
           <Card>
             <Statistic
               title={dashboard('targetAchievement')}
-              value={mockData.targetAchievement}
+              value={dashboardData.targetAchievement}
               suffix="%"
-              valueStyle={{ color: mockData.targetAchievement >= 80 ? '#3f8600' : '#cf1322' }}
+              valueStyle={{ color: dashboardData.targetAchievement >= 80 ? '#3f8600' : '#cf1322' }}
+              precision={1}
             />
           </Card>
         </Col>
@@ -73,18 +91,18 @@ const Dashboard: React.FC = () => {
         <Col xs={24} lg={12}>
           <Card title={dashboard('topPerformers')}>
             <Space direction="vertical" style={{ width: '100%' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span>Ahmed Ali</span>
-                <span style={{ color: '#3f8600' }}>95%</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span>Fatima Khan</span>
-                <span style={{ color: '#3f8600' }}>92%</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span>Muhammad Hassan</span>
-                <span style={{ color: '#3f8600' }}>88%</span>
-              </div>
+              {dashboardData.topPerformers.length > 0 ? (
+                dashboardData.topPerformers.map((performer) => (
+                  <div key={performer.orderBookerId} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span>{performer.name}</span>
+                    <span style={{ color: '#3f8600' }}>{performer.achievementPercentage.toFixed(1)}%</span>
+                  </div>
+                ))
+              ) : (
+                <div style={{ textAlign: 'center', color: '#8c8c8c' }}>
+                  No top performers data available
+                </div>
+              )}
             </Space>
           </Card>
         </Col>
@@ -92,18 +110,18 @@ const Dashboard: React.FC = () => {
         <Col xs={24} lg={12}>
           <Card title={dashboard('needsAttention')}>
             <Space direction="vertical" style={{ width: '100%' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span>Ali Ahmed</span>
-                <span style={{ color: '#cf1322' }}>65%</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span>Sara Khan</span>
-                <span style={{ color: '#cf1322' }}>58%</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span>Omar Sheikh</span>
-                <span style={{ color: '#cf1322' }}>52%</span>
-              </div>
+              {dashboardData.needsAttention.length > 0 ? (
+                dashboardData.needsAttention.map((performer) => (
+                  <div key={performer.orderBookerId} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span>{performer.name}</span>
+                    <span style={{ color: '#cf1322' }}>{performer.achievementPercentage.toFixed(1)}%</span>
+                  </div>
+                ))
+              ) : (
+                <div style={{ textAlign: 'center', color: '#8c8c8c' }}>
+                  No underperformers data available
+                </div>
+              )}
             </Space>
           </Card>
         </Col>

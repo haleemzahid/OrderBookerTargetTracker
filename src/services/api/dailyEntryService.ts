@@ -23,8 +23,8 @@ export interface IDailyEntryService {
 export const dailyEntryService: IDailyEntryService = {
   getByMonth: async (year: number, month: number): Promise<DailyEntry[]> => {
     const db = getDatabase();
-    const startDate = new Date(year, month - 1, 1).toISOString();
-    const endDate = new Date(year, month, 0).toISOString();
+    const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
+    const endDate = `${year}-${String(month).padStart(2, '0')}-31`;
     
     const result = await db.select<DailyEntry[]>(
       'SELECT * FROM daily_entries WHERE date >= ? AND date <= ? ORDER BY date DESC',
@@ -33,7 +33,7 @@ export const dailyEntryService: IDailyEntryService = {
     
     return result.map(row => ({
       ...row,
-      date: new Date(row.date),
+      date: new Date(row.date + 'T00:00:00'), // Convert 'YYYY-MM-DD' to Date object
       createdAt: new Date(row.createdAt),
       updatedAt: new Date(row.updatedAt),
     }));
@@ -69,7 +69,7 @@ export const dailyEntryService: IDailyEntryService = {
     
     return result.map(row => ({
       ...row,
-      date: new Date(row.date),
+      date: new Date(row.date + 'T00:00:00'), // Convert 'YYYY-MM-DD' to Date object
       createdAt: new Date(row.createdAt),
       updatedAt: new Date(row.updatedAt),
     }));

@@ -144,7 +144,7 @@ const MonthlyTargets: React.FC = () => {
       key: 'targetAmount',
       render: (amount: number) => (
         <Tag color="blue" style={{ minWidth: '100px', textAlign: 'center' }}>
-          Rs.{amount.toLocaleString()}
+          Rs.{amount}
         </Tag>
       ),
       sorter: (a, b) => a.targetAmount - b.targetAmount,
@@ -156,7 +156,7 @@ const MonthlyTargets: React.FC = () => {
       key: 'achievedAmount',
       render: (amount: number) => (
         <Tag color="green" style={{ minWidth: '100px', textAlign: 'center' }}>
-          Rs.{amount.toLocaleString()}
+          Rs.{amount}
         </Tag>
       ),
       sorter: (a, b) => a.achievedAmount - b.achievedAmount,
