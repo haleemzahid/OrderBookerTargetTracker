@@ -64,6 +64,7 @@ const MonthlyTargets: React.FC = () => {
     data: monthlyTargets, 
     isLoading: isLoadingTargets,
     createTarget,
+    batchUpsertTargets,
     updateTarget,
     deleteTarget,
     copyFromPreviousMonth,
@@ -131,7 +132,7 @@ const MonthlyTargets: React.FC = () => {
         <div>
           <div style={{ fontWeight: 'medium' }}>{name}</div>
           <Text type="secondary" style={{ fontSize: '12px' }}>
-            {record.orderBooker?.territory || 'No territory'}
+            {record.orderBooker?.phone || 'No phone'}
           </Text>
         </div>
       ),
@@ -259,7 +260,7 @@ const MonthlyTargets: React.FC = () => {
     setEditingTarget(target);
     setIsModalOpen(true);
     form.setFieldsValue({
-      orderBookerId: target.orderBookerId,
+      orderBookerIds: [target.orderBookerId],
       targetAmount: target.targetAmount,
     });
   };
@@ -284,13 +285,17 @@ const MonthlyTargets: React.FC = () => {
 
   const handleModalOk = () => {
     form.validateFields().then(values => {
-      const targetData: CreateMonthlyTargetRequest = {
-        ...values,
-        year: filters.year,
-        month: filters.month,
-      };
-
+      const { orderBookerIds, targetAmount } = values;
+      
       if (editingTarget) {
+        // Single update for existing target
+        const targetData: CreateMonthlyTargetRequest = {
+          orderBookerId: orderBookerIds[0],
+          targetAmount,
+          year: filters.year,
+          month: filters.month,
+        };
+
         updateTarget.mutate(
           { id: editingTarget.id, ...targetData },
           {
@@ -306,14 +311,22 @@ const MonthlyTargets: React.FC = () => {
           }
         );
       } else {
-        createTarget.mutate(targetData, {
+        // Batch upsert for new targets (supports multiple order bookers)
+        const targets: CreateMonthlyTargetRequest[] = orderBookerIds.map((orderBookerId: string) => ({
+          orderBookerId,
+          targetAmount,
+          year: filters.year,
+          month: filters.month,
+        }));
+
+        batchUpsertTargets.mutate(targets, {
           onSuccess: () => {
-            message.success('Target created successfully');
+            message.success(`Target${targets.length > 1 ? 's' : ''} set successfully for ${targets.length} order booker${targets.length > 1 ? 's' : ''}`);
             setIsModalOpen(false);
             form.resetFields();
           },
           onError: (error: unknown) => {
-            message.error('Failed to create target');
+            message.error('Failed to set targets');
             console.error('Create error:', error);
           },
         });
@@ -499,21 +512,27 @@ const MonthlyTargets: React.FC = () => {
           setIsModalOpen(false);
           form.resetFields();
         }}
-        confirmLoading={createTarget.isPending || updateTarget.isPending}
+        confirmLoading={createTarget.isPending || batchUpsertTargets.isPending || updateTarget.isPending}
         width={600}
       >
         <Form form={form} layout="vertical">
           <Row gutter={16}>
             <Col span={24}>
               <Form.Item
-                label="Order Booker"
-                name="orderBookerId"
-                rules={[{ required: true, message: 'Please select an order booker' }]}
+                label={editingTarget ? "Order Booker" : "Order Booker(s)"}
+                name="orderBookerIds"
+                rules={[{ required: true, message: 'Please select at least one order booker' }]}
               >
-                <Select placeholder="Select order booker" showSearch>
+                <Select 
+                  mode={editingTarget ? undefined : "multiple"}
+                  placeholder={editingTarget ? "Select order booker" : "Select order bookers"}
+                  showSearch
+                  disabled={!!editingTarget}
+                  maxTagCount="responsive"
+                >
                   {orderBookers?.map(ob => (
                     <Option key={ob.id} value={ob.id}>
-                      {ob.name} - {ob.territory}
+                      {ob.name}
                     </Option>
                   ))}
                 </Select>
@@ -543,13 +562,22 @@ const MonthlyTargets: React.FC = () => {
           <Row gutter={16}>
             <Col span={24}>
               <Card size="small" style={{ backgroundColor: '#f6f8fa' }}>
-                <Text type="secondary">
-                  <AimOutlined /> Daily Target: Rs.
-                  {form.getFieldValue('targetAmount') 
-                    ? (form.getFieldValue('targetAmount') / dayjs(`${filters.year}-${filters.month}`).daysInMonth()).toFixed(0)
-                    : '0'
-                  } per day
-                </Text>
+                <div>
+                  <Text type="secondary">
+                    <AimOutlined /> Daily Target: Rs.
+                    {form.getFieldValue('targetAmount') 
+                      ? (form.getFieldValue('targetAmount') / dayjs(`${filters.year}-${filters.month}`).daysInMonth()).toFixed(0)
+                      : '0'
+                    } per day
+                  </Text>
+                  {!editingTarget && (
+                    <div style={{ marginTop: '8px' }}>
+                      <Text type="secondary">
+                        Selected Order Bookers: {form.getFieldValue('orderBookerIds')?.length || 0}
+                      </Text>
+                    </div>
+                  )}
+                </div>
               </Card>
             </Col>
           </Row>

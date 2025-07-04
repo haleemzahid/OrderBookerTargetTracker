@@ -177,7 +177,7 @@ const DailyEntries: React.FC = () => {
         <div>
           <div style={{ fontWeight: 'medium' }}>{name}</div>
           <Text type="secondary" style={{ fontSize: '12px' }}>
-            {record.orderBooker?.territory || 'No territory'}
+            {record.orderBooker?.name || 'No territory'}
           </Text>
         </div>
       ),
@@ -510,7 +510,7 @@ const DailyEntries: React.FC = () => {
                 <Select placeholder="Select order booker" showSearch>
                   {orderBookers?.map(ob => (
                     <Option key={ob.id} value={ob.id}>
-                      {ob.name} - {ob.territory}
+                      {ob.name}
                     </Option>
                   ))}
                 </Select>

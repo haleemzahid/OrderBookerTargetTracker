@@ -150,6 +150,14 @@ export const useMonthlyTargets = (year: number, month: number) => {
     },
   });
 
+  const batchUpsertTargets = useMutation({
+    mutationFn: (targets: CreateMonthlyTargetRequest[]) => monthlyTargetService.batchUpsert(targets),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.monthlyTargetsByMonth(year, month) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.monthlyAnalytics(year, month) });
+    },
+  });
+
   return {
     data,
     isLoading,
@@ -158,5 +166,6 @@ export const useMonthlyTargets = (year: number, month: number) => {
     updateTarget,
     deleteTarget,
     copyFromPreviousMonth,
+    batchUpsertTargets,
   };
 };
