@@ -144,7 +144,7 @@ const MonthlyTargets: React.FC = () => {
       key: 'targetAmount',
       render: (amount: number) => (
         <Tag color="blue" style={{ minWidth: '100px', textAlign: 'center' }}>
-          ${amount.toLocaleString()}
+          Rs.{amount.toLocaleString()}
         </Tag>
       ),
       sorter: (a, b) => a.targetAmount - b.targetAmount,
@@ -156,7 +156,7 @@ const MonthlyTargets: React.FC = () => {
       key: 'achievedAmount',
       render: (amount: number) => (
         <Tag color="green" style={{ minWidth: '100px', textAlign: 'center' }}>
-          ${amount.toLocaleString()}
+          Rs.{amount.toLocaleString()}
         </Tag>
       ),
       sorter: (a, b) => a.achievedAmount - b.achievedAmount,
@@ -191,7 +191,7 @@ const MonthlyTargets: React.FC = () => {
         const dailyTarget = record.targetAmount / daysInMonth;
         return (
           <Text type="secondary">
-            ${dailyTarget.toFixed(0)}/day
+            Rs.{dailyTarget.toFixed(0)}/day
           </Text>
         );
       },
@@ -374,7 +374,7 @@ const MonthlyTargets: React.FC = () => {
             <Statistic
               title="Total Targets"
               value={summaryStats.totalTargets}
-              prefix="$"
+              prefix="Rs."
               precision={0}
               valueStyle={{ color: '#1890ff' }}
             />
@@ -385,7 +385,7 @@ const MonthlyTargets: React.FC = () => {
             <Statistic
               title="Total Achieved"
               value={summaryStats.totalAchieved}
-              prefix="$"
+              prefix="Rs."
               precision={0}
               valueStyle={{ color: '#3f8600' }}
             />
@@ -533,7 +533,7 @@ const MonthlyTargets: React.FC = () => {
                 <InputNumber
                   style={{ width: '100%' }}
                   placeholder="Enter target amount"
-                  prefix="$"
+                  prefix="Rs."
                   precision={2}
                   size="large"
                 />
@@ -544,7 +544,7 @@ const MonthlyTargets: React.FC = () => {
             <Col span={24}>
               <Card size="small" style={{ backgroundColor: '#f6f8fa' }}>
                 <Text type="secondary">
-                  <AimOutlined /> Daily Target: $
+                  <AimOutlined /> Daily Target: Rs.
                   {form.getFieldValue('targetAmount') 
                     ? (form.getFieldValue('targetAmount') / dayjs(`${filters.year}-${filters.month}`).daysInMonth()).toFixed(0)
                     : '0'

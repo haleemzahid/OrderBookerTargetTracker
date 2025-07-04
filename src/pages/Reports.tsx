@@ -226,7 +226,7 @@ const Reports: React.FC = () => {
       title: 'Net Sales',
       dataIndex: 'netSales',
       key: 'netSales',
-      render: (value: number) => `$${value.toLocaleString()}`,
+      render: (value: number) => `Rs.${value.toLocaleString()}`,
       sorter: (a, b) => a.netSales - b.netSales,
       width: 120,
     },
@@ -234,7 +234,7 @@ const Reports: React.FC = () => {
       title: 'Target',
       dataIndex: 'targetAmount',
       key: 'targetAmount',
-      render: (value: number) => `$${value.toLocaleString()}`,
+      render: (value: number) => `Rs.${value.toLocaleString()}`,
       sorter: (a, b) => a.targetAmount - b.targetAmount,
       width: 120,
     },
@@ -257,7 +257,7 @@ const Reports: React.FC = () => {
       title: 'Daily Avg',
       dataIndex: 'dailyAverage',
       key: 'dailyAverage',
-      render: (value: number) => `$${value.toFixed(0)}`,
+      render: (value: number) => `Rs.${value.toFixed(0)}`,
       sorter: (a, b) => a.dailyAverage - b.dailyAverage,
       width: 100,
     },
@@ -514,7 +514,7 @@ const Reports: React.FC = () => {
                         title={item.orderBooker.name}
                         description={
                           <div>
-                            <Text strong>${item.netSales.toLocaleString()}</Text>
+                            <Text strong>Rs.{item.netSales.toLocaleString()}</Text>
                             <br />
                             <Text type="secondary">
                               {item.achievementPercent.toFixed(0)}% of target
@@ -550,7 +550,7 @@ const Reports: React.FC = () => {
                           title={item.orderBooker.name}
                           description={
                             <div>
-                              <Text strong>${item.netSales.toLocaleString()}</Text>
+                              <Text strong>Rs.{item.netSales.toLocaleString()}</Text>
                               <br />
                               <Text type="secondary">
                                 {item.achievementPercent.toFixed(0)}% of target
@@ -598,19 +598,19 @@ const Reports: React.FC = () => {
                       title: 'Sales',
                       dataIndex: 'totalSales',
                       key: 'totalSales',
-                      render: (value: number) => `$${value.toLocaleString()}`,
+                      render: (value: number) => `Rs.Rs.{value.toLocaleString()}`,
                     },
                     {
                       title: 'Net Sales',
                       dataIndex: 'netSales',
                       key: 'netSales',
-                      render: (value: number) => `$${value.toLocaleString()}`,
+                      render: (value: number) => `Rs.Rs.{value.toLocaleString()}`,
                     },
                     {
                       title: 'Target',
                       dataIndex: 'targetAmount',
                       key: 'targetAmount',
-                      render: (value: number) => `$${value.toLocaleString()}`,
+                      render: (value: number) => `Rs.Rs.{value.toLocaleString()}`,
                     },
                     {
                       title: 'Achievement',

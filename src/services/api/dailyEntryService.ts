@@ -1,4 +1,5 @@
-import { invoke } from '@tauri-apps/api/core';
+import { getDatabase } from '../database';
+import { v4 as uuidv4 } from 'uuid';
 import type {
   DailyEntry,
   CreateDailyEntryRequest,
@@ -11,6 +12,7 @@ export interface IDailyEntryService {
   getByMonth(year: number, month: number): Promise<DailyEntry[]>;
   getByOrderBooker(orderBookerId: string, dateRange?: DateRange): Promise<DailyEntry[]>;
   getByDateRange(startDate: string, endDate: string): Promise<DailyEntry[]>;
+  getById(id: string): Promise<DailyEntry | null>;
   create(entry: CreateDailyEntryRequest): Promise<DailyEntry>;
   batchCreate(entries: CreateDailyEntryRequest[]): Promise<DailyEntry[]>;
   update(id: string, entry: UpdateDailyEntryRequest): Promise<DailyEntry>;
@@ -20,40 +22,246 @@ export interface IDailyEntryService {
 
 export const dailyEntryService: IDailyEntryService = {
   getByMonth: async (year: number, month: number): Promise<DailyEntry[]> => {
-    return await invoke<DailyEntry[]>('get_daily_entries_by_month', { year, month });
+    const db = getDatabase();
+    const startDate = new Date(year, month - 1, 1).toISOString();
+    const endDate = new Date(year, month, 0).toISOString();
+    
+    const result = await db.select<DailyEntry[]>(
+      'SELECT * FROM daily_entries WHERE date >= ? AND date <= ? ORDER BY date DESC',
+      [startDate, endDate]
+    );
+    
+    return result.map(row => ({
+      ...row,
+      date: new Date(row.date),
+      createdAt: new Date(row.createdAt),
+      updatedAt: new Date(row.updatedAt),
+    }));
   },
 
   getByOrderBooker: async (orderBookerId: string, dateRange?: DateRange): Promise<DailyEntry[]> => {
-    return await invoke<DailyEntry[]>('get_daily_entries_by_order_booker', { 
-      orderBookerId, 
-      dateRange 
-    });
+    const db = getDatabase();
+    let query = 'SELECT * FROM daily_entries WHERE order_booker_id = ?';
+    const params: any[] = [orderBookerId];
+
+    if (dateRange) {
+      query += ' AND date >= ? AND date <= ?';
+      params.push(dateRange.startDate.toISOString(), dateRange.endDate.toISOString());
+    }
+
+    query += ' ORDER BY date DESC';
+
+    const result = await db.select<DailyEntry[]>(query, params);
+    return result.map(row => ({
+      ...row,
+      date: new Date(row.date),
+      createdAt: new Date(row.createdAt),
+      updatedAt: new Date(row.updatedAt),
+    }));
   },
 
   getByDateRange: async (startDate: string, endDate: string): Promise<DailyEntry[]> => {
-    return await invoke<DailyEntry[]>('get_daily_entries_by_date_range', { 
-      startDate, 
-      endDate 
-    });
+    const db = getDatabase();
+    const result = await db.select<DailyEntry[]>(
+      'SELECT * FROM daily_entries WHERE date >= ? AND date <= ? ORDER BY date DESC',
+      [startDate, endDate]
+    );
+    
+    return result.map(row => ({
+      ...row,
+      date: new Date(row.date),
+      createdAt: new Date(row.createdAt),
+      updatedAt: new Date(row.updatedAt),
+    }));
+  },
+
+  getById: async (id: string): Promise<DailyEntry | null> => {
+    const db = getDatabase();
+    const result = await db.select<DailyEntry[]>('SELECT * FROM daily_entries WHERE id = ?', [id]);
+    
+    if (result.length === 0) {
+      return null;
+    }
+
+    const row = result[0];
+    return {
+      ...row,
+      date: new Date(row.date),
+      createdAt: new Date(row.createdAt),
+      updatedAt: new Date(row.updatedAt),
+    };
   },
 
   create: async (entry: CreateDailyEntryRequest): Promise<DailyEntry> => {
-    return await invoke<DailyEntry>('create_daily_entry', { entry });
+    const db = getDatabase();
+    const id = uuidv4();
+    const now = new Date().toISOString();
+    const netSales = entry.sales - entry.returns;
+
+    await db.execute(
+      `INSERT INTO daily_entries (
+        id, order_booker_id, date, sales, returns, net_sales, notes, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        id,
+        entry.orderBookerId,
+        entry.date.toISOString(),
+        entry.sales,
+        entry.returns,
+        netSales,
+        entry.notes || null,
+        now,
+        now,
+      ]
+    );
+
+    const created = await dailyEntryService.getById(id);
+    if (!created) {
+      throw new Error('Failed to create daily entry');
+    }
+
+    return created;
   },
 
   batchCreate: async (entries: CreateDailyEntryRequest[]): Promise<DailyEntry[]> => {
-    return await invoke<DailyEntry[]>('batch_create_daily_entries', { entries });
+    const createdEntries: DailyEntry[] = [];
+
+    for (const entry of entries) {
+      const created = await dailyEntryService.create(entry);
+      createdEntries.push(created);
+    }
+
+    return createdEntries;
   },
 
   update: async (id: string, entry: UpdateDailyEntryRequest): Promise<DailyEntry> => {
-    return await invoke<DailyEntry>('update_daily_entry', { id, entry });
+    const db = getDatabase();
+    const now = new Date().toISOString();
+
+    const setParts: string[] = [];
+    const params: any[] = [];
+
+    if (entry.sales !== undefined) {
+      setParts.push('sales = ?');
+      params.push(entry.sales);
+    }
+    if (entry.returns !== undefined) {
+      setParts.push('returns = ?');
+      params.push(entry.returns);
+    }
+    if (entry.notes !== undefined) {
+      setParts.push('notes = ?');
+      params.push(entry.notes);
+    }
+
+    // Calculate net sales if sales or returns are being updated
+    if (entry.sales !== undefined || entry.returns !== undefined) {
+      const current = await dailyEntryService.getById(id);
+      if (current) {
+        const newSales = entry.sales !== undefined ? entry.sales : current.sales;
+        const newReturns = entry.returns !== undefined ? entry.returns : current.returns;
+        const netSales = newSales - newReturns;
+        
+        setParts.push('net_sales = ?');
+        params.push(netSales);
+      }
+    }
+
+    if (setParts.length === 0) {
+      throw new Error('No fields to update');
+    }
+
+    setParts.push('updated_at = ?');
+    params.push(now);
+    params.push(id);
+
+    const query = `UPDATE daily_entries SET ${setParts.join(', ')} WHERE id = ?`;
+    await db.execute(query, params);
+
+    const updated = await dailyEntryService.getById(id);
+    if (!updated) {
+      throw new Error('Daily entry not found');
+    }
+
+    return updated;
   },
 
   delete: async (id: string): Promise<void> => {
-    await invoke<void>('delete_daily_entry', { id });
+    const db = getDatabase();
+    await db.execute('DELETE FROM daily_entries WHERE id = ?', [id]);
   },
 
   getMonthlyAnalytics: async (year: number, month: number): Promise<MonthlyAnalytics> => {
-    return await invoke<MonthlyAnalytics>('get_monthly_analytics', { year, month });
+    const db = getDatabase();
+    const startDate = new Date(year, month - 1, 1).toISOString();
+    const endDate = new Date(year, month, 0).toISOString();
+
+    // Get total sales, returns, and net sales
+    const salesResult = await db.select<Array<{totalSales: number, totalReturns: number, totalNetSales: number}>>(
+      `SELECT 
+        COALESCE(SUM(sales), 0) as totalSales,
+        COALESCE(SUM(returns), 0) as totalReturns,
+        COALESCE(SUM(net_sales), 0) as totalNetSales
+       FROM daily_entries 
+       WHERE date >= ? AND date <= ?`,
+      [startDate, endDate]
+    );
+
+    // Get total target amount
+    const targetResult = await db.select<Array<{totalTargetAmount: number}>>(
+      `SELECT COALESCE(SUM(target_amount), 0) as totalTargetAmount
+       FROM monthly_targets 
+       WHERE year = ? AND month = ?`,
+      [year, month]
+    );
+
+    // Get performance by order booker
+    const performanceResult = await db.select<Array<{
+      orderBookerId: string,
+      name: string,
+      sales: number,
+      targetAmount: number,
+      achievementPercentage: number
+    }>>(
+      `SELECT 
+        de.order_booker_id as orderBookerId,
+        ob.name,
+        COALESCE(SUM(de.net_sales), 0) as sales,
+        COALESCE(mt.target_amount, 0) as targetAmount,
+        CASE 
+          WHEN mt.target_amount > 0 THEN (COALESCE(SUM(de.net_sales), 0) / mt.target_amount) * 100
+          ELSE 0
+        END as achievementPercentage
+       FROM order_bookers ob
+       LEFT JOIN daily_entries de ON ob.id = de.order_booker_id 
+         AND de.date >= ? AND de.date <= ?
+       LEFT JOIN monthly_targets mt ON ob.id = mt.order_booker_id 
+         AND mt.year = ? AND mt.month = ?
+       GROUP BY ob.id, ob.name, mt.target_amount
+       ORDER BY achievementPercentage DESC`,
+      [startDate, endDate, year, month]
+    );
+
+    const totalSales = salesResult[0]?.totalSales || 0;
+    const totalReturns = salesResult[0]?.totalReturns || 0;
+    const totalNetSales = salesResult[0]?.totalNetSales || 0;
+    const totalTargetAmount = targetResult[0]?.totalTargetAmount || 0;
+    const totalAchievedAmount = totalNetSales;
+    const averageAchievementPercentage = totalTargetAmount > 0 ? (totalAchievedAmount / totalTargetAmount) * 100 : 0;
+
+    // Split performers
+    const topPerformers = performanceResult.filter(p => p.achievementPercentage >= 80).slice(0, 5);
+    const underPerformers = performanceResult.filter(p => p.achievementPercentage < 80).slice(0, 5);
+
+    return {
+      totalSales,
+      totalReturns,
+      totalNetSales,
+      totalTargetAmount,
+      totalAchievedAmount,
+      averageAchievementPercentage,
+      topPerformers,
+      underPerformers,
+    };
   },
 };

@@ -190,7 +190,7 @@ const DailyEntries: React.FC = () => {
       key: 'sales',
       render: (sales: number) => (
         <Tag color="green" style={{ minWidth: '80px', textAlign: 'center' }}>
-          ${sales.toLocaleString()}
+          Rs.{sales.toLocaleString()}
         </Tag>
       ),
       sorter: (a, b) => a.sales - b.sales,
@@ -202,7 +202,7 @@ const DailyEntries: React.FC = () => {
       key: 'returns',
       render: (returns: number) => (
         <Tag color="red" style={{ minWidth: '80px', textAlign: 'center' }}>
-          ${returns.toLocaleString()}
+          Rs.{returns.toLocaleString()}
         </Tag>
       ),
       sorter: (a, b) => a.returns - b.returns,
@@ -215,7 +215,7 @@ const DailyEntries: React.FC = () => {
         const netSales = record.sales - record.returns;
         return (
           <Tag color={netSales >= 0 ? 'blue' : 'red'} style={{ minWidth: '80px', textAlign: 'center' }}>
-            ${netSales.toLocaleString()}
+            Rs.{netSales.toLocaleString()}
           </Tag>
         );
       },
@@ -354,7 +354,7 @@ const DailyEntries: React.FC = () => {
             <Statistic
               title="Total Sales"
               value={summaryStats.totalSales}
-              prefix="$"
+              prefix="Rs."
               precision={0}
               valueStyle={{ color: '#3f8600' }}
             />
@@ -365,7 +365,7 @@ const DailyEntries: React.FC = () => {
             <Statistic
               title="Total Returns"
               value={summaryStats.totalReturns}
-              prefix="$"
+              prefix="Rs."
               precision={0}
               valueStyle={{ color: '#cf1322' }}
             />
@@ -376,7 +376,7 @@ const DailyEntries: React.FC = () => {
             <Statistic
               title="Net Sales"
               value={summaryStats.netSales}
-              prefix="$"
+              prefix="Rs."
               precision={0}
               valueStyle={{ color: summaryStats.netSales >= 0 ? '#3f8600' : '#cf1322' }}
             />
@@ -541,7 +541,7 @@ const DailyEntries: React.FC = () => {
                 <InputNumber
                   style={{ width: '100%' }}
                   placeholder="Enter sales amount"
-                  prefix="$"
+                  prefix="Rs."
                   precision={2}
                 />
               </Form.Item>
@@ -558,7 +558,7 @@ const DailyEntries: React.FC = () => {
                 <InputNumber
                   style={{ width: '100%' }}
                   placeholder="Enter returns amount"
-                  prefix="$"
+                  prefix="Rs."
                   precision={2}
                 />
               </Form.Item>
