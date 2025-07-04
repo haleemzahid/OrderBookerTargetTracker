@@ -30,8 +30,6 @@ const OrderBookers: React.FC = () => {
       nameUrdu: orderBooker.nameUrdu,
       phone: orderBooker.phone,
       email: orderBooker.email,
-      territory: orderBooker.territory,
-      monthlyTarget: orderBooker.monthlyTarget,
       isActive: orderBooker.isActive,
     });
     setIsModalVisible(true);
@@ -64,8 +62,6 @@ const OrderBookers: React.FC = () => {
           nameUrdu: values.nameUrdu,
           phone: values.phone,
           email: values.email,
-          territory: values.territory,
-          monthlyTarget: values.monthlyTarget,
           isActive: values.isActive,
         };
         await updateMutation.mutateAsync({ id: editingOrderBooker.id, data: updateData });
@@ -76,8 +72,6 @@ const OrderBookers: React.FC = () => {
           nameUrdu: values.nameUrdu,
           phone: values.phone,
           email: values.email,
-          territory: values.territory,
-          monthlyTarget: values.monthlyTarget,
         };
         await createMutation.mutateAsync(createData);
         message.success(t('createSuccess'));
@@ -118,16 +112,21 @@ const OrderBookers: React.FC = () => {
       ),
     },
     {
-      title: t('territory'),
-      dataIndex: 'territory',
-      key: 'territory',
-      render: (text: string) => text || '-',
-    },
-    {
       title: t('monthlyTarget'),
-      dataIndex: 'monthlyTarget',
       key: 'monthlyTarget',
-      render: (amount: number) => `${amount}`,
+      render: (record: OrderBooker) => (
+        <div>
+          <div style={{ fontWeight: 'bold' }}>
+            Target: {record.currentMonthTarget?.toLocaleString() || 0}
+          </div>
+          <div style={{ fontSize: '12px', color: '#666' }}>
+            Achieved: {record.currentMonthAchieved?.toLocaleString() || 0}
+          </div>
+          <div style={{ fontSize: '12px', color: record.currentMonthAchievementPercentage && record.currentMonthAchievementPercentage >= 100 ? '#52c41a' : '#f5222d' }}>
+            {record.currentMonthAchievementPercentage?.toFixed(1) || 0}%
+          </div>
+        </div>
+      ),
     },
     {
       title: t('status'),
@@ -249,21 +248,6 @@ const OrderBookers: React.FC = () => {
             rules={[{ type: 'email', message: t('emailInvalid') }]}
           >
             <Input />
-          </Form.Item>
-
-          <Form.Item
-            label={t('territory')}
-            name="territory"
-          >
-            <Input />
-          </Form.Item>
-
-          <Form.Item
-            label={t('monthlyTarget')}
-            name="monthlyTarget"
-            rules={[{ required: true, message: t('monthlyTargetRequired') }]}
-          >
-            <Input type="number" />
           </Form.Item>
 
           {editingOrderBooker && (

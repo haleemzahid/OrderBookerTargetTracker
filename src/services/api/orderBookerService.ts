@@ -18,50 +18,83 @@ export interface IOrderBookerService {
 export const orderBookerService: IOrderBookerService = {
   getAll: async (filters?: OrderBookerFilters): Promise<OrderBooker[]> => {
     const db = getDatabase();
-    let query = 'SELECT * FROM order_bookers WHERE 1=1';
-    const params: any[] = [];
+    const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().getMonth() + 1;
+    
+    let query = `
+      SELECT 
+        ob.*,
+        mt.target_amount as current_month_target,
+        mt.achieved_amount as current_month_achieved,
+        mt.remaining_amount as current_month_remaining,
+        mt.achievement_percentage as current_month_achievement_percentage
+      FROM order_bookers ob
+      LEFT JOIN monthly_targets mt ON ob.id = mt.order_booker_id 
+        AND mt.year = ? AND mt.month = ?
+      WHERE 1=1
+    `;
+    const params: any[] = [currentYear, currentMonth];
 
     if (filters?.search) {
-      query += ' AND (name LIKE ? OR name_urdu LIKE ? OR phone LIKE ?)';
+      query += ' AND (ob.name LIKE ? OR ob.name_urdu LIKE ? OR ob.phone LIKE ?)';
       const searchTerm = `%${filters.search}%`;
       params.push(searchTerm, searchTerm, searchTerm);
     }
 
-    if (filters?.territory) {
-      query += ' AND territory = ?';
-      params.push(filters.territory);
-    }
-
     if (filters?.isActive !== undefined) {
-      query += ' AND is_active = ?';
+      query += ' AND ob.is_active = ?';
       params.push(filters.isActive ? 1 : 0);
     }
 
     if (filters?.joinDateFrom) {
-      query += ' AND join_date >= ?';
+      query += ' AND ob.join_date >= ?';
       params.push(filters.joinDateFrom.toISOString());
     }
 
     if (filters?.joinDateTo) {
-      query += ' AND join_date <= ?';
+      query += ' AND ob.join_date <= ?';
       params.push(filters.joinDateTo.toISOString());
     }
 
-    query += ' ORDER BY name';
+    query += ' ORDER BY ob.name';
 
-    const result = await db.select<OrderBooker[]>(query, params);
+    const result = await db.select<any[]>(query, params);
     return result.map(row => ({
-      ...row,
-      joinDate: new Date(row.joinDate),
-      isActive: Boolean(row.isActive),
-      createdAt: new Date(row.createdAt),
-      updatedAt: new Date(row.updatedAt),
+      id: row.id,
+      name: row.name,
+      nameUrdu: row.name_urdu,
+      phone: row.phone,
+      email: row.email,
+      joinDate: new Date(row.join_date),
+      isActive: Boolean(row.is_active),
+      createdAt: new Date(row.created_at),
+      updatedAt: new Date(row.updated_at),
+      currentMonthTarget: row.current_month_target || 0,
+      currentMonthAchieved: row.current_month_achieved || 0,
+      currentMonthRemaining: row.current_month_remaining || 0,
+      currentMonthAchievementPercentage: row.current_month_achievement_percentage || 0,
     }));
   },
 
   getById: async (id: string): Promise<OrderBooker | null> => {
     const db = getDatabase();
-    const result = await db.select<OrderBooker[]>('SELECT * FROM order_bookers WHERE id = ?', [id]);
+    const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().getMonth() + 1;
+    
+    const query = `
+      SELECT 
+        ob.*,
+        mt.target_amount as current_month_target,
+        mt.achieved_amount as current_month_achieved,
+        mt.remaining_amount as current_month_remaining,
+        mt.achievement_percentage as current_month_achievement_percentage
+      FROM order_bookers ob
+      LEFT JOIN monthly_targets mt ON ob.id = mt.order_booker_id 
+        AND mt.year = ? AND mt.month = ?
+      WHERE ob.id = ?
+    `;
+    
+    const result = await db.select<any[]>(query, [currentYear, currentMonth, id]);
     
     if (result.length === 0) {
       return null;
@@ -69,11 +102,19 @@ export const orderBookerService: IOrderBookerService = {
 
     const row = result[0];
     return {
-      ...row,
-      joinDate: new Date(row.joinDate),
-      isActive: Boolean(row.isActive),
-      createdAt: new Date(row.createdAt),
-      updatedAt: new Date(row.updatedAt),
+      id: row.id,
+      name: row.name,
+      nameUrdu: row.name_urdu,
+      phone: row.phone,
+      email: row.email,
+      joinDate: new Date(row.join_date),
+      isActive: Boolean(row.is_active),
+      createdAt: new Date(row.created_at),
+      updatedAt: new Date(row.updated_at),
+      currentMonthTarget: row.current_month_target || 0,
+      currentMonthAchieved: row.current_month_achieved || 0,
+      currentMonthRemaining: row.current_month_remaining || 0,
+      currentMonthAchievementPercentage: row.current_month_achievement_percentage || 0,
     };
   },
 
@@ -86,8 +127,8 @@ export const orderBookerService: IOrderBookerService = {
     await db.execute(
       `INSERT INTO order_bookers (
         id, name, name_urdu, phone, email, join_date, is_active, 
-        monthly_target, territory, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         data.name,
@@ -96,8 +137,6 @@ export const orderBookerService: IOrderBookerService = {
         data.email || null,
         joinDate,
         1,
-        data.monthlyTarget,
-        data.territory || null,
         now,
         now,
       ]
@@ -133,14 +172,6 @@ export const orderBookerService: IOrderBookerService = {
     if (data.email !== undefined) {
       setParts.push('email = ?');
       params.push(data.email);
-    }
-    if (data.territory !== undefined) {
-      setParts.push('territory = ?');
-      params.push(data.territory);
-    }
-    if (data.monthlyTarget !== undefined) {
-      setParts.push('monthly_target = ?');
-      params.push(data.monthlyTarget);
     }
     if (data.isActive !== undefined) {
       setParts.push('is_active = ?');

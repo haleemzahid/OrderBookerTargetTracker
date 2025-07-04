@@ -6,10 +6,13 @@ export interface OrderBooker {
   email?: string;
   joinDate: Date;
   isActive: boolean;
-  monthlyTarget: number;
-  territory?: string;
   createdAt: Date;
   updatedAt: Date;
+  // Current month's target data
+  currentMonthTarget?: number;
+  currentMonthAchieved?: number;
+  currentMonthRemaining?: number;
+  currentMonthAchievementPercentage?: number;
 }
 
 export interface CreateOrderBookerRequest {
@@ -17,8 +20,6 @@ export interface CreateOrderBookerRequest {
   nameUrdu: string;
   phone: string;
   email?: string;
-  territory?: string;
-  monthlyTarget: number;
 }
 
 export interface UpdateOrderBookerRequest {
@@ -26,14 +27,11 @@ export interface UpdateOrderBookerRequest {
   nameUrdu?: string;
   phone?: string;
   email?: string;
-  territory?: string;
-  monthlyTarget?: number;
   isActive?: boolean;
 }
 
 export interface OrderBookerFilters {
   search?: string;
-  territory?: string;
   isActive?: boolean;
   joinDateFrom?: Date;
   joinDateTo?: Date;
