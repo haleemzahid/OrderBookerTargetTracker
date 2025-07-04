@@ -21,6 +21,16 @@ export const useDailyEntriesByOrderBooker = (orderBookerId: string, dateRange?: 
   });
 };
 
+export const useDailyEntriesByDateRange = (startDate?: string, endDate?: string) => {
+  return useQuery({
+    queryKey: ['dailyEntries', 'dateRange', startDate, endDate],
+    queryFn: () => dailyEntryService.getByDateRange(startDate!, endDate!),
+    enabled: !!startDate && !!endDate,
+    staleTime: 2 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
+  });
+};
+
 export const useCreateDailyEntry = () => {
   const queryClient = useQueryClient();
 

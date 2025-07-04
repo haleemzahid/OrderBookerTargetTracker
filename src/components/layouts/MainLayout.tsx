@@ -4,6 +4,9 @@ import Header from './Header';
 import Sidebar from './Sidebar';
 import Dashboard from '../../pages/Dashboard';
 import OrderBookers from '../../pages/OrderBookers';
+import DailyEntries from '../../pages/DailyEntries';
+import MonthlyTargets from '../../pages/MonthlyTargets';
+import Reports from '../../pages/Reports';
 import { useApp } from '../../contexts/AppContext';
 
 const { Content } = Layout;
@@ -37,11 +40,11 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       case 'order-bookers':
         return <OrderBookers />;
       case 'daily-entries':
-        return <div>Daily Entries (Coming Soon)</div>;
+        return <DailyEntries />;
       case 'monthly-targets':
-        return <div>Monthly Targets (Coming Soon)</div>;
+        return <MonthlyTargets />;
       case 'reports':
-        return <div>Reports (Coming Soon)</div>;
+        return <Reports />;
       case 'settings':
         return <div>Settings (Coming Soon)</div>;
       default:

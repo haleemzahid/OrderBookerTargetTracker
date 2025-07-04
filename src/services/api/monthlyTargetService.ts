@@ -12,6 +12,7 @@ export interface IMonthlyTargetService {
   batchCreate(targets: CreateMonthlyTargetRequest[]): Promise<MonthlyTarget[]>;
   update(id: string, target: UpdateMonthlyTargetRequest): Promise<MonthlyTarget>;
   delete(id: string): Promise<void>;
+  copyFromPreviousMonth(params: { fromYear: number; fromMonth: number; toYear: number; toMonth: number }): Promise<MonthlyTarget[]>;
 }
 
 export const monthlyTargetService: IMonthlyTargetService = {
@@ -37,5 +38,9 @@ export const monthlyTargetService: IMonthlyTargetService = {
 
   delete: async (id: string): Promise<void> => {
     await invoke<void>('delete_monthly_target', { id });
+  },
+
+  copyFromPreviousMonth: async (params: { fromYear: number; fromMonth: number; toYear: number; toMonth: number }): Promise<MonthlyTarget[]> => {
+    return await invoke<MonthlyTarget[]>('copy_monthly_targets_from_previous_month', params);
   },
 };

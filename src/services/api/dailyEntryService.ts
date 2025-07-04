@@ -10,6 +10,7 @@ import type {
 export interface IDailyEntryService {
   getByMonth(year: number, month: number): Promise<DailyEntry[]>;
   getByOrderBooker(orderBookerId: string, dateRange?: DateRange): Promise<DailyEntry[]>;
+  getByDateRange(startDate: string, endDate: string): Promise<DailyEntry[]>;
   create(entry: CreateDailyEntryRequest): Promise<DailyEntry>;
   batchCreate(entries: CreateDailyEntryRequest[]): Promise<DailyEntry[]>;
   update(id: string, entry: UpdateDailyEntryRequest): Promise<DailyEntry>;
@@ -26,6 +27,13 @@ export const dailyEntryService: IDailyEntryService = {
     return await invoke<DailyEntry[]>('get_daily_entries_by_order_booker', { 
       orderBookerId, 
       dateRange 
+    });
+  },
+
+  getByDateRange: async (startDate: string, endDate: string): Promise<DailyEntry[]> => {
+    return await invoke<DailyEntry[]>('get_daily_entries_by_date_range', { 
+      startDate, 
+      endDate 
     });
   },
 

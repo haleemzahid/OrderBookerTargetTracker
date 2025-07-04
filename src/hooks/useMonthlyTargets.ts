@@ -106,3 +106,57 @@ export const useDeleteMonthlyTarget = () => {
     },
   });
 };
+
+export const useMonthlyTargets = (year: number, month: number) => {
+  const queryClient = useQueryClient();
+
+  const { data, isLoading, error } = useQuery({
+    queryKey: queryKeys.monthlyTargetsByMonth(year, month),
+    queryFn: () => monthlyTargetService.getByMonth(year, month),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+  const createTarget = useMutation({
+    mutationFn: (target: CreateMonthlyTargetRequest) => monthlyTargetService.create(target),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.monthlyTargetsByMonth(year, month) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.monthlyAnalytics(year, month) });
+    },
+  });
+
+  const updateTarget = useMutation({
+    mutationFn: (params: { id: string } & UpdateMonthlyTargetRequest) => 
+      monthlyTargetService.update(params.id, params),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.monthlyTargetsByMonth(year, month) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.monthlyAnalytics(year, month) });
+    },
+  });
+
+  const deleteTarget = useMutation({
+    mutationFn: (id: string) => monthlyTargetService.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.monthlyTargetsByMonth(year, month) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.monthlyAnalytics(year, month) });
+    },
+  });
+
+  const copyFromPreviousMonth = useMutation({
+    mutationFn: (params: { fromYear: number; fromMonth: number; toYear: number; toMonth: number }) => 
+      monthlyTargetService.copyFromPreviousMonth(params),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.monthlyTargetsByMonth(year, month) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.monthlyAnalytics(year, month) });
+    },
+  });
+
+  return {
+    data,
+    isLoading,
+    error,
+    createTarget,
+    updateTarget,
+    deleteTarget,
+    copyFromPreviousMonth,
+  };
+};
