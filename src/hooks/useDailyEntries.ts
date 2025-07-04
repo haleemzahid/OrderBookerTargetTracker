@@ -47,6 +47,10 @@ export const useCreateDailyEntry = () => {
       queryClient.invalidateQueries({ 
         queryKey: queryKeys.monthlyAnalytics(entryDate.getFullYear(), entryDate.getMonth() + 1) 
       });
+      // Invalidate date range queries
+      queryClient.invalidateQueries({ 
+        queryKey: ['dailyEntries', 'dateRange'] 
+      });
     },
     onError: (error) => {
       console.error('Failed to create daily entry:', error);
@@ -84,6 +88,11 @@ export const useBatchCreateDailyEntries = () => {
           queryKey: queryKeys.dailyEntriesByOrderBooker(orderBookerId) 
         });
       });
+      
+      // Invalidate date range queries
+      queryClient.invalidateQueries({ 
+        queryKey: ['dailyEntries', 'dateRange'] 
+      });
     },
     onError: (error) => {
       console.error('Failed to batch create daily entries:', error);
@@ -108,6 +117,10 @@ export const useUpdateDailyEntry = () => {
       queryClient.invalidateQueries({ 
         queryKey: queryKeys.monthlyAnalytics(entryDate.getFullYear(), entryDate.getMonth() + 1) 
       });
+      // Invalidate date range queries
+      queryClient.invalidateQueries({ 
+        queryKey: ['dailyEntries', 'dateRange'] 
+      });
     },
     onError: (error) => {
       console.error('Failed to update daily entry:', error);
@@ -123,6 +136,10 @@ export const useDeleteDailyEntry = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.dailyEntries });
       queryClient.invalidateQueries({ queryKey: queryKeys.analytics });
+      // Invalidate date range queries
+      queryClient.invalidateQueries({ 
+        queryKey: ['dailyEntries', 'dateRange'] 
+      });
     },
     onError: (error) => {
       console.error('Failed to delete daily entry:', error);

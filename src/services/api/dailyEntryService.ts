@@ -26,16 +26,21 @@ export const dailyEntryService: IDailyEntryService = {
     const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
     const endDate = `${year}-${String(month).padStart(2, '0')}-31`;
     
-    const result = await db.select<DailyEntry[]>(
+    const result = await db.select<any[]>(
       'SELECT * FROM daily_entries WHERE date >= ? AND date <= ? ORDER BY date DESC',
       [startDate, endDate]
     );
     
     return result.map(row => ({
-      ...row,
+      id: row.id,
+      orderBookerId: row.order_booker_id,
       date: new Date(row.date + 'T00:00:00'), // Convert 'YYYY-MM-DD' to Date object
-      createdAt: new Date(row.createdAt),
-      updatedAt: new Date(row.updatedAt),
+      sales: row.sales || 0,
+      returns: row.returns || 0,
+      netSales: row.net_sales || 0,
+      notes: row.notes,
+      createdAt: new Date(row.created_at),
+      updatedAt: new Date(row.updated_at),
     }));
   },
 
@@ -51,33 +56,43 @@ export const dailyEntryService: IDailyEntryService = {
 
     query += ' ORDER BY date DESC';
 
-    const result = await db.select<DailyEntry[]>(query, params);
+    const result = await db.select<any[]>(query, params);
     return result.map(row => ({
-      ...row,
-      date: new Date(row.date),
-      createdAt: new Date(row.createdAt),
-      updatedAt: new Date(row.updatedAt),
+      id: row.id,
+      orderBookerId: row.order_booker_id,
+      date: new Date(row.date + 'T00:00:00'),
+      sales: row.sales || 0,
+      returns: row.returns || 0,
+      netSales: row.net_sales || 0,
+      notes: row.notes,
+      createdAt: new Date(row.created_at),
+      updatedAt: new Date(row.updated_at),
     }));
   },
 
   getByDateRange: async (startDate: string, endDate: string): Promise<DailyEntry[]> => {
     const db = getDatabase();
-    const result = await db.select<DailyEntry[]>(
+    const result = await db.select<any[]>(
       'SELECT * FROM daily_entries WHERE date >= ? AND date <= ? ORDER BY date DESC',
       [startDate, endDate]
     );
     
     return result.map(row => ({
-      ...row,
+      id: row.id,
+      orderBookerId: row.order_booker_id,
       date: new Date(row.date + 'T00:00:00'), // Convert 'YYYY-MM-DD' to Date object
-      createdAt: new Date(row.createdAt),
-      updatedAt: new Date(row.updatedAt),
+      sales: row.sales || 0,
+      returns: row.returns || 0,
+      netSales: row.net_sales || 0,
+      notes: row.notes,
+      createdAt: new Date(row.created_at),
+      updatedAt: new Date(row.updated_at),
     }));
   },
 
   getById: async (id: string): Promise<DailyEntry | null> => {
     const db = getDatabase();
-    const result = await db.select<DailyEntry[]>('SELECT * FROM daily_entries WHERE id = ?', [id]);
+    const result = await db.select<any[]>('SELECT * FROM daily_entries WHERE id = ?', [id]);
     
     if (result.length === 0) {
       return null;
@@ -85,10 +100,15 @@ export const dailyEntryService: IDailyEntryService = {
 
     const row = result[0];
     return {
-      ...row,
-      date: new Date(row.date),
-      createdAt: new Date(row.createdAt),
-      updatedAt: new Date(row.updatedAt),
+      id: row.id,
+      orderBookerId: row.order_booker_id,
+      date: new Date(row.date + 'T00:00:00'),
+      sales: row.sales || 0,
+      returns: row.returns || 0,
+      netSales: row.net_sales || 0,
+      notes: row.notes,
+      createdAt: new Date(row.created_at),
+      updatedAt: new Date(row.updated_at),
     };
   },
 
@@ -98,6 +118,9 @@ export const dailyEntryService: IDailyEntryService = {
     const now = new Date().toISOString();
     const netSales = entry.sales - entry.returns;
 
+    // Handle both string and Date object for date field
+    const dateString = typeof entry.date === 'string' ? entry.date : entry.date.toISOString().split('T')[0];
+
     await db.execute(
       `INSERT INTO daily_entries (
         id, order_booker_id, date, sales, returns, net_sales, notes, created_at, updated_at
@@ -105,7 +128,7 @@ export const dailyEntryService: IDailyEntryService = {
       [
         id,
         entry.orderBookerId,
-        entry.date.toISOString(),
+        dateString,
         entry.sales,
         entry.returns,
         netSales,

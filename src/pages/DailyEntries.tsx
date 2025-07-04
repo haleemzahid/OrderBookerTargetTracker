@@ -10,12 +10,12 @@ import {
   Row,
   Col,
   Statistic,
-  InputNumber,
   Tag,
   message,
   Modal,
   Form,
   Tooltip,
+  InputNumber,
 } from 'antd';
 import {
   PlusOutlined,
@@ -177,7 +177,7 @@ const DailyEntries: React.FC = () => {
         <div>
           <div style={{ fontWeight: 'medium' }}>{name}</div>
           <Text type="secondary" style={{ fontSize: '12px' }}>
-            {record.orderBooker?.name || 'No territory'}
+            {record.orderBooker?.name}
           </Text>
         </div>
       ),
@@ -295,7 +295,7 @@ const DailyEntries: React.FC = () => {
 
       if (editingEntry) {
         updateEntry.mutate(
-          { id: editingEntry.id, ...entryData },
+          { id: editingEntry.id, entry: entryData },
           {
             onSuccess: () => {
               message.success('Entry updated successfully');

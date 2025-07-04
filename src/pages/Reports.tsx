@@ -440,10 +440,10 @@ const Reports: React.FC = () => {
         <Col span={4}>
           <Card>
             <Statistic
-              title="Return Rate"
-              value={summaryStats.totalSales > 0 ? (summaryStats.totalReturns / summaryStats.totalSales) * 100 : 0}
-              precision={1}
-              suffix="%"
+              title="Total Returns"
+              value={summaryStats.totalReturns}
+              prefix={<DollarOutlined />}
+              precision={0}
               valueStyle={{ color: '#fa8c16' }}
             />
           </Card>
