@@ -27,6 +27,7 @@ import {
   UserOutlined,
   ExportOutlined,
   ReloadOutlined,
+  InboxOutlined,
 } from '@ant-design/icons';
 import { useOrderBookers } from '../hooks/useOrderBookers';
 import { useDailyEntriesByDateRange } from '../hooks/useDailyEntries';
@@ -45,10 +46,14 @@ interface PerformanceData {
   totalSales: number;
   totalReturns: number;
   netSales: number;
+  totalCarton: number;
+  returnCarton: number;
+  netCarton: number;
   targetAmount: number;
   achievementPercent: number;
   dailyAverage: number;
   returnRate: number;
+  cartonReturnRate: number;
   entriesCount: number;
   status: 'ahead' | 'on-track' | 'behind' | 'achieved';
 }
@@ -58,6 +63,9 @@ interface DailyPerformance {
   totalSales: number;
   totalReturns: number;
   netSales: number;
+  totalCarton: number;
+  returnCarton: number;
+  netCarton: number;
   entriesCount: number;
   targetAmount: number;
   achievementPercent: number;
@@ -109,10 +117,14 @@ const Reports: React.FC = () => {
         const totalSales = obEntries.reduce((sum, entry) => sum + entry.sales, 0);
         const totalReturns = obEntries.reduce((sum, entry) => sum + entry.returns, 0);
         const netSales = totalSales - totalReturns;
+        const totalCarton = obEntries.reduce((sum, entry) => sum + entry.totalCarton, 0);
+        const returnCarton = obEntries.reduce((sum, entry) => sum + entry.returnCarton, 0);
+        const netCarton = totalCarton - returnCarton;
         const targetAmount = obTarget?.targetAmount || 0;
         const achievementPercent = targetAmount > 0 ? (netSales / targetAmount) * 100 : 0;
         const dailyAverage = obEntries.length > 0 ? netSales / obEntries.length : 0;
         const returnRate = totalSales > 0 ? (totalReturns / totalSales) * 100 : 0;
+        const cartonReturnRate = totalCarton > 0 ? (returnCarton / totalCarton) * 100 : 0;
         
         let status: PerformanceData['status'] = 'behind';
         if (achievementPercent >= 100) status = 'achieved';
@@ -124,10 +136,14 @@ const Reports: React.FC = () => {
           totalSales,
           totalReturns,
           netSales,
+          totalCarton,
+          returnCarton,
+          netCarton,
           targetAmount,
           achievementPercent,
           dailyAverage,
           returnRate,
+          cartonReturnRate,
           entriesCount: obEntries.length,
           status,
         };
@@ -151,6 +167,9 @@ const Reports: React.FC = () => {
           totalSales: 0,
           totalReturns: 0,
           netSales: 0,
+          totalCarton: 0,
+          returnCarton: 0,
+          netCarton: 0,
           entriesCount: 0,
           targetAmount: dailyTargetAmount,
           achievementPercent: 0,
@@ -161,6 +180,9 @@ const Reports: React.FC = () => {
       dayData.totalSales += entry.sales;
       dayData.totalReturns += entry.returns;
       dayData.netSales += (entry.sales - entry.returns);
+      dayData.totalCarton += entry.totalCarton;
+      dayData.returnCarton += entry.returnCarton;
+      dayData.netCarton += (entry.totalCarton - entry.returnCarton);
       dayData.entriesCount += 1;
       dayData.achievementPercent = dayData.targetAmount > 0 ? (dayData.netSales / dayData.targetAmount) * 100 : 0;
     });
@@ -172,6 +194,8 @@ const Reports: React.FC = () => {
   const summaryStats = useMemo(() => {
     const totalSales = performanceData.reduce((sum, data) => sum + data.totalSales, 0);
     const totalReturns = performanceData.reduce((sum, data) => sum + data.totalReturns, 0);
+    const totalCarton = performanceData.reduce((sum, data) => sum + data.totalCarton, 0);
+    const totalReturnCarton = performanceData.reduce((sum, data) => sum + data.returnCarton, 0);
     const totalTargets = performanceData.reduce((sum, data) => sum + data.targetAmount, 0);
     const averageAchievement = performanceData.length > 0 
       ? performanceData.reduce((sum, data) => sum + data.achievementPercent, 0) / performanceData.length
@@ -183,6 +207,9 @@ const Reports: React.FC = () => {
       totalSales,
       totalReturns,
       netSales: totalSales - totalReturns,
+      totalCarton,
+      totalReturnCarton,
+      netCarton: totalCarton - totalReturnCarton,
       totalTargets,
       averageAchievement,
       activeOrderBookers,
@@ -260,6 +287,34 @@ const Reports: React.FC = () => {
       render: (value: number) => `Rs.${value.toFixed(0)}`,
       sorter: (a, b) => a.dailyAverage - b.dailyAverage,
       width: 100,
+    },
+    {
+      title: 'Total Cartons',
+      dataIndex: 'totalCarton',
+      key: 'totalCarton',
+      render: (value: number) => value.toLocaleString(),
+      sorter: (a, b) => a.totalCarton - b.totalCarton,
+      width: 100,
+    },
+    {
+      title: 'Net Cartons',
+      dataIndex: 'netCarton',
+      key: 'netCarton',
+      render: (value: number) => value.toLocaleString(),
+      sorter: (a, b) => a.netCarton - b.netCarton,
+      width: 100,
+    },
+    {
+      title: 'Carton Return Rate',
+      dataIndex: 'cartonReturnRate',
+      key: 'cartonReturnRate',
+      render: (value: number) => (
+        <Tag color={value > 20 ? 'red' : value > 10 ? 'orange' : 'green'}>
+          {value.toFixed(1)}%
+        </Tag>
+      ),
+      sorter: (a, b) => a.cartonReturnRate - b.cartonReturnRate,
+      width: 130,
     },
     {
       title: 'Return Rate',
@@ -382,7 +437,7 @@ const Reports: React.FC = () => {
 
       {/* Summary Statistics */}
       <Row gutter={16} style={{ marginBottom: '24px' }}>
-        <Col span={4}>
+        <Col span={3}>
           <Card>
             <Statistic
               title="Total Sales"
@@ -393,7 +448,7 @@ const Reports: React.FC = () => {
             />
           </Card>
         </Col>
-        <Col span={4}>
+        <Col span={3}>
           <Card>
             <Statistic
               title="Net Sales"
@@ -404,7 +459,29 @@ const Reports: React.FC = () => {
             />
           </Card>
         </Col>
-        <Col span={4}>
+        <Col span={3}>
+          <Card>
+            <Statistic
+              title="Total Cartons"
+              value={summaryStats.totalCarton}
+              prefix={<InboxOutlined />}
+              precision={0}
+              valueStyle={{ color: '#722ed1' }}
+            />
+          </Card>
+        </Col>
+        <Col span={3}>
+          <Card>
+            <Statistic
+              title="Net Cartons"
+              value={summaryStats.netCarton}
+              prefix={<InboxOutlined />}
+              precision={0}
+              valueStyle={{ color: '#52c41a' }}
+            />
+          </Card>
+        </Col>
+        <Col span={3}>
           <Card>
             <Statistic
               title="Avg Achievement"
@@ -415,7 +492,7 @@ const Reports: React.FC = () => {
             />
           </Card>
         </Col>
-        <Col span={4}>
+        <Col span={3}>
           <Card>
             <Statistic
               title="Active OBs"
@@ -426,7 +503,7 @@ const Reports: React.FC = () => {
             />
           </Card>
         </Col>
-        <Col span={4}>
+        <Col span={3}>
           <Card>
             <Statistic
               title="On Track"
@@ -437,7 +514,7 @@ const Reports: React.FC = () => {
             />
           </Card>
         </Col>
-        <Col span={4}>
+        <Col span={3}>
           <Card>
             <Statistic
               title="Total Returns"
@@ -605,6 +682,18 @@ const Reports: React.FC = () => {
                       dataIndex: 'netSales',
                       key: 'netSales',
                       render: (value: number) => `Rs.${value.toLocaleString()}`,
+                    },
+                    {
+                      title: 'Total Cartons',
+                      dataIndex: 'totalCarton',
+                      key: 'totalCarton',
+                      render: (value: number) => value.toLocaleString(),
+                    },
+                    {
+                      title: 'Net Cartons',
+                      dataIndex: 'netCarton',
+                      key: 'netCarton',
+                      render: (value: number) => value.toLocaleString(),
                     },
                     {
                       title: 'Target',

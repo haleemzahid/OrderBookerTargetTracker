@@ -8,6 +8,9 @@ export interface DashboardStats {
   thisMonthSales: number;
   thisMonthReturns: number;
   thisMonthNetSales: number;
+  thisMonthCarton: number;
+  thisMonthReturnCarton: number;
+  thisMonthNetCarton: number;
   targetAchievement: number;
   topPerformers: Array<{
     orderBookerId: string;
@@ -45,6 +48,9 @@ export const useDashboard = () => {
         thisMonthSales: 0,
         thisMonthReturns: 0,
         thisMonthNetSales: 0,
+        thisMonthCarton: 0,
+        thisMonthReturnCarton: 0,
+        thisMonthNetCarton: 0,
         targetAchievement: 0,
         topPerformers: [],
         needsAttention: [],
@@ -59,6 +65,9 @@ export const useDashboard = () => {
       thisMonthSales: monthlyAnalytics.totalSales,
       thisMonthReturns: monthlyAnalytics.totalReturns,
       thisMonthNetSales: monthlyAnalytics.totalNetSales,
+      thisMonthCarton: monthlyAnalytics.totalCarton,
+      thisMonthReturnCarton: monthlyAnalytics.totalReturnCarton,
+      thisMonthNetCarton: monthlyAnalytics.totalNetCarton,
       targetAchievement,
       topPerformers: monthlyAnalytics.topPerformers.slice(0, 5),
       needsAttention: monthlyAnalytics.underPerformers.slice(0, 5),

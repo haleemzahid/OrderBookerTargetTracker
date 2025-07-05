@@ -149,14 +149,25 @@ const DailyEntries: React.FC = () => {
 
   // Calculate summary statistics
   const summaryStats = useMemo(() => {
-    if (!tableData.length) return { totalSales: 0, totalReturns: 0, netSales: 0, entriesCount: 0 };
+    if (!tableData.length) return { 
+      totalSales: 0, 
+      totalReturns: 0, 
+      netSales: 0, 
+      entriesCount: 0, 
+      totalCartons: 0, 
+      returnCartons: 0,
+      netCartons: 0
+    };
 
     const totalSales = tableData.reduce((sum: number, entry: DailyEntryWithOrderBooker) => sum + entry.sales, 0);
     const totalReturns = tableData.reduce((sum: number, entry: DailyEntryWithOrderBooker) => sum + entry.returns, 0);
     const netSales = totalSales - totalReturns;
     const entriesCount = tableData.length;
+    const totalCartons = tableData.reduce((sum: number, entry: DailyEntryWithOrderBooker) => sum + entry.totalCarton, 0);
+    const returnCartons = tableData.reduce((sum: number, entry: DailyEntryWithOrderBooker) => sum + entry.returnCarton, 0);
+    const netCartons = totalCartons - returnCartons;
 
-    return { totalSales, totalReturns, netSales, entriesCount };
+    return { totalSales, totalReturns, netSales, entriesCount, totalCartons, returnCartons, netCartons };
   }, [tableData]);
 
   // Table columns
@@ -223,6 +234,44 @@ const DailyEntries: React.FC = () => {
       width: 120,
     },
     {
+      title: 'Total Carton',
+      dataIndex: 'totalCarton',
+      key: 'totalCarton',
+      render: (totalCarton: number) => (
+        <Tag color="blue" style={{ minWidth: '60px', textAlign: 'center' }}>
+          {totalCarton}
+        </Tag>
+      ),
+      sorter: (a, b) => a.totalCarton - b.totalCarton,
+      width: 100,
+    },
+    {
+      title: 'Return Carton',
+      dataIndex: 'returnCarton',
+      key: 'returnCarton',
+      render: (returnCarton: number) => (
+        <Tag color="orange" style={{ minWidth: '60px', textAlign: 'center' }}>
+          {returnCarton}
+        </Tag>
+      ),
+      sorter: (a, b) => a.returnCarton - b.returnCarton,
+      width: 100,
+    },
+    {
+      title: 'Net Cartons',
+      key: 'netCartons',
+      render: (_, record) => {
+        const netCartons = record.totalCarton - record.returnCarton;
+        return (
+          <Tag color={netCartons >= 0 ? 'green' : 'red'} style={{ minWidth: '60px', textAlign: 'center' }}>
+            {netCartons}
+          </Tag>
+        );
+      },
+      sorter: (a, b) => (a.totalCarton - a.returnCarton) - (b.totalCarton - b.returnCarton),
+      width: 100,
+    },
+    {
       title: 'Actions',
       key: 'actions',
       render: (_, record) => (
@@ -255,6 +304,11 @@ const DailyEntries: React.FC = () => {
     setEditingEntry(null);
     setIsModalOpen(true);
     form.resetFields();
+    form.setFieldsValue({
+      date: dayjs(),
+      returns: 0,
+      returnCarton: 0,
+    });
   };
 
   const handleEdit = (entry: DailyEntry) => {
@@ -265,6 +319,8 @@ const DailyEntries: React.FC = () => {
       date: dayjs(entry.date),
       sales: entry.sales,
       returns: entry.returns,
+      totalCarton: entry.totalCarton,
+      returnCarton: entry.returnCarton,
     });
   };
 
@@ -349,7 +405,7 @@ const DailyEntries: React.FC = () => {
 
       {/* Summary Statistics */}
       <Row gutter={16} style={{ marginBottom: '24px' }}>
-        <Col span={6}>
+        <Col span={4}>
           <Card>
             <Statistic
               title="Total Sales"
@@ -360,7 +416,7 @@ const DailyEntries: React.FC = () => {
             />
           </Card>
         </Col>
-        <Col span={6}>
+        <Col span={4}>
           <Card>
             <Statistic
               title="Total Returns"
@@ -371,7 +427,7 @@ const DailyEntries: React.FC = () => {
             />
           </Card>
         </Col>
-        <Col span={6}>
+        <Col span={4}>
           <Card>
             <Statistic
               title="Net Sales"
@@ -382,12 +438,41 @@ const DailyEntries: React.FC = () => {
             />
           </Card>
         </Col>
-        <Col span={6}>
+        <Col span={4}>
+          <Card>
+            <Statistic
+              title="Total Cartons"
+              value={summaryStats.totalCartons}
+              valueStyle={{ color: '#1890ff' }}
+            />
+          </Card>
+        </Col>
+        <Col span={4}>
+          <Card>
+            <Statistic
+              title="Return Cartons"
+              value={summaryStats.returnCartons}
+              valueStyle={{ color: '#fa8c16' }}
+            />
+          </Card>
+        </Col>
+        <Col span={4}>
+          <Card>
+            <Statistic
+              title="Net Cartons"
+              value={summaryStats.netCartons}
+              valueStyle={{ color: summaryStats.netCartons >= 0 ? '#3f8600' : '#cf1322' }}
+            />
+          </Card>
+        </Col>
+      </Row>
+      <Row gutter={16} style={{ marginBottom: '24px' }}>
+        <Col span={24}>
           <Card>
             <Statistic
               title="Total Entries"
               value={summaryStats.entriesCount}
-              valueStyle={{ color: '#1890ff' }}
+              valueStyle={{ color: '#722ed1' }}
             />
           </Card>
         </Col>
@@ -497,9 +582,13 @@ const DailyEntries: React.FC = () => {
           form.resetFields();
         }}
         confirmLoading={createEntry.isPending || updateEntry.isPending}
-        width={600}
+        width={800}
       >
-        <Form form={form} layout="vertical">
+        <Form form={form} layout="vertical" initialValues={{ 
+          date: dayjs(), 
+          returns: 0, 
+          returnCarton: 0 
+        }}>
           <Row gutter={16}>
             <Col span={24}>
               <Form.Item
@@ -560,6 +649,40 @@ const DailyEntries: React.FC = () => {
                   placeholder="Enter returns amount"
                   prefix="Rs."
                   precision={2}
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                label="Total Carton"
+                name="totalCarton"
+                rules={[
+                  { required: true, message: 'Please enter total carton count' },
+                  { type: 'number', min: 0, message: 'Total carton must be positive' },
+                ]}
+              >
+                <InputNumber
+                  style={{ width: '100%' }}
+                  placeholder="Enter total carton count"
+                  precision={0}
+                />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                label="Return Carton"
+                name="returnCarton"
+                rules={[
+                  { required: true, message: 'Please enter return carton count' },
+                  { type: 'number', min: 0, message: 'Return carton must be positive' },
+                ]}
+              >
+                <InputNumber
+                  style={{ width: '100%' }}
+                  placeholder="Enter return carton count"
+                  precision={0}
                 />
               </Form.Item>
             </Col>

@@ -38,6 +38,8 @@ export const dailyEntryService: IDailyEntryService = {
       sales: row.sales || 0,
       returns: row.returns || 0,
       netSales: row.net_sales || 0,
+      totalCarton: row.total_carton || 0,
+      returnCarton: row.return_carton || 0,
       notes: row.notes,
       createdAt: new Date(row.created_at),
       updatedAt: new Date(row.updated_at),
@@ -64,6 +66,8 @@ export const dailyEntryService: IDailyEntryService = {
       sales: row.sales || 0,
       returns: row.returns || 0,
       netSales: row.net_sales || 0,
+      totalCarton: row.total_carton || 0,
+      returnCarton: row.return_carton || 0,
       notes: row.notes,
       createdAt: new Date(row.created_at),
       updatedAt: new Date(row.updated_at),
@@ -84,6 +88,8 @@ export const dailyEntryService: IDailyEntryService = {
       sales: row.sales || 0,
       returns: row.returns || 0,
       netSales: row.net_sales || 0,
+      totalCarton: row.total_carton || 0,
+      returnCarton: row.return_carton || 0,
       notes: row.notes,
       createdAt: new Date(row.created_at),
       updatedAt: new Date(row.updated_at),
@@ -106,6 +112,8 @@ export const dailyEntryService: IDailyEntryService = {
       sales: row.sales || 0,
       returns: row.returns || 0,
       netSales: row.net_sales || 0,
+      totalCarton: row.total_carton || 0,
+      returnCarton: row.return_carton || 0,
       notes: row.notes,
       createdAt: new Date(row.created_at),
       updatedAt: new Date(row.updated_at),
@@ -123,8 +131,8 @@ export const dailyEntryService: IDailyEntryService = {
 
     await db.execute(
       `INSERT INTO daily_entries (
-        id, order_booker_id, date, sales, returns, net_sales, notes, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        id, order_booker_id, date, sales, returns, net_sales, total_carton, return_carton, notes, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         entry.orderBookerId,
@@ -132,6 +140,8 @@ export const dailyEntryService: IDailyEntryService = {
         entry.sales,
         entry.returns,
         netSales,
+        entry.totalCarton,
+        entry.returnCarton,
         entry.notes || null,
         now,
         now,
@@ -171,6 +181,14 @@ export const dailyEntryService: IDailyEntryService = {
     if (entry.returns !== undefined) {
       setParts.push('returns = ?');
       params.push(entry.returns);
+    }
+    if (entry.totalCarton !== undefined) {
+      setParts.push('total_carton = ?');
+      params.push(entry.totalCarton);
+    }
+    if (entry.returnCarton !== undefined) {
+      setParts.push('return_carton = ?');
+      params.push(entry.returnCarton);
     }
     if (entry.notes !== undefined) {
       setParts.push('notes = ?');
@@ -219,12 +237,22 @@ export const dailyEntryService: IDailyEntryService = {
     const startDate = new Date(year, month - 1, 1).toISOString();
     const endDate = new Date(year, month, 0).toISOString();
 
-    // Get total sales, returns, and net sales
-    const salesResult = await db.select<Array<{totalSales: number, totalReturns: number, totalNetSales: number}>>(
+    // Get total sales, returns, net sales, and carton data
+    const salesResult = await db.select<Array<{
+      totalSales: number, 
+      totalReturns: number, 
+      totalNetSales: number,
+      totalCarton: number,
+      totalReturnCarton: number,
+      totalNetCarton: number
+    }>>(
       `SELECT 
         COALESCE(SUM(sales), 0) as totalSales,
         COALESCE(SUM(returns), 0) as totalReturns,
-        COALESCE(SUM(net_sales), 0) as totalNetSales
+        COALESCE(SUM(net_sales), 0) as totalNetSales,
+        COALESCE(SUM(total_carton), 0) as totalCarton,
+        COALESCE(SUM(return_carton), 0) as totalReturnCarton,
+        COALESCE(SUM(total_carton - return_carton), 0) as totalNetCarton
        FROM daily_entries 
        WHERE date >= ? AND date <= ?`,
       [startDate, endDate]
@@ -268,6 +296,9 @@ export const dailyEntryService: IDailyEntryService = {
     const totalSales = salesResult[0]?.totalSales || 0;
     const totalReturns = salesResult[0]?.totalReturns || 0;
     const totalNetSales = salesResult[0]?.totalNetSales || 0;
+    const totalCarton = salesResult[0]?.totalCarton || 0;
+    const totalReturnCarton = salesResult[0]?.totalReturnCarton || 0;
+    const totalNetCarton = salesResult[0]?.totalNetCarton || 0;
     const totalTargetAmount = targetResult[0]?.totalTargetAmount || 0;
     const totalAchievedAmount = totalNetSales;
     const averageAchievementPercentage = totalTargetAmount > 0 ? (totalAchievedAmount / totalTargetAmount) * 100 : 0;
@@ -280,6 +311,9 @@ export const dailyEntryService: IDailyEntryService = {
       totalSales,
       totalReturns,
       totalNetSales,
+      totalCarton,
+      totalReturnCarton,
+      totalNetCarton,
       totalTargetAmount,
       totalAchievedAmount,
       averageAchievementPercentage,

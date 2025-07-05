@@ -44,6 +44,8 @@ export interface DailyEntry {
   sales: number;
   returns: number;
   netSales: number;
+  totalCarton: number;
+  returnCarton: number;
   notes?: string;
   createdAt: Date;
   updatedAt: Date;
@@ -54,12 +56,16 @@ export interface CreateDailyEntryRequest {
   date: Date;
   sales: number;
   returns: number;
+  totalCarton: number;
+  returnCarton: number;
   notes?: string;
 }
 
 export interface UpdateDailyEntryRequest {
   sales?: number;
   returns?: number;
+  totalCarton?: number;
+  returnCarton?: number;
   notes?: string;
 }
 
@@ -94,6 +100,9 @@ export interface MonthlyAnalytics {
   totalSales: number;
   totalReturns: number;
   totalNetSales: number;
+  totalCarton: number;
+  totalReturnCarton: number;
+  totalNetCarton: number;
   totalTargetAmount: number;
   totalAchievedAmount: number;
   averageAchievementPercentage: number;

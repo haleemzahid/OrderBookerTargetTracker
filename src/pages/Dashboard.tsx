@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, Row, Col, Statistic, Typography, Space, Spin, Alert } from 'antd';
-import { ArrowUpOutlined, ArrowDownOutlined, TeamOutlined, DollarOutlined } from '@ant-design/icons';
+import { ArrowUpOutlined, ArrowDownOutlined, TeamOutlined, DollarOutlined, InboxOutlined } from '@ant-design/icons';
 import { useI18n } from '../hooks/useI18n';
 import { useDashboard } from '../hooks/useDashboard';
 
@@ -37,7 +37,7 @@ const Dashboard: React.FC = () => {
       </Title>
       
       <Row gutter={[16, 16]}>
-        <Col xs={24} sm={12} md={6}>
+        <Col xs={24} sm={12} md={8} lg={6}>
           <Card>
             <Statistic
               title={dashboard('totalOrderBookers')}
@@ -48,7 +48,7 @@ const Dashboard: React.FC = () => {
           </Card>
         </Col>
         
-        <Col xs={24} sm={12} md={6}>
+        <Col xs={24} sm={12} md={8} lg={6}>
           <Card>
             <Statistic
               title={dashboard('thisMonthSales')}
@@ -61,7 +61,7 @@ const Dashboard: React.FC = () => {
           </Card>
         </Col>
         
-        <Col xs={24} sm={12} md={6}>
+        <Col xs={24} sm={12} md={8} lg={6}>
           <Card>
             <Statistic
               title={dashboard('thisMonthReturns')}
@@ -74,7 +74,7 @@ const Dashboard: React.FC = () => {
           </Card>
         </Col>
         
-        <Col xs={24} sm={12} md={6}>
+        <Col xs={24} sm={12} md={8} lg={6}>
           <Card>
             <Statistic
               title={dashboard('targetAchievement')}
@@ -82,6 +82,54 @@ const Dashboard: React.FC = () => {
               suffix="%"
               valueStyle={{ color: dashboardData.targetAchievement >= 80 ? '#3f8600' : '#cf1322' }}
               precision={1}
+            />
+          </Card>
+        </Col>
+      </Row>
+
+      <Row gutter={[16, 16]} style={{ marginTop: '16px' }}>
+        <Col xs={24} sm={12} md={8} lg={6}>
+          <Card>
+            <Statistic
+              title="Total Cartons"
+              value={dashboardData.thisMonthCarton}
+              prefix={<InboxOutlined />}
+              valueStyle={{ color: '#1890ff' }}
+            />
+          </Card>
+        </Col>
+        
+        <Col xs={24} sm={12} md={8} lg={6}>
+          <Card>
+            <Statistic
+              title="Return Cartons"
+              value={dashboardData.thisMonthReturnCarton}
+              prefix={<InboxOutlined />}
+              suffix={<ArrowDownOutlined style={{ color: '#cf1322' }} />}
+              valueStyle={{ color: '#cf1322' }}
+            />
+          </Card>
+        </Col>
+        
+        <Col xs={24} sm={12} md={8} lg={6}>
+          <Card>
+            <Statistic
+              title="Net Cartons"
+              value={dashboardData.thisMonthNetCarton}
+              prefix={<InboxOutlined />}
+              valueStyle={{ color: '#52c41a' }}
+            />
+          </Card>
+        </Col>
+        
+        <Col xs={24} sm={12} md={8} lg={6}>
+          <Card>
+            <Statistic
+              title="Net Sales"
+              value={dashboardData.thisMonthNetSales}
+              prefix={<DollarOutlined />}
+              valueStyle={{ color: '#1890ff' }}
+              precision={0}
             />
           </Card>
         </Col>
