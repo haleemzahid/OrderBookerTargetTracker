@@ -9,6 +9,7 @@ import {
 } from '@ant-design/icons';
 import { useApp } from '../../contexts/AppContext';
 import { useI18n } from '../../hooks/useI18n';
+import { UpdateChecker } from '../common/UpdateChecker';
 
 const { Header: AntHeader } = Layout;
 const { Text } = Typography;
@@ -78,6 +79,8 @@ const Header: React.FC<HeaderProps> = ({ collapsed, onToggle }) => {
       </Space>
 
       <Space>
+        <UpdateChecker />
+        
         <Space>
           <BulbOutlined />
           <Switch
