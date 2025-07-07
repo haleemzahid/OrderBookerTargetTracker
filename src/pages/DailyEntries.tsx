@@ -24,7 +24,7 @@ import {
   ExportOutlined,
   CopyOutlined,
 } from '@ant-design/icons';
-import { useOrderBookers } from '../hooks/useOrderBookers';
+import { useOrderBookers } from '../features/order-bookers';
 import { 
   useDailyEntriesByDateRange, 
   useCreateDailyEntry, 
@@ -34,7 +34,8 @@ import {
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import dayjs, { Dayjs } from 'dayjs';
 import type { ColumnsType } from 'antd/es/table';
-import type { DailyEntry, OrderBooker } from '../types';
+import type { DailyEntry } from '../types';
+import type { OrderBooker } from '../features/order-bookers';
 
 const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
