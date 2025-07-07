@@ -2,8 +2,8 @@ import { createRouter, createRootRoute, createRoute } from '@tanstack/react-rout
 import MainLayout from '../../components/layouts/MainLayout';
 import Dashboard from '../../pages/Dashboard';
 import { OrderBookersListPage } from '../../features/order-bookers';
-import DailyEntries from '../../pages/DailyEntries';
-import MonthlyTargets from '../../pages/MonthlyTargets';
+import { DailyEntriesListPage } from '../../features/daily-entries';
+import { MonthlyTargetsListPage } from '../../features/monthly-targets';
 import Reports from '../../pages/Reports';
 
 const rootRoute = createRootRoute({
@@ -25,13 +25,13 @@ const orderBookersRoute = createRoute({
 const dailyEntriesRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/daily-entries',
-  component: DailyEntries,
+  component: DailyEntriesListPage,
 });
 
 const monthlyTargetsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/monthly-targets',
-  component: MonthlyTargets,
+  component: MonthlyTargetsListPage,
 });
 
 const reportsRoute = createRoute({

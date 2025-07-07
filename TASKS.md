@@ -815,26 +815,46 @@ Update `src/app/router/index.ts` to import and use `OrderBookersListPage` instea
 
 ### [x] Task 4.12: Clean Up Old Order Bookers Files
 After verifying the new implementation works:
-- [ ] Delete `src/pages/OrderBookers.tsx`
-- [ ] Delete `src/hooks/useOrderBookers.ts`
-- [ ] Delete `src/services/api/orderBookerService.ts`
-- [ ] Remove order booker types from `src/types/index.ts`
+- [x] Delete `src/pages/OrderBookers.tsx`
+- [x] Delete `src/hooks/useOrderBookers.ts`
+- [x] Delete `src/services/api/orderBookerService.ts`
+- [x] Remove order booker types from `src/types/index.ts`
 
 ## Phase 5: Migrate Remaining Features
 
-### [ ] Task 5.1: Migrate Daily Entries Feature
+### [x] Task 5.1: Migrate Daily Entries Feature
 Apply the same pattern as Order Bookers:
-- [ ] Create `src/features/daily-entries/` structure
-- [ ] Move daily entry types, services, hooks, and components
-- [ ] Update router
+- [x] Create `src/features/daily-entries/` structure
+- [x] Create daily entry types, API layer (queries, mutations, service)
+- [x] Create daily entry components (form, table)
+- [x] Create daily entries list page
+- [x] Create feature index with exports
+- [x] Update router to use new daily entries page
 - [ ] Clean up old files
 
-### [ ] Task 5.2: Migrate Monthly Targets Feature
+**Completed Components:**
+- `DailyEntryForm` - Form for creating/editing daily entries
+- `DailyEntryTable` - Table component with search and actions
+- `DailyEntriesListPage` - Main page with filters, stats, and CRUD operations
+- Complete API layer with queries, mutations, and service
+- Proper TypeScript types and query key management
+
+### [x] Task 5.2: Migrate Monthly Targets Feature
 Apply the same pattern as Order Bookers:
-- [ ] Create `src/features/monthly-targets/` structure
-- [ ] Move monthly target types, services, hooks, and components
-- [ ] Update router
+- [x] Create `src/features/monthly-targets/` structure
+- [x] Create monthly target types, API layer (queries, mutations, service)
+- [x] Create monthly target components (form, table)
+- [x] Create monthly targets list page with advanced features
+- [x] Create feature index with exports
+- [x] Update router to use new monthly targets page
 - [ ] Clean up old files
+
+**Completed Components:**
+- `MonthlyTargetForm` - Form for creating/editing monthly targets
+- `MonthlyTargetTable` - Table with progress indicators and status tags
+- `MonthlyTargetsListPage` - Advanced page with statistics, progress overview, and copy functionality
+- Complete API layer including batch operations and copy from previous month
+- Achievement tracking and performance indicators
 
 ### [ ] Task 5.3: Migrate Reports Feature
 Apply the same pattern as Order Bookers:
