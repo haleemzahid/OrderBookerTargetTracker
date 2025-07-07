@@ -152,7 +152,7 @@ return (
 );
 ```
 
-### [ ] Task 2.3: Update MainLayout Component
+### [x] Task 2.3: Update MainLayout Component
 Update `src/components/layouts/MainLayout.tsx` to use router navigation instead of state-based navigation. Replace the switch statement with `<Outlet />` from `@tanstack/react-router`.
 
 ## Phase 3: Create Shared Infrastructure

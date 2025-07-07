@@ -1,5 +1,6 @@
 import React from 'react';
 import { Layout, Menu } from 'antd';
+import { useNavigate, useLocation } from '@tanstack/react-router';
 import { 
   DashboardOutlined, 
   TeamOutlined, 
@@ -14,12 +15,47 @@ const { Sider } = Layout;
 
 interface SidebarProps {
   collapsed: boolean;
-  selectedKey: string;
-  onMenuSelect: (key: string) => void;
+  selectedKey?: string;
+  onMenuSelect?: (key: string) => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ collapsed, selectedKey, onMenuSelect }) => {
+const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
   const { language, direction } = useApp();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Get current path to determine selected key
+  const getCurrentKey = () => {
+    const path = location.pathname;
+    if (path === '/') return 'dashboard';
+    if (path.startsWith('/order-bookers')) return 'order-bookers';
+    if (path.startsWith('/daily-entries')) return 'daily-entries';
+    if (path.startsWith('/monthly-targets')) return 'monthly-targets';
+    if (path.startsWith('/reports')) return 'reports';
+    return 'dashboard';
+  };
+
+  const handleMenuClick = (key: string) => {
+    switch (key) {
+      case 'dashboard':
+        navigate({ to: '/' });
+        break;
+      case 'order-bookers':
+        navigate({ to: '/order-bookers' });
+        break;
+      case 'daily-entries':
+        navigate({ to: '/daily-entries' });
+        break;
+      case 'monthly-targets':
+        navigate({ to: '/monthly-targets' });
+        break;
+      case 'reports':
+        navigate({ to: '/reports' });
+        break;
+      default:
+        navigate({ to: '/' });
+    }
+  };
 
   const menuItems = [
     {
@@ -88,9 +124,9 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed, selectedKey, onMenuSelect 
       <Menu
         theme="dark"
         mode="inline"
-        selectedKeys={[selectedKey]}
+        selectedKeys={[getCurrentKey()]}
         items={menuItems}
-        onClick={({ key }) => onMenuSelect(key)}
+        onClick={({ key }) => handleMenuClick(key)}
       />
     </Sider>
   );

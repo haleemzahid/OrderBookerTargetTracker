@@ -1,5 +1,4 @@
 import { createRouter, createRootRoute, createRoute } from '@tanstack/react-router';
-import { QueryClient } from '@tanstack/react-query';
 import MainLayout from '../../components/layouts/MainLayout';
 import Dashboard from '../../pages/Dashboard';
 import OrderBookers from '../../pages/OrderBookers';
