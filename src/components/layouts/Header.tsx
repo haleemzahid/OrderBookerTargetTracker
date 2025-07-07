@@ -3,12 +3,10 @@ import { Layout, Button, Space, Typography, Dropdown, Switch } from 'antd';
 import { 
   MenuFoldOutlined, 
   MenuUnfoldOutlined, 
-  GlobalOutlined, 
   BulbOutlined,
   UserOutlined 
 } from '@ant-design/icons';
 import { useApp } from '../../contexts/AppContext';
-import { useI18n } from '../../hooks/useI18n';
 import { UpdateChecker } from '../common/UpdateChecker';
 
 const { Header: AntHeader } = Layout;
@@ -21,33 +19,19 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ collapsed, onToggle }) => {
   const { theme, toggleTheme } = useApp();
-  const { currentLanguage, changeLanguage, common } = useI18n();
-
-  const languageItems = [
-    {
-      key: 'en',
-      label: 'English',
-      onClick: () => changeLanguage('en'),
-    },
-    {
-      key: 'ur',
-      label: 'اردو',
-      onClick: () => changeLanguage('ur'),
-    },
-  ];
 
   const userMenuItems = [
     {
       key: 'profile',
-      label: common('profile'),
+      label: 'Profile',
     },
     {
       key: 'settings',
-      label: common('settings'),
+      label: 'Settings',
     },
     {
       key: 'logout',
-      label: common('logout'),
+      label: 'Logout',
     },
   ];
 
@@ -74,7 +58,7 @@ const Header: React.FC<HeaderProps> = ({ collapsed, onToggle }) => {
           }}
         />
         <Text strong style={{ fontSize: '18px' }}>
-          {currentLanguage === 'ur' ? 'آرڈر بکر ٹارگٹ ٹریکر' : 'Order Booker Target Tracker'}
+          Order Booker Target Tracker
         </Text>
       </Space>
 
@@ -89,16 +73,10 @@ const Header: React.FC<HeaderProps> = ({ collapsed, onToggle }) => {
             size="small"
           />
         </Space>
-        
-        <Dropdown menu={{ items: languageItems }} placement="bottomRight">
-          <Button type="text" icon={<GlobalOutlined />}>
-            {currentLanguage === 'ur' ? 'اردو' : 'English'}
-          </Button>
-        </Dropdown>
 
         <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
           <Button type="text" icon={<UserOutlined />}>
-            {currentLanguage === 'ur' ? 'صارف' : 'User'}
+            User
           </Button>
         </Dropdown>
       </Space>

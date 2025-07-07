@@ -847,7 +847,7 @@ Apply the same pattern as Order Bookers:
 - [x] Create monthly targets list page with advanced features
 - [x] Create feature index with exports
 - [x] Update router to use new monthly targets page
-- [ ] Clean up old files
+- [x] Clean up old files
 
 **Completed Components:**
 - `MonthlyTargetForm` - Form for creating/editing monthly targets
@@ -856,19 +856,19 @@ Apply the same pattern as Order Bookers:
 - Complete API layer including batch operations and copy from previous month
 - Achievement tracking and performance indicators
 
-### [ ] Task 5.3: Migrate Reports Feature
+### [x] Task 5.3: Migrate Reports Feature
 Apply the same pattern as Order Bookers:
-- [ ] Create `src/features/reports/` structure
-- [ ] Move report types, services, hooks, and components
-- [ ] Update router
-- [ ] Clean up old files
+- [x] Create `src/features/reports/` structure
+- [x] Move report types, services, hooks, and components
+- [x] Update router
+- [x] Clean up old files
 
 ### [ ] Task 5.4: Migrate Dashboard Feature
 Apply the same pattern as Order Bookers:
-- [ ] Create `src/features/dashboard/` structure
-- [ ] Move dashboard types, services, hooks, and components
-- [ ] Update router
-- [ ] Clean up old files
+- [x] Create `src/features/dashboard/` structure
+- [x] Move dashboard types, services, hooks, and components
+- [x] Update router
+- [x] Clean up old files
 
 ## Phase 6: Testing Infrastructure (Final Phase)
 

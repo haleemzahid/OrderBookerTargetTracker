@@ -3,7 +3,6 @@ import { Layout, theme } from 'antd';
 import { Outlet } from '@tanstack/react-router';
 import Header from './Header';
 import Sidebar from './Sidebar';
-import { useApp } from '../../contexts/AppContext';
 
 const { Content } = Layout;
 
@@ -13,7 +12,6 @@ interface MainLayoutProps {
 
 const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const [collapsed, setCollapsed] = useState(false);
-  const { direction } = useApp();
   const { token } = theme.useToken();
 
   const handleToggle = () => {
@@ -22,14 +20,8 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
-      <Sidebar
-        collapsed={collapsed}
-      />
-      <Layout 
-        style={{ 
-          [direction === 'rtl' ? 'marginRight' : 'marginLeft']: collapsed ? 80 : 200 
-        }}
-      >
+      <Sidebar collapsed={collapsed} />
+      <Layout>
         <Header collapsed={collapsed} onToggle={handleToggle} />
         <Content
           style={{

@@ -780,3 +780,4 @@ export const createUser = async (request: CreateUserRequest): Promise<User> => {
 ```
 
 Remember: Focus on clean, maintainable, and type-safe code. Always prefer explicit types over implicit ones, and structure your code in a modular way that promotes reusability and testability.
+When providing PowerShell commands, use PowerShell-native syntax only. Use semicolons (;) to separate commands on the same line, not && operators. For example, use cd "path"; command instead of cd "path" && command. If you're unsure about the shell environment, ask me to clarify before providing commands.

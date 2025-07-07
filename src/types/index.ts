@@ -104,6 +104,4 @@ export enum UserRole {
 }
 
 export type Status = 'pending' | 'approved' | 'rejected';
-export type Language = 'en' | 'ur';
 export type Theme = 'light' | 'dark';
-export type Direction = 'ltr' | 'rtl';

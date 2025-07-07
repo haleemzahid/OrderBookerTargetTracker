@@ -9,7 +9,6 @@ import {
   BarChartOutlined,
   SettingOutlined 
 } from '@ant-design/icons';
-import { useApp } from '../../contexts/AppContext';
 
 const { Sider } = Layout;
 
@@ -20,7 +19,6 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
-  const { language, direction } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -61,32 +59,32 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
     {
       key: 'dashboard',
       icon: <DashboardOutlined />,
-      label: language === 'ur' ? 'ڈیش بورڈ' : 'Dashboard',
+      label: 'Dashboard',
     },
     {
       key: 'order-bookers',
       icon: <TeamOutlined />,
-      label: language === 'ur' ? 'آرڈر بکر' : 'Order Bookers',
+      label: 'Order Bookers',
     },
     {
       key: 'daily-entries',
       icon: <CalendarOutlined />,
-      label: language === 'ur' ? 'روزانہ اندراجات' : 'Daily Entries',
+      label: 'Daily Entries',
     },
     {
       key: 'monthly-targets',
       icon: <AimOutlined />,
-      label: language === 'ur' ? 'ماہانہ اہداف' : 'Monthly Targets',
+      label: 'Monthly Targets',
     },
     {
       key: 'reports',
       icon: <BarChartOutlined />,
-      label: language === 'ur' ? 'رپورٹس' : 'Reports',
+      label: 'Reports',
     },
     {
       key: 'settings',
       icon: <SettingOutlined />,
-      label: language === 'ur' ? 'سیٹنگز' : 'Settings',
+      label: 'Settings',
     },
   ];
 
@@ -99,7 +97,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
         overflow: 'auto',
         height: '100vh',
         position: 'fixed',
-        [direction === 'rtl' ? 'right' : 'left']: 0,
+        left: 0,
         top: 0,
         bottom: 0,
       }}
@@ -117,7 +115,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
           fontWeight: 'bold',
         }}
       >
-        {!collapsed && (language === 'ur' ? 'او بی ٹی ٹی' : 'OBTT')}
+        {!collapsed && 'OBTT'}
         {collapsed && 'OB'}
       </div>
       
