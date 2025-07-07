@@ -1,6 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useDashboardData } from '../api/queries';
-import { useRefreshDashboard, useDismissAlert } from '../api/mutations';
+import { useRefreshDashboard } from '../api/mutations';
 import type { DashboardFilters, DashboardCard, QuickAction } from '../types';
 import { 
   TeamOutlined, 
@@ -155,22 +155,15 @@ export const useQuickActions = (): QuickAction[] => {
 
 export const useDashboardActions = () => {
   const refreshMutation = useRefreshDashboard();
-  const dismissAlertMutation = useDismissAlert();
 
   const refreshDashboard = () => {
     refreshMutation.mutate();
   };
 
-  const dismissAlert = (alertId: string) => {
-    dismissAlertMutation.mutate(alertId);
-  };
 
   return {
     refreshDashboard,
-    dismissAlert,
     isRefreshing: refreshMutation.isPending,
-    isDismissing: dismissAlertMutation.isPending,
     refreshError: refreshMutation.error,
-    dismissError: dismissAlertMutation.error,
   };
 };

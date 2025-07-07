@@ -17,7 +17,6 @@ import {
   PlusOutlined,
   CopyOutlined,
   ExportOutlined,
-  CalendarOutlined,
   DollarOutlined,
   AimOutlined,
 } from '@ant-design/icons';

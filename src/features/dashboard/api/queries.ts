@@ -14,11 +14,4 @@ export const useDashboardData = (filters?: DashboardFilters) => {
   });
 };
 
-export const useDashboardLayout = () => {
-  return useQuery({
-    queryKey: dashboardQueryKeys.dashboard.layout(),
-    queryFn: () => dashboardService.getDashboardLayout(),
-    staleTime: 30 * 60 * 1000, // 30 minutes
-    gcTime: 60 * 60 * 1000, // 1 hour
-  });
-};
+

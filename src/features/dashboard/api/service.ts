@@ -5,6 +5,7 @@ import type { DashboardData, DashboardFilters } from '../types';
 
 export interface IDashboardService {
   getDashboardData(filters?: DashboardFilters): Promise<DashboardData>;
+  refreshDashboard(): Promise<void>;
 }
 
 export const dashboardService: IDashboardService = {
@@ -249,5 +250,10 @@ export const dashboardService: IDashboardService = {
       salesTrends,
       alerts,
     };
+  },
+
+  refreshDashboard: async () => {
+    
+    return Promise.resolve();
   },
 };

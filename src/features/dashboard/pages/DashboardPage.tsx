@@ -17,7 +17,6 @@ import {
   ArrowUpOutlined, 
   ArrowDownOutlined, 
   ReloadOutlined, 
-  CloseOutlined 
 } from '@ant-design/icons';
 import { useDashboardCards, useDashboardFilters, useQuickActions, useDashboardActions } from '../hooks';
 import { useDashboardData } from '../api/queries';
@@ -29,7 +28,7 @@ export const DashboardPage: React.FC = () => {
   const { cards, isLoading: cardsLoading } = useDashboardCards(filters);
   const { data: dashboardData, isLoading: dataLoading } = useDashboardData(filters);
   const quickActions = useQuickActions();
-  const { refreshDashboard, dismissAlert, isRefreshing } = useDashboardActions();
+  const { refreshDashboard, isRefreshing } = useDashboardActions();
 
   const isLoading = cardsLoading || dataLoading;
 
@@ -224,14 +223,6 @@ export const DashboardPage: React.FC = () => {
               type={alert.type}
               showIcon
               closable
-              onClose={() => dismissAlert(alert.id)}
-              action={
-                <Button
-                  size="small"
-                  icon={<CloseOutlined />}
-                  onClick={() => dismissAlert(alert.id)}
-                />
-              }
             />
           </Col>
         ))}

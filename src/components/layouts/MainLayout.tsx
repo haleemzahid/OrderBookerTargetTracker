@@ -21,7 +21,11 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   return (
     <Layout style={{ minHeight: '100vh' }}>
       <Sidebar collapsed={collapsed} />
-      <Layout>
+      <Layout
+        style={{ 
+          'marginLeft': collapsed ? 80 : 200 
+        }}
+      >
         <Header collapsed={collapsed} onToggle={handleToggle} />
         <Content
           style={{
