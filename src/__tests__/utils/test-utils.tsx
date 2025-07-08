@@ -31,5 +31,8 @@ const customRender = (
   options?: Omit<RenderOptions, 'wrapper'>,
 ) => render(ui, { wrapper: AllTheProviders, ...options });
 
+// Export custom render as renderWithProviders for better clarity
+export const renderWithProviders = customRender;
+
 export * from '@testing-library/react';
 export { customRender as render };
