@@ -119,7 +119,7 @@ describe('Monthly Target Mutation Hooks', () => {
         expect(result.current.isSuccess).toBe(true);
       });
 
-      expect(onSuccess).toHaveBeenCalledWith(mockCreatedTarget, createRequest, expect.anything());
+      expect(onSuccess).toHaveBeenCalledWith(mockCreatedTarget, createRequest, undefined);
     });
   });
 

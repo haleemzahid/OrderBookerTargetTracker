@@ -242,7 +242,11 @@ export const monthlyTargetService: IMonthlyTargetService = {
     params.push(id);
 
     const query = `UPDATE monthly_targets SET ${setParts.join(', ')} WHERE id = ?`;
-    await db.execute(query, params);
+    const result = await db.execute(query, params);
+
+    if (result.rowsAffected === 0) {
+      throw new Error('Monthly target not found');
+    }
 
     const updated = await monthlyTargetService.getById(id);
     if (!updated) {
@@ -254,7 +258,11 @@ export const monthlyTargetService: IMonthlyTargetService = {
 
   delete: async (id: string): Promise<void> => {
     const db = getDatabase();
-    await db.execute('DELETE FROM monthly_targets WHERE id = ?', [id]);
+    const result = await db.execute('DELETE FROM monthly_targets WHERE id = ?', [id]);
+
+    if (result.rowsAffected === 0) {
+      throw new Error('Monthly target not found');
+    }
   },
 
   copyFromPreviousMonth: async (params: CopyTargetsRequest): Promise<MonthlyTarget[]> => {

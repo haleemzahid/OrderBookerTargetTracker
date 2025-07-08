@@ -2,7 +2,7 @@ import React from 'react';
 import { Form, InputNumber, DatePicker, Select, Button, Card, Row, Col } from 'antd';
 import { useCreateMonthlyTarget, useUpdateMonthlyTarget } from '../api/mutations';
 import { useOrderBookers } from '../../order-bookers';
-import dayjs from 'dayjs';
+import dayjs from '../../../config/dayjs';
 import type { MonthlyTarget, CreateMonthlyTargetRequest, UpdateMonthlyTargetRequest } from '../types';
 
 const { Option } = Select;
