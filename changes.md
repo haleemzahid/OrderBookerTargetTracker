@@ -6,18 +6,18 @@ This document outlines the major changes required to migrate from a simple sales
 ## Migration Summary
 
 ### What is being changed:
-- [ ] **Remove `name_urdu` from order bookers**
-- [ ] **Add Companies table** for supplier/manufacturer management
-- [ ] **Add Products table** with company relationship
-- [ ] **Transform Daily Entries** from simple sales/returns to detailed product-based transactions
+- [ ] **Remove `name_urdu` from order bookers** - On hold (conflicts with existing UI)
+- [x] **Add Companies table** for supplier/manufacturer management ✓
+- [x] **Add Products table** with company relationship ✓
+- [x] **Transform Daily Entries** from simple sales/returns to detailed product-based transactions ✓
 - [ ] **Enhanced Return Management** with ability to return specific products from specific orders
 
 ### Key Business Logic Changes:
-- [ ] Users can enter quantities in cartons or individual units (auto-conversion based on units_per_carton)
-- [ ] Flexible pricing: Override sell/cost price per transaction
+- [x] Users can enter quantities in cartons or individual units (auto-conversion based on units_per_carton) ✓
+- [x] Flexible pricing: Override sell/cost price per transaction ✓
 - [ ] Granular return tracking: Return specific products with quantities
-- [ ] Pakistani Rupee (Rs.) currency formatting in frontend
-- [ ] Production data migration support
+- [x] Pakistani Rupee (Rs.) currency formatting in frontend ✓
+- [ ] Production data migration support for order bookers
 
 ---
 
@@ -480,23 +480,23 @@ VALUES ('default-product', 'default-company', 'General Product', 100, 120, 1, da
 
 ## Implementation Timeline
 
-### Week 1: Database Structure
-- [ ] Create migration files (010, 011, 012)
-- [ ] Implement company and product tables
-- [ ] Design daily entry transformation
-- [ ] Create data migration scripts
+### Week 1: Database Structure ✅ COMPLETED
+- [x] Create migration files (010, 011, 012) ✓
+- [x] Implement company and product tables ✓
+- [x] Design daily entry transformation ✓
+- [x] Create data migration scripts ✓
 
-### Week 2: Backend Services
-- [ ] Implement company service layer
-- [ ] Implement product service layer  
-- [ ] Update daily entry service
+### Week 2: Backend Services ✅ IN PROGRESS
+- [x] Implement company service layer ✓
+- [x] Implement product service layer ✓
+- [x] Update daily entry service ✓
 - [ ] Create return processing logic
 
-### Week 3: Frontend Components
-- [ ] Build company management pages
-- [ ] Build product management pages
+### Week 3: Frontend Components ✅ IN PROGRESS
+- [x] Build company management pages ✓
+- [x] Build product management pages ✓
 - [ ] Update daily entry forms
-- [ ] Implement quantity input components
+- [x] Implement quantity input components ✓
 
 ### Week 4: Integration & Testing
 - [ ] Integration testing

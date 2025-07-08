@@ -9,6 +9,9 @@ mod migration_006_insert_sample_data;
 mod migration_007_replace_with_july_2025_data;
 mod migration_008_remove_territory_and_monthly_target_columns;
 mod migration_009_add_carton_fields_to_daily_entries;
+mod migration_010_create_companies_table;
+mod migration_011_create_products_table;
+mod migration_012_transform_daily_entries_structure;
 
 /// Returns all database migrations in order
 pub fn get_migrations() -> Vec<Migration> {
@@ -22,5 +25,8 @@ pub fn get_migrations() -> Vec<Migration> {
         migration_007_replace_with_july_2025_data::migration(),
         migration_008_remove_territory_and_monthly_target_columns::migration(),
         migration_009_add_carton_fields_to_daily_entries::migration(),
+        migration_010_create_companies_table::migration(),
+        migration_011_create_products_table::migration(),
+        migration_012_transform_daily_entries_structure::migration(),
     ]
 }

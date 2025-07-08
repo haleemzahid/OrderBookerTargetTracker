@@ -2,23 +2,41 @@ import { getDatabase } from '../../../services/database';
 import { v4 as uuidv4 } from 'uuid';
 import type {
   DailyEntry,
+  DailyEntryItem,
+  DailyEntryWithItems,
   CreateDailyEntryRequest,
+  CreateDailyEntryItemRequest,
   UpdateDailyEntryRequest,
+  UpdateDailyEntryItemRequest,
   DailyEntryFilters,
   MonthlyAnalytics,
+  ReturnEntryRequest,
+  LegacyDailyEntry,
+  LegacyCreateDailyEntryRequest,
+  LegacyUpdateDailyEntryRequest,
 } from '../types';
 
 export interface IDailyEntryService {
+  // New product-based methods
   getAll(filters?: DailyEntryFilters): Promise<DailyEntry[]>;
+  getAllWithItems(filters?: DailyEntryFilters): Promise<DailyEntryWithItems[]>;
   getById(id: string): Promise<DailyEntry | null>;
+  getWithItems(id: string): Promise<DailyEntryWithItems | null>;
   getByMonth(year: number, month: number): Promise<DailyEntry[]>;
   getByOrderBooker(orderBookerId: string, dateRange?: { startDate: Date; endDate: Date }): Promise<DailyEntry[]>;
-  getByDateRange(startDate: string, endDate: string): Promise<DailyEntry[]>;
   create(entry: CreateDailyEntryRequest): Promise<DailyEntry>;
-  batchCreate(entries: CreateDailyEntryRequest[]): Promise<DailyEntry[]>;
   update(id: string, entry: UpdateDailyEntryRequest): Promise<DailyEntry>;
   delete(id: string): Promise<void>;
   getMonthlyAnalytics(year: number, month: number): Promise<MonthlyAnalytics>;
+  
+  // Return functionality
+  processReturns(data: ReturnEntryRequest): Promise<DailyEntry>;
+  getReturnableProducts(orderBookerId: string, fromDate: Date): Promise<DailyEntryItem[]>;
+  
+  // Legacy support for migration period
+  getAllLegacy(filters?: DailyEntryFilters): Promise<LegacyDailyEntry[]>;
+  createLegacy(entry: LegacyCreateDailyEntryRequest): Promise<LegacyDailyEntry>;
+  updateLegacy(id: string, entry: LegacyUpdateDailyEntryRequest): Promise<LegacyDailyEntry>;
 }
 
 export const dailyEntryService: IDailyEntryService = {
