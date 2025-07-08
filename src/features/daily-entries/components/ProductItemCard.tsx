@@ -1,35 +1,22 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { 
   Card, 
-  Select, 
   Row, 
   Col, 
+  Select, 
+  InputNumber, 
   Button, 
   Typography, 
-  Space, 
-  Divider,
-  Tag,
+  Badge, 
   Tooltip,
-  Alert,
-  InputNumber,
-  Switch,
-  Collapse
+  Divider,
 } from 'antd';
-import { 
-  DeleteOutlined, 
-  InfoCircleOutlined,
-  DollarOutlined,
-  ShoppingOutlined,
-  UndoOutlined,
-  SettingOutlined
-} from '@ant-design/icons';
-import { QuantityInput } from '../../../components/common/QuantityInput';
-import { formatRupees } from '../../../shared/utils/currency';
+import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import type { ProductWithCompany } from '../../products/types';
+import { formatRupees } from '../../../shared/utils/currency';
 
-const { Option } = Select;
 const { Text, Title } = Typography;
-const { Panel } = Collapse;
+const { Option } = Select;
 
 interface ProductItem {
   id?: string;
@@ -49,6 +36,7 @@ interface ProductItemCardProps {
   products: ProductWithCompany[];
   onUpdate: (updates: Partial<ProductItem>) => void;
   onRemove: () => void;
+  disableEditing?: boolean;
 }
 
 export const ProductItemCard: React.FC<ProductItemCardProps> = ({
@@ -57,313 +45,243 @@ export const ProductItemCard: React.FC<ProductItemCardProps> = ({
   products,
   onUpdate,
   onRemove,
+  disableEditing = false,
 }) => {
-  const [showAdvanced, setShowAdvanced] = useState(false);
-  
-  const product = products.find(p => p.id === item.productId);
-  
-  // Calculate totals for this item
-  const calculateItemTotals = () => {
-    if (!product) return { salesAmount: 0, returnAmount: 0, netAmount: 0, totalSoldUnits: 0, totalReturnedUnits: 0 };
-    
-    const sellPrice = item.overrideSellPrice || product.sellPrice;
-    const totalSoldUnits = (item.cartonsSold * product.unitPerCarton) + item.unitsSold;
-    const totalReturnedUnits = (item.cartonsReturned * product.unitPerCarton) + item.unitsReturned;
-    
-    const salesAmount = totalSoldUnits * sellPrice;
-    const returnAmount = totalReturnedUnits * sellPrice;
-    const netAmount = salesAmount - returnAmount;
-    
-    return {
-      salesAmount,
-      returnAmount,
-      netAmount,
-      totalSoldUnits,
-      totalReturnedUnits,
-    };
-  };
+  const selectedProduct = item.product || 
+    products.find(p => p.id === item.productId) || 
+    null;
 
-  const totals = calculateItemTotals();
+  // Calculate totals
+  const unitPerCarton = selectedProduct?.unitPerCarton || 1;
+  const sellPrice = item.overrideSellPrice || selectedProduct?.sellPrice || 0;
+  
+  // Calculate total units
+  const totalUnitsSold = (item.cartonsSold * unitPerCarton) + item.unitsSold;
+  const totalUnitsReturned = (item.cartonsReturned * unitPerCarton) + item.unitsReturned;
+  const netUnits = totalUnitsSold - totalUnitsReturned;
+  
+  // Calculate amounts
+  const totalAmount = totalUnitsSold * sellPrice;
+  const totalReturnAmount = totalUnitsReturned * sellPrice;
+  const netAmount = totalAmount - totalReturnAmount;
 
   const handleProductChange = (productId: string) => {
-    const selectedProduct = products.find(p => p.id === productId);
+    const newProduct = products.find(p => p.id === productId);
     onUpdate({ 
       productId, 
-      product: selectedProduct,
-      // Reset quantities when product changes
-      cartonsSold: 0,
-      unitsSold: 0,
-      cartonsReturned: 0,
-      unitsReturned: 0,
-      // Reset overrides when product changes
-      overrideCostPrice: undefined,
-      overrideSellPrice: undefined,
+      product: newProduct,
     });
   };
 
-  const handleQuantityChange = (type: 'sold' | 'returned', cartons: number, units: number) => {
-    if (type === 'sold') {
-      onUpdate({ cartonsSold: cartons, unitsSold: units });
-    } else {
-      onUpdate({ cartonsReturned: cartons, unitsReturned: units });
-    }
-  };
-
   return (
-    <Card 
+    <Card
+    id={"item__" + index.toString()}
       style={{ 
-        border: product ? '1px solid #d9d9d9' : '1px solid #ff7875',
-        borderRadius: '12px',
-        background: product ? '#fff' : '#fff2f0'
+        borderRadius: '8px',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+        borderLeft: selectedProduct?.company ? `4px solid #1890ff` : undefined
       }}
-      bodyStyle={{ padding: '20px' }}
     >
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-        <Title level={5} style={{ margin: 0, color: '#1890ff' }}>
-          📦 Product #{index + 1}
-        </Title>
-        <Button 
-          type="text" 
-          danger 
-          icon={<DeleteOutlined />} 
-          onClick={onRemove}
-          style={{ borderRadius: '6px' }}
-        >
-          Remove
-        </Button>
-      </div>
-
-      {/* Product Selection */}
-      <div style={{ marginBottom: '20px' }}>
-        <Text strong style={{ fontSize: '16px', marginBottom: '8px', display: 'block' }}>
-          🛍️ Select Product
-        </Text>
-        <Select
-          value={item.productId || undefined}
-          placeholder="Choose a product to sell..."
-          style={{ width: '100%', borderRadius: '8px' }}
-          size="large"
-          showSearch
-          optionFilterProp="children"
-          onChange={handleProductChange}
-          filterOption={(input, option) => {
-            const product = products.find(p => p.id === option?.value);
-            if (!product) return false;
-            return (
-              product.name.toLowerCase().includes(input.toLowerCase()) ||
-              product.nameUrdu.includes(input) ||
-              product.company.name.toLowerCase().includes(input.toLowerCase())
-            );
-          }}
-        >
-          {products.map(product => (
-            <Option key={product.id} value={product.id}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  <div style={{ fontWeight: 'bold' }}>{product.name}</div>
-                  <div style={{ fontSize: '12px', color: '#666' }}>
-                    {product.company.name} • {formatRupees(product.sellPrice)}/unit • {product.unitPerCarton} units/carton
-                  </div>
-                </div>
-                <Tag color="blue">{product.nameUrdu}</Tag>
-              </div>
-            </Option>
-          ))}
-        </Select>
-      </div>
-
-      {/* Product Not Selected Warning */}
-      {!product && (
-        <Alert
-          message="Please select a product first"
-          type="warning"
-          showIcon
-          style={{ marginBottom: '20px', borderRadius: '8px' }}
-        />
-      )}
-
-      {/* Product Details and Quantities */}
-      {product && (
-        <>
-          {/* Product Info */}
-          <div style={{ 
-            background: '#f0f5ff', 
-            padding: '16px', 
-            borderRadius: '8px', 
-            marginBottom: '20px',
-            border: '1px solid #b7dcfa'
-          }}>
-            <Row gutter={16}>
-              <Col xs={24} sm={12}>
-                <div>
-                  <Text strong style={{ color: '#1890ff' }}>{product.name}</Text>
-                  <Text style={{ marginLeft: '8px', color: '#666' }}>({product.nameUrdu})</Text>
-                </div>
-                <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
-                  {product.company.name}
-                </div>
-              </Col>
-              <Col xs={24} sm={12}>
-                <div style={{ textAlign: 'right' }}>
-                  <div>
-                    <Text strong>Price: </Text>
-                    <Text style={{ color: '#52c41a', fontSize: '16px', fontWeight: 'bold' }}>
-                      {formatRupees(item.overrideSellPrice || product.sellPrice)}
-                    </Text>
-                    <Text style={{ color: '#666' }}>/unit</Text>
-                  </div>
-                  <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
-                    {product.unitPerCarton} units per carton
-                  </div>
-                </div>
-              </Col>
-            </Row>
+      <Row gutter={[16, 16]} align="middle">
+        {/* Product Selection */}
+        <Col xs={24} md={8}>
+          <div style={{ marginBottom: '8px' }}>
+            <Text strong>Product</Text>
           </div>
-
-          {/* Sales Quantity */}
-          <div style={{ marginBottom: '20px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
-              <ShoppingOutlined style={{ color: '#52c41a', marginRight: '8px' }} />
-              <Text strong style={{ fontSize: '16px', color: '#52c41a' }}>Units Sold</Text>
-              <Tooltip title="Enter the number of cartons and individual units sold">
-                <InfoCircleOutlined style={{ marginLeft: '8px', color: '#666' }} />
-              </Tooltip>
-            </div>
-            <QuantityInput
-              cartons={item.cartonsSold}
-              units={item.unitsSold}
-              unitsPerCarton={product.unitPerCarton}
-              onChange={(cartons, units) => handleQuantityChange('sold', cartons, units)}
-              placeholder="Enter quantity sold"
-              style={{ borderRadius: '8px' }}
-            />
-          </div>
-
-          {/* Returns Quantity */}
-          <div style={{ marginBottom: '20px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
-              <UndoOutlined style={{ color: '#ff4d4f', marginRight: '8px' }} />
-              <Text strong style={{ fontSize: '16px', color: '#ff4d4f' }}>Units Returned</Text>
-              <Tooltip title="Enter the number of cartons and individual units returned by customers">
-                <InfoCircleOutlined style={{ marginLeft: '8px', color: '#666' }} />
-              </Tooltip>
-            </div>
-            <QuantityInput
-              cartons={item.cartonsReturned}
-              units={item.unitsReturned}
-              unitsPerCarton={product.unitPerCarton}
-              onChange={(cartons, units) => handleQuantityChange('returned', cartons, units)}
-              placeholder="Enter quantity returned (if any)"
-              style={{ borderRadius: '8px' }}
-            />
-          </div>
-
-          {/* Item Summary */}
-          <div style={{ 
-            background: '#f6ffed', 
-            padding: '16px', 
-            borderRadius: '8px', 
-            marginBottom: '16px',
-            border: '1px solid #b7eb8f'
-          }}>
-            <Row gutter={16}>
-              <Col xs={12} sm={6}>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#52c41a' }}>
-                    {formatRupees(totals.salesAmount)}
-                  </div>
-                  <div style={{ fontSize: '12px', color: '#666' }}>Sales</div>
-                </div>
-              </Col>
-              <Col xs={12} sm={6}>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#ff4d4f' }}>
-                    {formatRupees(totals.returnAmount)}
-                  </div>
-                  <div style={{ fontSize: '12px', color: '#666' }}>Returns</div>
-                </div>
-              </Col>
-              <Col xs={12} sm={6}>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#1890ff' }}>
-                    {formatRupees(totals.netAmount)}
-                  </div>
-                  <div style={{ fontSize: '12px', color: '#666' }}>Net</div>
-                </div>
-              </Col>
-              <Col xs={12} sm={6}>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#722ed1' }}>
-                    {totals.totalSoldUnits - totals.totalReturnedUnits}
-                  </div>
-                  <div style={{ fontSize: '12px', color: '#666' }}>Net Units</div>
-                </div>
-              </Col>
-            </Row>
-          </div>
-
-          {/* Advanced Settings */}
-          <Collapse 
-            ghost 
-            expandIcon={({ isActive }) => (
-              <SettingOutlined style={{ color: '#666' }} rotate={isActive ? 90 : 0} />
-            )}
+          <Select
+            showSearch
+            style={{ width: '100%' }}
+            placeholder="Select product"
+            optionFilterProp="children"
+            value={item.productId || undefined}
+            onChange={handleProductChange}
+            disabled={disableEditing}
           >
-            <Panel 
-              header={
-                <Text style={{ color: '#666', fontSize: '14px' }}>
-                  🔧 Advanced Settings (Optional)
-                </Text>
-              } 
-              key="advanced"
-            >
-              <Alert
-                message="Price Override"
-                description="Only change these prices if they're different from the standard prices for this specific sale."
-                type="info"
-                showIcon
-                style={{ marginBottom: '16px', borderRadius: '8px' }}
+            {products.map(product => (
+              <Option key={product.id} value={product.id}>
+                <div>
+                  <Badge color={product.company?.name ? '#1890ff' : '#999'} text={product.company?.name} /> 
+                  <div><strong>{product.name}</strong></div>
+                </div>
+              </Option>
+            ))}
+          </Select>
+
+          {selectedProduct && (
+            <div style={{ marginTop: '8px' }}>
+              <Text type="secondary">
+                <Tooltip title="Units per carton">
+                  <Badge
+                    count={`${selectedProduct.unitPerCarton} units/carton`}
+                    style={{ backgroundColor: '#faad14' }}
+                  />
+                </Tooltip>
+                <span style={{ marginLeft: '8px' }}>
+                  <Tooltip title="Regular price">
+                    {formatRupees(selectedProduct.sellPrice)}/unit
+                  </Tooltip>
+                </span>
+              </Text>
+            </div>
+          )}
+        </Col>
+
+        {/* Sales Input */}
+        <Col xs={24} md={7}>
+          <div style={{ marginBottom: '8px' }}>
+            <Text strong>Sales</Text>
+          </div>
+          <Row gutter={8}>
+            <Col span={12}>
+              <div style={{ marginBottom: '4px' }}>
+                <Text type="secondary">Cartons</Text>
+              </div>
+              <InputNumber
+                min={0}
+                value={item.cartonsSold}
+                onChange={value => onUpdate({ cartonsSold: value || 0 })}
+                style={{ width: '100%' }}
+                disabled={!selectedProduct || disableEditing}
               />
-              
-              <Row gutter={16}>
-                <Col xs={24} sm={12}>
-                  <div style={{ marginBottom: '16px' }}>
-                    <Text strong style={{ marginBottom: '8px', display: 'block' }}>
-                      💰 Override Sell Price
-                    </Text>
-                    <InputNumber
-                      value={item.overrideSellPrice}
-                      onChange={(value) => onUpdate({ overrideSellPrice: value || undefined })}
-                      placeholder={`Default: ${formatRupees(product.sellPrice)}`}
-                      style={{ width: '100%', borderRadius: '6px' }}
-                      min={0}
-                      step={0.1}
-                      formatter={(value) => `₨ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                      parser={(value) => value!.replace(/\₨\s?|(,*)/g, '')}
-                    />
-                  </div>
-                </Col>
-                <Col xs={24} sm={12}>
-                  <div style={{ marginBottom: '16px' }}>
-                    <Text strong style={{ marginBottom: '8px', display: 'block' }}>
-                      🏷️ Override Cost Price
-                    </Text>
-                    <InputNumber
-                      value={item.overrideCostPrice}
-                      onChange={(value) => onUpdate({ overrideCostPrice: value || undefined })}
-                      placeholder={`Default: ${formatRupees(product.costPrice)}`}
-                      style={{ width: '100%', borderRadius: '6px' }}
-                      min={0}
-                      step={0.1}
-                      formatter={(value) => `₨ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                      parser={(value) => value!.replace(/\₨\s?|(,*)/g, '')}
-                    />
-                  </div>
-                </Col>
-              </Row>
-            </Panel>
-          </Collapse>
+            </Col>
+            <Col span={12}>
+              <div style={{ marginBottom: '4px' }}>
+                <Text type="secondary">Units</Text>
+              </div>
+              <InputNumber
+                min={0}
+                max={unitPerCarton - 1}
+                value={item.unitsSold}
+                onChange={value => onUpdate({ unitsSold: value || 0 })}
+                style={{ width: '100%' }}
+                disabled={!selectedProduct || disableEditing}
+              />
+            </Col>
+          </Row>
+          <div style={{ marginTop: '4px' }}>
+            <Text type="secondary">Total: {totalUnitsSold} units</Text>
+          </div>
+        </Col>
+
+        {/* Returns Input */}
+        <Col xs={24} md={7}>
+          <div style={{ marginBottom: '8px' }}>
+            <Text strong>Returns</Text>
+          </div>
+          <Row gutter={8}>
+            <Col span={12}>
+              <div style={{ marginBottom: '4px' }}>
+                <Text type="secondary">Cartons</Text>
+              </div>
+              <InputNumber
+                min={0}
+                max={item.cartonsSold}
+                value={item.cartonsReturned}
+                onChange={value => onUpdate({ cartonsReturned: value || 0 })}
+                style={{ width: '100%' }}
+                disabled={!selectedProduct}
+              />
+            </Col>
+            <Col span={12}>
+              <div style={{ marginBottom: '4px' }}>
+                <Text type="secondary">Units</Text>
+              </div>
+              <InputNumber
+                min={0}
+                max={
+                  item.cartonsReturned < item.cartonsSold 
+                    ? unitPerCarton - 1 
+                    : item.unitsSold
+                }
+                value={item.unitsReturned}
+                onChange={value => onUpdate({ unitsReturned: value || 0 })}
+                style={{ width: '100%' }}
+                disabled={!selectedProduct}
+              />
+            </Col>
+          </Row>
+          <div style={{ marginTop: '4px' }}>
+            <Text type="secondary">Total: {totalUnitsReturned} units</Text>
+          </div>
+        </Col>
+
+        {/* Actions */}
+        <Col xs={24} md={2} style={{ textAlign: 'center' }}>
+          <Button 
+            type="text" 
+            danger 
+            icon={<DeleteOutlined />} 
+            onClick={onRemove}
+            disabled={disableEditing}
+          />
+        </Col>
+      </Row>
+
+      {/* Summary Section */}
+      {selectedProduct && (
+        <>
+          <Divider style={{ margin: '12px 0' }} />
+          <Row gutter={16} style={{ textAlign: 'center' }}>
+            <Col xs={8}>
+              <Text type="secondary">Total Amount</Text>
+              <div>
+                <Title level={5} style={{ color: '#1890ff', margin: '4px 0' }}>
+                  {formatRupees(totalAmount)}
+                </Title>
+              </div>
+            </Col>
+            <Col xs={8}>
+              <Text type="secondary">Return Amount</Text>
+              <div>
+                <Title level={5} style={{ color: '#ff4d4f', margin: '4px 0' }}>
+                  {formatRupees(totalReturnAmount)}
+                </Title>
+              </div>
+            </Col>
+            <Col xs={8}>
+              <Text type="secondary">Net Amount</Text>
+              <div>
+                <Title level={5} style={{ color: '#52c41a', margin: '4px 0' }}>
+                  {formatRupees(netAmount)}
+                </Title>
+              </div>
+            </Col>
+          </Row>
+          <Row gutter={16} style={{ textAlign: 'center', marginTop: '8px' }}>
+            <Col xs={8}>
+              <Badge status="processing" text={`${totalUnitsSold} units sold`} />
+            </Col>
+            <Col xs={8}>
+              <Badge status="error" text={`${totalUnitsReturned} units returned`} />
+            </Col>
+            <Col xs={8}>
+              <Badge status="success" text={`${netUnits} net units`} />
+            </Col>
+          </Row>
+
+          <div style={{ marginTop: '8px' }}>
+            <Row gutter={16}>
+              <Col xs={24} md={12}>
+                <Button
+                  size="small"
+                  type="dashed"
+                  icon={<EditOutlined />}
+                  onClick={() => {
+                    const price = prompt('Enter override sell price per unit:', sellPrice.toString());
+                    if (price && !isNaN(Number(price))) {
+                      onUpdate({ overrideSellPrice: Number(price) });
+                    }
+                  }}
+                  style={{ width: '100%' }}
+                  disabled={disableEditing}
+                >
+                  {item.overrideSellPrice 
+                    ? `Override Price: ${formatRupees(item.overrideSellPrice)}/unit` 
+                    : 'Override Price'}
+                </Button>
+              </Col>
+            </Row>
+          </div>
         </>
       )}
     </Card>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Form, 
   DatePicker, 
@@ -8,24 +8,18 @@ import {
   Row, 
   Col, 
   Space, 
-  InputNumber, 
   Typography, 
   message, 
-  Divider,
-  Tag,
-  Alert,
-  AutoComplete,
   Input,
   Tooltip,
-  Badge
+  Alert,
+  Badge,
 } from 'antd';
 import { 
   PlusOutlined, 
-  DeleteOutlined, 
-  ShoppingCartOutlined, 
-  DollarOutlined,
+  ShoppingCartOutlined,
   InfoCircleOutlined,
-  MinusCircleOutlined
+  ExclamationCircleOutlined,
 } from '@ant-design/icons';
 import { useCreateDailyEntry, useUpdateDailyEntry } from '../api/mutations';
 import { useOrderBookers } from '../../order-bookers';
@@ -35,6 +29,7 @@ import dayjs from 'dayjs';
 import type { DailyEntry, CreateDailyEntryRequest, UpdateDailyEntryRequest, CreateDailyEntryItemRequest } from '../types';
 import type { ProductWithCompany } from '../../products/types';
 import { ProductItemCard } from './ProductItemCard';
+
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -124,12 +119,43 @@ export const DailyEntryForm: React.FC<DailyEntryFormProps> = ({
     setProductItems(newItems);
   };
 
-  // Update a specific product item
-  const updateProductItem = (index: number, updates: Partial<ProductItem>) => {
+  // Update a specific product item with validation
+  const updateProductItem = useCallback((index: number, updates: Partial<ProductItem>) => {
     const newItems = [...productItems];
-    newItems[index] = { ...newItems[index], ...updates };
+    const updatedItem = { ...newItems[index], ...updates };
+    
+    // Find the product for validation
+    const product = products?.find(p => p.id === updatedItem.productId);
+    
+    // Validate return quantities don't exceed sold quantities
+    if (product) {
+      const totalSoldUnits = (updatedItem.cartonsSold * product.unitPerCarton) + updatedItem.unitsSold;
+      const totalReturnUnits = (updatedItem.cartonsReturned * product.unitPerCarton) + updatedItem.unitsReturned;
+      
+      // Automatically adjust returns if they exceed sales
+      if (totalReturnUnits > totalSoldUnits) {
+        // First try to adjust units
+        if (updatedItem.unitsReturned > 0) {
+          updatedItem.unitsReturned = Math.min(updatedItem.unitsReturned, updatedItem.unitsSold);
+        }
+        
+        // If still exceeding, adjust cartons
+        const newTotalReturnUnits = (updatedItem.cartonsReturned * product.unitPerCarton) + updatedItem.unitsReturned;
+        if (newTotalReturnUnits > totalSoldUnits) {
+          updatedItem.cartonsReturned = Math.min(updatedItem.cartonsSold, updatedItem.cartonsReturned);
+          
+          // Final check and adjustment
+          const finalTotalReturnUnits = (updatedItem.cartonsReturned * product.unitPerCarton) + updatedItem.unitsReturned;
+          if (finalTotalReturnUnits > totalSoldUnits) {
+            updatedItem.unitsReturned = Math.max(0, totalSoldUnits - (updatedItem.cartonsReturned * product.unitPerCarton));
+          }
+        }
+      }
+    }
+    
+    newItems[index] = updatedItem;
     setProductItems(newItems);
-  };
+  }, [productItems, products]);
 
   const handleSubmit = async (values: any) => {
     try {
@@ -142,6 +168,26 @@ export const DailyEntryForm: React.FC<DailyEntryFormProps> = ({
       const invalidItems = productItems.filter(item => !item.productId);
       if (invalidItems.length > 0) {
         message.error('Please select products for all items!');
+        return;
+      }
+
+      // Perform additional validation
+      const invalidReturnItems = productItems.filter(item => {
+        const product = products?.find(p => p.id === item.productId);
+        if (!product) return false;
+        
+        const totalSoldUnits = (item.cartonsSold * product.unitPerCarton) + item.unitsSold;
+        const totalReturnedUnits = (item.cartonsReturned * product.unitPerCarton) + item.unitsReturned;
+        
+        return totalReturnedUnits > totalSoldUnits;
+      });
+
+      if (invalidReturnItems.length > 0) {
+        const productNames = invalidReturnItems
+          .map(item => products?.find(p => p.id === item.productId)?.name || 'Unknown')
+          .join(', ');
+        
+        message.error(`Returned quantities cannot exceed sold quantities for: ${productNames}`);
         return;
       }
 
@@ -168,15 +214,21 @@ export const DailyEntryForm: React.FC<DailyEntryFormProps> = ({
       };
 
       if (isEditing && dailyEntry) {
+        // For updates, we need to map the daily entry item IDs from the existing items
         const updateData: UpdateDailyEntryRequest = {
           notes: formData.notes,
-          items: items.map(item => ({
-            productId: item.productId,
-            quantitySold: item.quantitySold,
-            quantityReturned: item.quantityReturned,
-            costPriceOverride: item.costPriceOverride,
-            sellPriceOverride: item.sellPriceOverride,
-          })),
+          items: items.map(newItem => {
+            // Find the matching original item to get its ID
+            const originalItem = dailyEntry.items?.find(i => i.productId === newItem.productId);
+            return {
+              id: originalItem?.id || '', // Use existing ID or empty string for new items
+              productId: newItem.productId,
+              quantitySold: newItem.quantitySold,
+              quantityReturned: newItem.quantityReturned,
+              costPriceOverride: newItem.costPriceOverride,
+              sellPriceOverride: newItem.sellPriceOverride,
+            };
+          }),
         };
         await updateMutation.mutateAsync({ id: dailyEntry.id, data: updateData });
         message.success('Daily entry updated successfully!');
@@ -227,6 +279,48 @@ export const DailyEntryForm: React.FC<DailyEntryFormProps> = ({
       setProductItems(items);
     }
   }, [isEditing, dailyEntry, products, productItems.length]);
+
+  // Calculate form validation status
+  const getFormValidationStatus = () => {
+    if (productItems.length === 0) {
+      return {
+        valid: false,
+        message: 'Please add at least one product to continue.'
+      };
+    }
+
+    const invalidItems = productItems.filter(item => !item.productId);
+    if (invalidItems.length > 0) {
+      return {
+        valid: false,
+        message: `Please select products for all ${invalidItems.length} empty item(s).`
+      };
+    }
+
+    const invalidReturnItems = productItems.filter(item => {
+      const product = products?.find(p => p.id === item.productId);
+      if (!product) return false;
+      
+      const totalSoldUnits = (item.cartonsSold * product.unitPerCarton) + item.unitsSold;
+      const totalReturnedUnits = (item.cartonsReturned * product.unitPerCarton) + item.unitsReturned;
+      
+      return totalReturnedUnits > totalSoldUnits;
+    });
+
+    if (invalidReturnItems.length > 0) {
+      return {
+        valid: false,
+        message: `Returned quantities exceed sold quantities for ${invalidReturnItems.length} product(s).`
+      };
+    }
+
+    return {
+      valid: true,
+      message: 'All entries are valid.'
+    };
+  };
+
+  const formValidation = getFormValidationStatus();
 
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>

@@ -10,6 +10,7 @@ export const queryKeys = {
     byDateRange: (startDate: string, endDate: string) => [...queryKeys.dailyEntries.all, 'dateRange', startDate, endDate] as const,
     details: () => [...queryKeys.dailyEntries.all, 'detail'] as const,
     detail: (id: string) => [...queryKeys.dailyEntries.details(), id] as const,
+    withItems: (id: string) => [...queryKeys.dailyEntries.details(), id, 'withItems'] as const,
     analytics: () => [...queryKeys.dailyEntries.all, 'analytics'] as const,
     monthlyAnalytics: (year: number, month: number) => [...queryKeys.dailyEntries.analytics(), 'monthly', year, month] as const,
   },

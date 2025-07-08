@@ -1,6 +1,11 @@
 import type { OrderBooker } from '../../order-bookers/types';
 import type { Product } from '../../products/types';
 
+export interface DateRange {
+  startDate: Date;
+  endDate: Date;
+}
+
 export interface DailyEntry {
   id: string;
   orderBookerId: string;
@@ -54,9 +59,9 @@ export interface UpdateDailyEntryRequest {
 }
 
 export interface UpdateDailyEntryItemRequest {
-  id?: string; // If provided, update existing; if not, create new
-  productId: string;
-  quantitySold: number;
+  id: string;
+  productId?: string;
+  quantitySold?: number;
   quantityReturned?: number;
   costPriceOverride?: number;
   sellPriceOverride?: number;
@@ -64,12 +69,9 @@ export interface UpdateDailyEntryItemRequest {
 
 export interface DailyEntryFilters {
   orderBookerIds?: string[];
-  dateRange?: {
-    startDate: Date;
-    endDate: Date;
-  };
-  month?: number;
+  dateRange?: DateRange;
   year?: number;
+  month?: number;
 }
 
 export interface MonthlyAnalytics {
@@ -113,37 +115,4 @@ export interface QuantityInput {
   cartons: number;
   units: number;
   totalUnits: number; // Auto-calculated
-}
-
-// Legacy interfaces for migration compatibility
-export interface LegacyDailyEntry {
-  id: string;
-  orderBookerId: string;
-  date: Date;
-  sales: number;
-  returns: number;
-  netSales: number;
-  totalCarton: number;
-  returnCarton: number;
-  notes?: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface LegacyCreateDailyEntryRequest {
-  orderBookerId: string;
-  date: Date;
-  sales: number;
-  returns: number;
-  totalCarton: number;
-  returnCarton: number;
-  notes?: string;
-}
-
-export interface LegacyUpdateDailyEntryRequest {
-  sales?: number;
-  returns?: number;
-  totalCarton?: number;
-  returnCarton?: number;
-  notes?: string;
 }

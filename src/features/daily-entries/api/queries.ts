@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { dailyEntryService } from './service';
 import { queryKeys } from './keys';
-import type { DailyEntryFilters } from '../types';
+import type { DailyEntryFilters, DateRange } from '../types';
 
 export const useDailyEntries = (filters?: DailyEntryFilters) => {
   return useQuery({
@@ -30,7 +30,7 @@ export const useDailyEntriesByMonth = (year: number, month: number) => {
   });
 };
 
-export const useDailyEntriesByOrderBooker = (orderBookerId: string, dateRange?: { startDate: Date; endDate: Date }) => {
+export const useDailyEntriesByOrderBooker = (orderBookerId: string, dateRange?: DateRange) => {
   return useQuery({
     queryKey: [...queryKeys.dailyEntries.byOrderBooker(orderBookerId), dateRange],
     queryFn: () => dailyEntryService.getByOrderBooker(orderBookerId, dateRange),
@@ -39,11 +39,37 @@ export const useDailyEntriesByOrderBooker = (orderBookerId: string, dateRange?: 
   });
 };
 
-export const useDailyEntriesByDateRange = (startDate?: string, endDate?: string) => {
+export const useDailyEntriesByDateRange = (startDate?: string | Date, endDate?: string | Date) => {
+  const startDateStr = startDate ? (typeof startDate === 'string' ? startDate : startDate.toISOString().split('T')[0]) : '';
+  const endDateStr = endDate ? (typeof endDate === 'string' ? endDate : endDate.toISOString().split('T')[0]) : '';
+  
   return useQuery({
-    queryKey: queryKeys.dailyEntries.byDateRange(startDate || '', endDate || ''),
-    queryFn: () => dailyEntryService.getByDateRange(startDate!, endDate!),
+    queryKey: queryKeys.dailyEntries.byDateRange(startDateStr, endDateStr),
+    queryFn: () => {
+      if (!startDate || !endDate) {
+        throw new Error('Start date and end date are required');
+      }
+      return dailyEntryService.getByDateRange(startDate, endDate);
+    },
     enabled: !!startDate && !!endDate,
+    staleTime: 2 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
+  });
+};
+
+export const useDailyEntriesByDateRangeWithDateRange = (dateRange?: DateRange) => {
+  return useQuery({
+    queryKey: queryKeys.dailyEntries.byDateRange(
+      dateRange ? dateRange.startDate.toISOString().split('T')[0] : '',
+      dateRange ? dateRange.endDate.toISOString().split('T')[0] : ''
+    ),
+    queryFn: () => {
+      if (!dateRange) {
+        throw new Error('Date range is required');
+      }
+      return dailyEntryService.getByDateRange(dateRange.startDate, dateRange.endDate);
+    },
+    enabled: !!dateRange,
     staleTime: 2 * 60 * 1000,
     gcTime: 5 * 60 * 1000,
   });
