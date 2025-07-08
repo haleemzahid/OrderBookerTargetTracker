@@ -284,7 +284,7 @@ export const MonthlyTargetsListPage: React.FC = () => {
               onClick={handleCopyFromPrevious}
               loading={copyMutation.isPending}
             >
-              Copy Previous
+              Copy From Previous Month
             </Button>
             <Button icon={<ExportOutlined />}>Export</Button>
             <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
@@ -307,6 +307,7 @@ export const MonthlyTargetsListPage: React.FC = () => {
             <Col span={8}>
               <Select
                 mode="multiple"
+                id="filterByOrderBooker"
                 placeholder="Filter by Order Booker"
                 value={filters.orderBookerIds}
                 onChange={handleOrderBookerFilter}
@@ -314,7 +315,7 @@ export const MonthlyTargetsListPage: React.FC = () => {
               >
                 {orderBookers?.map(orderBooker => (
                   <Option key={orderBooker.id} value={orderBooker.id}>
-                    {orderBooker.name} ({orderBooker.nameUrdu})
+                    {orderBooker.name}
                   </Option>
                 ))}
               </Select>

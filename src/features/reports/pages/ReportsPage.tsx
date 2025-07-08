@@ -5,7 +5,6 @@ import {
   Col,
   Statistic,
   Select,
-  DatePicker,
   Space,
   Typography,
   Button,
@@ -21,7 +20,7 @@ import {
   ReloadOutlined,
 } from '@ant-design/icons';
 import { useReportFilters, usePerformanceAnalysis, useDailyTrends, useMonthlyComparison, useReportExport } from '../hooks';
-import dayjs from 'dayjs';
+import { DatePicker } from '../../../components/date';
 
 const { Title } = Typography;
 const { RangePicker } = DatePicker;
@@ -263,7 +262,7 @@ export const ReportsPage: React.FC = () => {
         <Title level={2}>Reports & Analytics</Title>
         <Space wrap>
           <RangePicker
-            value={filters.dateRange ? [dayjs(filters.dateRange[0]), dayjs(filters.dateRange[1])] : null}
+            value={filters.dateRange ? [new Date(filters.dateRange[0]), new Date(filters.dateRange[1])] : null}
             onChange={handleDateRangeChange}
             placeholder={['Start Date', 'End Date']}
           />

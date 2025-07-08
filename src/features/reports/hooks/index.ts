@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { usePerformanceReport, useDailyReport, useMonthlyReport } from '../api/queries';
 import { useExportReport, useRefreshReports } from '../api/mutations';
 import type { ReportFilters } from '../types';
-import dayjs from 'dayjs';
+import { format } from 'date-fns';
 
 export const useReportFilters = (initialFilters?: ReportFilters) => {
   const [filters, setFilters] = useState<ReportFilters>(initialFilters || {});
@@ -87,7 +87,7 @@ export const useDailyTrends = (filters?: ReportFilters) => {
     );
 
     const salesTrend = sortedData.map(item => ({
-      date: dayjs(item.date).format('YYYY-MM-DD'),
+      date: format(new Date(item.date), 'yyyy-MM-dd'),
       sales: item.totalSales,
       netSales: item.netSales,
       returns: item.totalReturns,
@@ -159,7 +159,7 @@ export const useMonthlyComparison = (filters?: ReportFilters) => {
         targetAchievement: targetGrowth,
       },
       monthlyTrend: sortedData.map(item => ({
-        month: dayjs(item.month).format('YYYY-MM'),
+        month: format(new Date(item.month), 'yyyy-MM'),
         sales: item.totalSales,
         returns: item.totalReturns,
         netSales: item.netSales,

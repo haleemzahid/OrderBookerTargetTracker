@@ -1,8 +1,9 @@
 import React from 'react';
-import { Form, InputNumber, DatePicker, Select, Button, Card, Row, Col } from 'antd';
+import { Form, InputNumber, Select, Button, Card, Row, Col } from 'antd';
+import { DatePicker } from '../../../components/date';
 import { useCreateMonthlyTarget, useUpdateMonthlyTarget } from '../api/mutations';
 import { useOrderBookers } from '../../order-bookers';
-import dayjs from '../../../config/dayjs';
+import dateUtils from '../../../config/date';
 import type { MonthlyTarget, CreateMonthlyTargetRequest, UpdateMonthlyTargetRequest } from '../types';
 
 const { Option } = Select;
@@ -28,13 +29,14 @@ export const MonthlyTargetForm: React.FC<MonthlyTargetFormProps> = ({
 
   const handleSubmit = async (values: any) => {
     try {
+      const selectedDate = values.monthYear as Date;
       const formData = {
         ...values,
-        year: values.monthYear.year(),
-        month: values.monthYear.month() + 1,
+        year: dateUtils.getDateYear(selectedDate),
+        month: dateUtils.getDateMonth(selectedDate),
       };
 
-      if (isEditing) {
+      if (isEditing && monthlyTarget) {
         const updateData: UpdateMonthlyTargetRequest = {
           targetAmount: formData.targetAmount,
         };
@@ -58,9 +60,9 @@ export const MonthlyTargetForm: React.FC<MonthlyTargetFormProps> = ({
 
   const initialValues = monthlyTarget ? {
     ...monthlyTarget,
-    monthYear: dayjs().year(monthlyTarget.year).month(monthlyTarget.month - 1),
+    monthYear: dateUtils.createYearMonth(monthlyTarget.year, monthlyTarget.month),
   } : {
-    monthYear: dayjs(),
+    monthYear: dateUtils.now(),
     targetAmount: 0,
   };
 

@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
 import { afterEach, vi } from 'vitest';
 import { cleanup } from '@testing-library/react';
-import '../config/dayjs'; // Import configured dayjs
+// Date configuration is done in main.tsx
 // import { server } from './mocks/server';
 
 // Start server before all tests (uncomment when MSW is set up)

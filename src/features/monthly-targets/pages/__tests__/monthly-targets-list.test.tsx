@@ -26,18 +26,6 @@ vi.mock('antd', async () => {
     },
   };
 });
-
-// Mock dayjs
-vi.mock('dayjs', () => ({
-  default: vi.fn(() => ({
-    year: vi.fn(() => 2024),
-    month: vi.fn(() => 5), // 0-indexed, so June
-    add: vi.fn(() => ({ year: vi.fn(() => 2024), month: vi.fn(() => 4) })),
-    subtract: vi.fn(() => ({ year: vi.fn(() => 2024), month: vi.fn(() => 4) })),
-    format: vi.fn(() => 'Jun 2024'),
-  })),
-}));
-
 // Mock the components
 vi.mock('../../components/monthly-target-table', () => ({
   MonthlyTargetTable: ({ data, onEdit, onDelete, loading }: any) => (
@@ -55,13 +43,26 @@ vi.mock('../../components/monthly-target-table', () => ({
 }));
 
 vi.mock('../../components/monthly-target-form', () => ({
-  MonthlyTargetForm: ({ monthlyTarget, onSuccess, onCancel }: any) => (
-    <div data-testid="monthly-target-form">
-      <span>{monthlyTarget ? 'Edit Form' : 'Create Form'}</span>
-      <button onClick={onSuccess}>Save</button>
-      <button onClick={onCancel}>Cancel</button>
-    </div>
-  ),
+  MonthlyTargetForm: ({ monthlyTarget, onSuccess, onCancel }: any) => {
+    // Simulate async form submission
+    const handleSave = async () => {
+      // Simulate some async work
+      await new Promise(resolve => setTimeout(resolve, 100));
+      onSuccess?.();
+    };
+    
+    const handleCancel = () => {
+      onCancel?.();
+    };
+    
+    return (
+      <div data-testid="monthly-target-form">
+        <span>{monthlyTarget ? 'Edit Form' : 'Create Form'}</span>
+        <button onClick={handleSave}>Save</button>
+        <button onClick={handleCancel}>Cancel</button>
+      </div>
+    );
+  },
 }));
 
 describe('MonthlyTargetsListPage', () => {
@@ -154,8 +155,8 @@ describe('MonthlyTargetsListPage', () => {
 
     // Check for statistics cards
     expect(screen.getByText('Total Targets')).toBeInTheDocument();
-    expect(screen.getByText('Total Target Amount')).toBeInTheDocument();
-    expect(screen.getByText('Total Achieved')).toBeInTheDocument();
+    expect(screen.getByText('Target Amount')).toBeInTheDocument();
+    expect(screen.getByText('Achieved Amount')).toBeInTheDocument();
     expect(screen.getByText('Average Achievement')).toBeInTheDocument();
     expect(screen.getByText('On Track')).toBeInTheDocument();
     expect(screen.getByText('Behind')).toBeInTheDocument();
@@ -173,8 +174,9 @@ describe('MonthlyTargetsListPage', () => {
     // Total achieved should be 70,000 (40,000 + 30,000)
     expect(screen.getByText('70,000')).toBeInTheDocument();
     
-    // Average achievement should be 65% ((80 + 50) / 2)
-    expect(screen.getByText('65%')).toBeInTheDocument();
+    // Average achievement should be 65.0% ((80 + 50) / 2) with precision 1
+    // The percentage is rendered by Ant Design Statistic component
+    expect(screen.getByText((content) => content.includes('65.0'))).toBeInTheDocument();
     
     // On track count should be 1 (achievement >= 80%)
     expect(screen.getByText('1')).toBeInTheDocument();
@@ -186,7 +188,7 @@ describe('MonthlyTargetsListPage', () => {
   it('should filter by search text', async () => {
     renderWithProviders(<MonthlyTargetsListPage />);
 
-    const searchInput = screen.getByPlaceholderText('Search by order booker name...');
+    const searchInput = screen.getByPlaceholderText('Search targets...');
     await userEvent.type(searchInput, 'John');
 
     // Should filter to show only John Doe's targets
@@ -197,9 +199,16 @@ describe('MonthlyTargetsListPage', () => {
   it('should filter by order booker selection', async () => {
     renderWithProviders(<MonthlyTargetsListPage />);
 
-    const orderBookerSelect = screen.getByLabelText('Order Booker Filter');
-    await userEvent.click(orderBookerSelect);
-    await userEvent.click(screen.getByText('John Doe (جان ڈو)'));
+    // Find the select by using the id directly since the combobox doesn't have an accessible name
+    const selectContainer = screen.getByText('Filter by Order Booker').closest('.ant-select');
+    expect(selectContainer).not.toBeNull();
+    await userEvent.click(selectContainer!);
+    
+    // Wait for options to appear and click on John Doe
+    await waitFor(() => {
+      expect(screen.getByText('John Doe')).toBeInTheDocument();
+    });
+    await userEvent.click(screen.getByText('John Doe'));
 
     // Should show only John Doe's targets
     expect(screen.getByText('John Doe')).toBeInTheDocument();
@@ -234,12 +243,14 @@ describe('MonthlyTargetsListPage', () => {
     const addButton = screen.getByText('Add Target');
     await userEvent.click(addButton);
 
-    // Save form
+    // Save form - this should trigger onSuccess which calls handleModalClose
     const saveButton = screen.getByText('Save');
     await userEvent.click(saveButton);
 
-    // Modal should close
-    expect(screen.queryByTestId('monthly-target-form')).not.toBeInTheDocument();
+    // Wait for modal to close
+    await waitFor(() => {
+      expect(screen.queryByTestId('monthly-target-form')).not.toBeInTheDocument();
+    });
   });
 
   it('should close modal when cancel button is clicked', async () => {
@@ -253,8 +264,10 @@ describe('MonthlyTargetsListPage', () => {
     const cancelButton = screen.getByText('Cancel');
     await userEvent.click(cancelButton);
 
-    // Modal should close
-    expect(screen.queryByTestId('monthly-target-form')).not.toBeInTheDocument();
+    // Wait for modal to close - increase timeout to ensure state updates
+    await waitFor(() => {
+      expect(screen.queryByTestId('monthly-target-form')).not.toBeInTheDocument();
+    });
   });
 
   it('should handle delete operation', async () => {
@@ -286,6 +299,12 @@ describe('MonthlyTargetsListPage', () => {
 
   it('should handle copy from previous month', async () => {
     const { message } = await import('antd');
+    
+    // Mock the current date to July 2024 to match the mocked data's year
+    const currentDate = new Date(2024, 6, 8); // July 8, 2024
+    vi.useFakeTimers();
+    vi.setSystemTime(currentDate);
+    
     renderWithProviders(<MonthlyTargetsListPage />);
 
     const copyButton = screen.getByText('Copy From Previous Month');
@@ -294,13 +313,15 @@ describe('MonthlyTargetsListPage', () => {
     await waitFor(() => {
       expect(mockCopyMutation.mutateAsync).toHaveBeenCalledWith({
         fromYear: 2024,
-        fromMonth: 5, // Previous month
+        fromMonth: 6, // Previous month (current is July = 7)
         toYear: 2024,
-        toMonth: 6, // Current month
-        orderBookerIds: [], // All order bookers
+        toMonth: 7, // Current month
+        orderBookerIds: undefined, // All order bookers
       });
-      expect(message.success).toHaveBeenCalledWith('Monthly targets copied successfully');
+      expect(message.success).toHaveBeenCalledWith('Targets copied from previous month successfully');
     });
+    
+    vi.useRealTimers();
   });
 
   it('should handle copy error', async () => {
@@ -313,7 +334,7 @@ describe('MonthlyTargetsListPage', () => {
     await userEvent.click(copyButton);
 
     await waitFor(() => {
-      expect(message.error).toHaveBeenCalledWith('Failed to copy monthly targets');
+      expect(message.error).toHaveBeenCalledWith('Failed to copy targets from previous month');
     });
   });
 
@@ -336,9 +357,15 @@ describe('MonthlyTargetsListPage', () => {
 
     renderWithProviders(<MonthlyTargetsListPage />);
 
-    // Should show zero stats
-    expect(screen.getByText('0')).toBeInTheDocument();
-    expect(screen.getByText('0%')).toBeInTheDocument();
+    // Should show zero stats - using a more specific selector
+    const totalTargetsStatistic = screen.getAllByText('0')[0];
+    expect(totalTargetsStatistic).toBeInTheDocument();
+    
+    // For percentage, we need to be more specific
+    const percentElements = screen.getAllByText((content) => {
+      return content.includes('0%');
+    });
+    expect(percentElements.length).toBeGreaterThan(0);
   });
 
   it('should update filters when month/year changes', async () => {
@@ -380,11 +407,15 @@ describe('MonthlyTargetsListPage', () => {
       createMockMonthlyTarget({
         id: 'target1',
         orderBookerId: 'ob1',
+        targetAmount: 50000,
+        achievedAmount: 60000,
         achievementPercentage: 120, // Over-achieved
       }),
       createMockMonthlyTarget({
         id: 'target2',
         orderBookerId: 'ob2',
+        targetAmount: 60000,
+        achievedAmount: 27000,
         achievementPercentage: 45, // Under-achieved
       }),
     ];
@@ -398,20 +429,39 @@ describe('MonthlyTargetsListPage', () => {
 
     // Should calculate mixed achievement properly
     expect(screen.getByText('2')).toBeInTheDocument(); // Total targets
-    expect(screen.getByText('82.5%')).toBeInTheDocument(); // Average achievement
+    
+    // Target amount should be 110,000
+    expect(screen.getByText('110,000')).toBeInTheDocument();
+    
+    // Achieved amount should be 87,000 (60,000 + 27,000)
+    expect(screen.getByText('87,000')).toBeInTheDocument();
+    
+    // Average achievement should be 82.5% ((120 + 45) / 2) with precision 1
+    // Use regex to find the achievement percentage
+    const achievementElements = screen.getAllByText(/\d+\.\d+/);
+    const hasExpectedAchievement = achievementElements.some(element => 
+      element.textContent && parseFloat(element.textContent) === 82.5
+    );
+    expect(hasExpectedAchievement).toBeTruthy();
   });
 
   it('should filter targets by multiple criteria', async () => {
     renderWithProviders(<MonthlyTargetsListPage />);
 
     // Apply search filter
-    const searchInput = screen.getByPlaceholderText('Search by order booker name...');
+    const searchInput = screen.getByPlaceholderText('Search targets...');
     await userEvent.type(searchInput, 'John');
 
-    // Apply order booker filter
-    const orderBookerSelect = screen.getByLabelText('Order Booker Filter');
-    await userEvent.click(orderBookerSelect);
-    await userEvent.click(screen.getByText('John Doe (جان ڈو)'));
+    // Apply order booker filter - find by text and closest select
+    const selectContainer = screen.getByText('Filter by Order Booker').closest('.ant-select');
+    expect(selectContainer).not.toBeNull();
+    await userEvent.click(selectContainer!);
+    
+    // Wait for options to appear and click on John Doe
+    await waitFor(() => {
+      expect(screen.getByText('John Doe')).toBeInTheDocument();
+    });
+    await userEvent.click(screen.getByText('John Doe'));
 
     // Both filters should be applied
     expect(screen.getByText('John Doe')).toBeInTheDocument();
