@@ -1,8 +1,9 @@
 import React from 'react';
-import { Table, Button, Space, Tag, Popconfirm } from 'antd';
-import { EditOutlined, DeleteOutlined, PhoneOutlined, MailOutlined } from '@ant-design/icons';
+import { Table, Space, Tag} from 'antd';
+import { PhoneOutlined, MailOutlined } from '@ant-design/icons';
 import { useTable } from '../../../shared/hooks/use-table';
 import type { OrderBooker } from '../types';
+import { TableActions } from '../../../shared/components';
 
 interface OrderBookerTableProps {
   data: OrderBooker[];
@@ -65,36 +66,21 @@ export const OrderBookerTable: React.FC<OrderBookerTableProps> = ({
     {
       title: 'Actions',
       key: 'actions',
-      render: (record: OrderBooker) => (
-        <Space>
-          <Button
-            type="primary"
-            icon={<EditOutlined />}
-            onClick={() => onEdit(record)}
-          >
-            Edit
-          </Button>
-          <Popconfirm
-            title="Are you sure you want to delete this order booker?"
-            onConfirm={() => onDelete(record)}
-            okText="Yes"
-            cancelText="No"
-          >
-            <Button danger icon={<DeleteOutlined />}>
-              Delete
-            </Button>
-          </Popconfirm>
-        </Space>
-      ),
+      render: (_: any, record: OrderBooker) => (
+             <TableActions onEdit={() => onEdit(record)} onDelete={() => onDelete(record)} />
+           ),
     },
   ];
 
   return (
     <Table
-      {...tableProps}
-      columns={columns}
-      loading={loading}
-      rowKey="id"
+       {...tableProps}
+        columns={columns}
+        dataSource={data}
+        loading={loading}
+        rowKey="id"
+        size="small"
+        scroll={{ x: 1000 }}
     />
   );
 };

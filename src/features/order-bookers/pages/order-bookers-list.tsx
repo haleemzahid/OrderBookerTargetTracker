@@ -5,6 +5,8 @@ import { useDeleteOrderBooker } from '../api/mutations';
 import { OrderBookerTable } from '../components/order-booker-table';
 import { OrderBookerForm } from '../components/order-booker-form';
 import { ActionBar, ListPageLayout } from '../../../shared/components';
+import { useExport } from '../../../shared/hooks';
+import { ExportColumn } from '../../../shared/utils/export/exportService';
 import type { OrderBooker } from '../types';
 
 const { Option } = Select;
@@ -23,7 +25,20 @@ export const OrderBookersListPage: React.FC = () => {
     territory: 'all',
   });
 
-  const { data: orderBookers, isLoading, error } = useOrderBookers({
+  // Set up export functionality
+  const exportFileName = 'order-bookers';
+  const exportTitle = 'Order Bookers';
+
+  const { exportData, isExporting } = useExport({
+    fileName: exportFileName,
+    title: exportTitle,
+  });
+
+  const {
+    data: orderBookers,
+    isLoading,
+    error,
+  } = useOrderBookers({
     search: searchText,
   });
   const deleteMutation = useDeleteOrderBooker();
@@ -55,34 +70,42 @@ export const OrderBookersListPage: React.FC = () => {
   const handleFormSuccess = () => {
     handleModalClose();
     message.success(
-      editingOrderBooker
-        ? 'Order booker updated successfully'
-        : 'Order booker created successfully'
+      editingOrderBooker ? 'Order booker updated successfully' : 'Order booker created successfully'
     );
   };
 
   // Filter data based on selected filters
   const filteredData = useMemo(() => {
     if (!orderBookers) return [];
-    
+
     let filtered = orderBookers;
-    
+
     // Filter by activity status
     if (filters.status !== 'all') {
       const isActive = filters.status === 'active';
-      filtered = filtered.filter(orderBooker => orderBooker.isActive === isActive);
+      filtered = filtered.filter((orderBooker) => orderBooker.isActive === isActive);
     }
-    
-    // We don't have territory in the current model, so just returning the filtered data
+
     return filtered;
   }, [orderBookers, filters.status]);
-  
-  const handleTerritoryFilter = (territory: string) => {
-    setFilters(prev => ({ ...prev, territory }));
-  };
-  
+
+
+
   const handleStatusFilter = (status: string) => {
-    setFilters(prev => ({ ...prev, status }));
+    setFilters((prev) => ({ ...prev, status }));
+  };
+
+  // Export functionality
+  const getExportColumns = (): ExportColumn[] => [
+    { title: 'Name', dataIndex: 'name' },
+    { title: 'Name (Urdu)', dataIndex: 'nameUrdu' },
+    { title: 'Phone', dataIndex: 'phone' },
+    { title: 'Email', dataIndex: 'email' },
+    { title: 'Status', dataIndex: 'isActive', render: (value) => (value ? 'Active' : 'Inactive') },
+  ];
+
+  const handleExport = async (format: string) => {
+    await exportData(format, filteredData, getExportColumns());
   };
 
   if (error) {
@@ -117,15 +140,16 @@ export const OrderBookersListPage: React.FC = () => {
           searchPlaceholder="Search order bookers..."
           onAdd={handleAdd}
           addLabel="Add Order Booker"
-          onExport={() => {}}
+          onExport={handleExport}
           extraActions={renderExtraActions()}
         />
       }
     >
       <Space direction="vertical" size="small" style={{ width: '100%' }}>
+        {' '}
         <OrderBookerTable
           data={filteredData}
-          loading={isLoading}
+          loading={isLoading || isExporting}
           onEdit={handleEdit}
           onDelete={handleDelete}
         />

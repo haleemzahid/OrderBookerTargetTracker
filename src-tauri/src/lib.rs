@@ -1,4 +1,3 @@
-use tauri_plugin_sql::{Migration, MigrationKind};
 mod migrations;
 #[tauri::command]
 fn greet(name: &str) -> String {

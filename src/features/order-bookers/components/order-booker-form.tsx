@@ -36,7 +36,7 @@ export const OrderBookerForm: React.FC<OrderBookerFormProps> = ({
   };
 
   return (
-    <Card title={isEditing ? 'Edit Order Booker' : 'Create Order Booker'}>
+    <Card >
       <Form
         form={form}
         layout="vertical"
