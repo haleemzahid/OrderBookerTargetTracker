@@ -3,7 +3,7 @@ import { Table, Tag, Tooltip } from 'antd';
 import type { ProductTableProps } from '../types';
 import type { ColumnsType } from 'antd/es/table';
 import type { Product } from '../types';
-import { TableActions } from '../../../shared/components';
+import { TableActions, FormatNumber } from '../../../shared/components';
 
 
 export const ProductTable: React.FC<ProductTableProps> = ({
@@ -26,8 +26,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
       key: 'costPrice',
       render: (price: number) => (
         <span style={{ color: '#8c8c8c' }}>
-          Rs.{' '}
-          {price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          <FormatNumber value={price} prefix="Rs. " decimalPlaces={2} />
         </span>
       ),
       sorter: (a, b) => a.costPrice - b.costPrice,
@@ -38,8 +37,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
       key: 'sellPrice',
       render: (price: number) => (
         <Tag color="blue">
-          Rs.{' '}
-          {price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          <FormatNumber value={price} prefix="Rs. " decimalPlaces={2} />
         </Tag>
       ),
       sorter: (a, b) => a.sellPrice - b.sellPrice,
@@ -53,8 +51,13 @@ export const ProductTable: React.FC<ProductTableProps> = ({
         const color = marginPercentage < 10 ? 'red' : marginPercentage < 20 ? 'orange' : 'green';
 
         return (
-          <Tooltip title={`Rs. ${margin.toFixed(2)} (${marginPercentage.toFixed(2)}%)`}>
-            <Tag color={color}>{marginPercentage.toFixed(1)}%</Tag>
+          <Tooltip title={
+            <>
+              <FormatNumber value={margin} prefix="Rs. " decimalPlaces={2} /> 
+              {` (${marginPercentage.toFixed(2)}%)`}
+            </>
+          }>
+            <Tag color={color}>Rs.{margin} ({marginPercentage.toFixed(1)})%</Tag>
           </Tooltip>
         );
       },

@@ -70,13 +70,6 @@ export const ProductsListPage: React.FC = () => {
     setEditingProduct(null);
   };
 
-  const handleFormSuccess = () => {
-    handleModalClose();
-    message.success(
-      editingProduct ? 'Product updated successfully' : 'Product created successfully'
-    );
-  };
-
   // Filter data based on selected filters
   const filteredData = useMemo(() => {
     if (!products) return [];
@@ -174,17 +167,9 @@ export const ProductsListPage: React.FC = () => {
         width={600}
       >
         <ProductForm
-          initialValues={editingProduct || undefined}
-          onSubmit={async () => {
-            try {
-              // Form submission is handled by the form component
-              handleFormSuccess();
-            } catch (error) {
-              console.error('Error submitting form:', error);
-            }
-          }}
+          product={editingProduct || undefined}
           onCancel={handleModalClose}
-          isEdit={!!editingProduct}
+          onSuccess={handleModalClose}
         />
       </Modal>
     </ListPageLayout>

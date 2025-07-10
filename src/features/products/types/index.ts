@@ -31,13 +31,7 @@ export interface ProductFilterOptions {
   sortOrder?: 'ascend' | 'descend';
 }
 
-export interface ProductFormProps {
-  initialValues?: Partial<Product>;
-  onSubmit: (values: CreateProductRequest | UpdateProductRequest) => Promise<void>;
-  onCancel: () => void;
-  isLoading?: boolean;
-  isEdit?: boolean;
-}
+// ProductFormProps moved to product-form.tsx file as an internal interface
 
 export interface ProductTableProps {
   data: Product[];

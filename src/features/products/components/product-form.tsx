@@ -1,37 +1,44 @@
-import React, { useEffect } from 'react';
-import { Form, Input, InputNumber, Select, Button, Row, Col, Space } from 'antd';
+import React from 'react';
+import { Form, Input, InputNumber, Select, Card, Row, Col } from 'antd';
 import { useCompanies } from '../../../features/companies/hooks/queries';
-import type { ProductFormProps } from '../types';
+import { useCreateProduct, useUpdateProduct } from '../api/mutations';
+import { FormActions } from '../../../shared/components';
+import type { Product, CreateProductRequest } from '../types';
 
 const { Option } = Select;
 
+interface ProductFormProps {
+  product?: Product;
+  onSuccess?: () => void;
+  onCancel?: () => void;
+}
+
 export const ProductForm: React.FC<ProductFormProps> = ({ 
-  initialValues, 
-  onSubmit, 
-  onCancel, 
-  isLoading, 
-  isEdit 
+  product, 
+  onSuccess, 
+  onCancel
 }) => {
   const [form] = Form.useForm();
   const { data: companies, isLoading: isLoadingCompanies } = useCompanies();
-
-  // Reset form when initialValues changes
-  useEffect(() => {
-    if (initialValues) {
-      form.setFieldsValue({
-        companyId: initialValues.companyId,
-        name: initialValues.name,
-        costPrice: initialValues.costPrice,
-        sellPrice: initialValues.sellPrice,
-        unitPerCarton: initialValues.unitPerCarton,
-      });
-    } else {
+  
+  const createMutation = useCreateProduct();
+  const updateMutation = useUpdateProduct();
+  
+  const isEditing = !!product;
+  const isLoading = createMutation.isPending || updateMutation.isPending;
+  
+  const handleSubmit = async (values: CreateProductRequest) => {
+    try {
+      if (isEditing) {
+        await updateMutation.mutateAsync({ id: product.id, data: values });
+      } else {
+        await createMutation.mutateAsync(values);
+      }
       form.resetFields();
+      onSuccess?.();
+    } catch (error) {
+      console.error('Form submission error:', error);
     }
-  }, [form, initialValues]);
-
-  const handleFinish = (values: any) => {
-    onSubmit(values);
   };
 
   const priceFormatter = (value: number | undefined): string => {
@@ -45,90 +52,100 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   };
 
   return (
-    <Form form={form} layout="vertical" onFinish={handleFinish} initialValues={{ unitPerCarton: 1 }}>
-      {!isEdit && (
+    <Card>
+      <Form
+        form={form}
+        layout="vertical"
+        onFinish={handleSubmit}
+        initialValues={product || { unitPerCarton: 1 }}
+      >
+        {!isEditing && (
+          <Form.Item
+            name="companyId"
+            label="Company"
+            rules={[{ required: true, message: 'Please select a company' }]}
+          >
+            <Select placeholder="Select company" loading={isLoadingCompanies}>
+              {companies?.map(company => (
+                <Option key={company.id} value={company.id}>
+                  {company.name}
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
+        )}
+
         <Form.Item
-          name="companyId"
-          label="Company"
-          rules={[{ required: true, message: 'Please select a company' }]}
+          name="name"
+          label="Product Name"
+          rules={[{ required: true, message: 'Please enter product name' }]}
         >
-          <Select placeholder="Select company" loading={isLoadingCompanies}>
-            {companies?.map(company => (
-              <Option key={company.id} value={company.id}>
-                {company.name}
-              </Option>
-            ))}
-          </Select>
+          <Input placeholder="Enter product name" />
         </Form.Item>
-      )}
 
-      <Form.Item
-        name="name"
-        label="Product Name"
-        rules={[{ required: true, message: 'Please enter product name' }]}
-      >
-        <Input placeholder="Enter product name" />
-      </Form.Item>
+        <Row gutter={16}>
+          <Col span={12}>
+            <Form.Item
+              name="costPrice"
+              label="Cost Price (Rs.)"
+              rules={[
+                { required: true, message: 'Please enter cost price' },
+                { type: 'number', min: 0, message: 'Price must be positive' }
+              ]}
+            >
+              <InputNumber
+                style={{ width: '100%' }}
+                precision={2}
+                min={0}
+                placeholder="0.00"
+                formatter={priceFormatter}
+                parser={priceParser}
+              />
+            </Form.Item>
+          </Col>
+          <Col span={12}>
+            <Form.Item
+              name="sellPrice"
+              label="Sell Price (Rs.)"
+              rules={[
+                { required: true, message: 'Please enter sell price' },
+                { type: 'number', min: 0, message: 'Price must be positive' }
+              ]}
+            >
+              <InputNumber
+                style={{ width: '100%' }}
+                precision={2}
+                min={0}
+                placeholder="0.00"
+                formatter={priceFormatter}
+                parser={priceParser}
+              />
+            </Form.Item>
+          </Col>
+        </Row>
 
-      <Row gutter={16}>
-        <Col span={12}>
-          <Form.Item
-            name="costPrice"
-            label="Cost Price (Rs.)"
-            rules={[
-              { required: true, message: 'Please enter cost price' },
-              { type: 'number', min: 0, message: 'Price must be positive' }
-            ]}
-          >
-            <InputNumber
-              style={{ width: '100%' }}
-              precision={2}
-              min={0}
-              placeholder="0.00"
-              formatter={priceFormatter}
-              parser={priceParser}
-            />
-          </Form.Item>
-        </Col>
-        <Col span={12}>
-          <Form.Item
-            name="sellPrice"
-            label="Sell Price (Rs.)"
-            rules={[
-              { required: true, message: 'Please enter sell price' },
-              { type: 'number', min: 0, message: 'Price must be positive' }
-            ]}
-          >
-            <InputNumber
-              style={{ width: '100%' }}
-              precision={2}
-              min={0}
-              placeholder="0.00"
-              formatter={priceFormatter}
-              parser={priceParser}
-            />
-          </Form.Item>
-        </Col>
-      </Row>
+        <Form.Item
+          name="unitPerCarton"
+          label="Units Per Carton"
+          rules={[
+            { required: true, message: 'Please enter units per carton' },
+            { type: 'number', min: 1, message: 'Must be at least 1' }
+          ]}
+          tooltip="Number of units in one carton"
+        >
+          <InputNumber style={{ width: '100%' }} min={1} placeholder="1" />
+        </Form.Item>
 
-      <Form.Item
-        name="unitPerCarton"
-        label="Units Per Carton"
-        rules={[
-          { required: true, message: 'Please enter units per carton' },
-          { type: 'number', min: 1, message: 'Must be at least 1' }
-        ]}
-        tooltip="Number of units in one carton"
-      >
-        <InputNumber style={{ width: '100%' }} min={1} placeholder="1" />
-      </Form.Item>
-
-      <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
-        <Button onClick={onCancel}>Cancel</Button>
-        <Button type="primary" htmlType="submit" loading={isLoading}>
-          {isEdit ? 'Update' : 'Create'} Product
-        </Button>
-      </Space>
-    </Form>
+        <Form.Item>
+          <FormActions 
+            isLoading={isLoading}
+            isEditing={isEditing}
+            onCancel={onCancel}
+            submitLabel={isEditing ? 'Update Product' : 'Create Product'}
+            align="right"
+          />
+        </Form.Item>
+      </Form>
+    </Card>
   );
 };
