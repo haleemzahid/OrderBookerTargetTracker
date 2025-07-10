@@ -1,6 +1,6 @@
 import React, { ReactNode } from 'react';
-import { Space, Input, Button, Dropdown, Menu } from 'antd';
-import { PlusOutlined, ExportOutlined, FilePdfOutlined, FileWordOutlined, FileExcelOutlined } from '@ant-design/icons';
+import { Space, Input, Button, Dropdown } from 'antd';
+import { PlusOutlined, ExportOutlined, FilePdfOutlined, FileWordOutlined, FileExcelOutlined, DownOutlined } from '@ant-design/icons';
 
 const { Search } = Input;
 
@@ -72,8 +72,12 @@ export const ActionBar: React.FC<ActionBarProps> = ({
             }))
           }}
         >
-          <Button icon={<ExportOutlined />}>
-            {exportLabel} <i className="fa fa-caret-down" />
+          <Button>
+            <Space>
+              <ExportOutlined />
+              {exportLabel}
+              <DownOutlined />
+            </Space>
           </Button>
         </Dropdown>
       )}
