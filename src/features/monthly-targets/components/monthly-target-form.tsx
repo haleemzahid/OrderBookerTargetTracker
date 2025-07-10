@@ -1,6 +1,7 @@
 import React from 'react';
-import { Form, InputNumber, Select, Button, Card, Row, Col } from 'antd';
+import { Form, InputNumber, Select, Card, Row, Col } from 'antd';
 import { DatePicker } from '../../../components/date';
+import { FormActions } from '../../../shared/components';
 import { useCreateMonthlyTarget, useUpdateMonthlyTarget } from '../api/mutations';
 import { useOrderBookers } from '../../order-bookers';
 import dateUtils from '../../../config/date';
@@ -131,14 +132,12 @@ export const MonthlyTargetForm: React.FC<MonthlyTargetFormProps> = ({
         </Row>
 
         <Form.Item>
-          <Button type="primary" htmlType="submit" loading={isLoading}>
-            {isEditing ? 'Update' : 'Create'} Monthly Target
-          </Button>
-          {onCancel && (
-            <Button style={{ marginLeft: 8 }} onClick={onCancel}>
-              Cancel
-            </Button>
-          )}
+          <FormActions
+            isLoading={isLoading}
+            isEditing={isEditing}
+            onCancel={onCancel}
+            submitLabel={`${isEditing ? 'Update' : 'Create'} Monthly Target`}
+          />
         </Form.Item>
       </Form>
     </Card>

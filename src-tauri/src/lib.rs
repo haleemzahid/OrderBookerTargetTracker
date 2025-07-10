@@ -7,13 +7,13 @@ fn greet(name: &str) -> String {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    let migrations = mod::get_migrations();
+    let migrations = migrations::get_migrations();
     tauri::Builder::default()
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(
             tauri_plugin_sql::Builder::default()
-                .add_migrations("sqlite:app.db", migrations)
+                .add_migrations("sqlite:app2.db", migrations)
                 .build(),
         )
         .plugin(tauri_plugin_opener::init())

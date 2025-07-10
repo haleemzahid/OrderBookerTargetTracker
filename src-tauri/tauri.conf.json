@@ -5,7 +5,7 @@
   "identifier": "com.orderbookertargettracker.app",
   "build": {
     "beforeDevCommand": "pnpm dev",
-    "devUrl": "http://localhost:1420",
+    "devUrl": "http://localhost:1400",
     "beforeBuildCommand": "pnpm build",
     "frontendDist": "../dist"
   },
@@ -26,7 +26,7 @@
   "plugins": {
     "sql": {
       "preload": [
-        "sqlite:app.db"
+        "sqlite:app2.db"
       ]
     },
     "updater": {
