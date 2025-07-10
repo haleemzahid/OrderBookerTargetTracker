@@ -2,6 +2,56 @@
 
 This document outlines the tasks required to implement the Orders Module for the OrderBookerTargetTracker application. It follows the same patterns and structures used in the existing modules (order-bookers, products, companies).
 
+## Business Context and Requirements
+
+### WHY - Business Need
+The orders module is needed to track and manage the core business operation: recording orders from shops through order bookers. Currently, order bookers collect orders on paper from shopkeepers, and the office staff needs to digitally record these orders for processing and supply management.
+
+### WHAT - Core Functionality
+The module should handle:
+1. **Order Entry**: Recording orders brought by order bookers from shops
+2. **Product Management**: Adding products to orders with flexible pricing
+3. **Return Processing**: Handling returned products when shopkeepers don't accept full deliveries
+4. **Calculations**: Auto-calculating totals, profits, and carton quantities
+5. **Supply Tracking**: Managing the supply process and returns
+
+### HOW - User Experience Flow
+
+#### Order Creation Flow:
+1. **Order Booker Selection**: User selects which order booker brought the order
+2. **Date Entry**: Order date defaults to today (can be adjusted)
+3. **Product Entry**: Inline table where user can:
+   - Select a product from dropdown
+   - Enter quantity (starts at 0)
+   - Cost price auto-populates from product master
+   - Sell price auto-populates but can be modified (negotiation-based pricing)
+   - Row auto-saves when valid and complete
+   - New empty row appears automatically after saving current row
+4. **Auto-calculations**: System calculates total cartons, total price, and profit automatically
+
+#### Return Management Flow:
+1. **Return Entry**: When entering returns, user can:
+   - Select products from the order list
+   - Enter return quantity (max = original order quantity)
+   - System asks for confirmation before processing returns
+   - Option to return entire order with single action
+2. **Return Calculations**: System automatically calculates return cartons and return amount
+
+#### Technical Implementation Details:
+- **Inline Editing**: Table with editable rows, double-click to edit existing rows
+- **Validation**: Prevent negative quantities, validate required fields
+- **Flexible Pricing**: Sell prices can vary based on negotiation (not fixed pricing)
+- **Master-Detail Structure**: Orders (master) contain multiple order items (details)
+- **Auto-save**: Rows save automatically when input loses focus and data is valid
+- **Confirmation Dialogs**: Required for return operations to prevent accidental data loss
+
+#### Key Business Rules:
+1. **Pricing Flexibility**: Sell prices are negotiable and can differ from standard product prices
+2. **Return Limits**: Cannot return more than originally ordered
+3. **No Customer Tracking**: Focus is on order booker and products, not end customers
+4. **Supply Timing**: Orders can be entered before or during supply process
+5. **Pakistani Context**: Use "Rs." for currency, design for local business practices
+
 ## Database Structure
 
 ### 1. Create Database Tables Migration
