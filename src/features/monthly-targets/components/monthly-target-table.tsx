@@ -1,18 +1,19 @@
-import React from 'react';
-import { Table, Space, Tag, Progress, Typography } from 'antd';
+import { Table, Space } from 'antd';
 import { CalendarOutlined } from '@ant-design/icons';
 import { useTable } from '../../../shared/hooks/use-table';
-import { TableActions, FormatNumber } from '../../../shared/components';
+import { FormatNumber, TableActions } from '../../../shared/components';
+import { useExport } from '../../../shared/hooks';
+import { ExportColumn } from '../../../shared/utils/export/exportService';
 import dayjs from 'dayjs';
 import type { MonthlyTarget, MonthlyTargetWithOrderBooker } from '../types';
-
-const { Text } = Typography;
 
 interface MonthlyTargetTableProps {
   data: MonthlyTargetWithOrderBooker[];
   loading?: boolean;
   onEdit: (monthlyTarget: MonthlyTarget) => void;
   onDelete: (monthlyTarget: MonthlyTarget) => void;
+  exportFileName?: string;
+  exportTitle?: string;
 }
 
 export const MonthlyTargetTable: React.FC<MonthlyTargetTableProps> = ({
@@ -20,149 +21,138 @@ export const MonthlyTargetTable: React.FC<MonthlyTargetTableProps> = ({
   loading,
   onEdit,
   onDelete,
+  exportFileName = 'monthly-targets',
+  exportTitle = 'Monthly Targets',
 }) => {
   const { tableProps } = useTable({
     data,
   });
 
+  const { exportData, isExporting } = useExport({
+    fileName: exportFileName,
+    title: exportTitle,
+  });
+
+  // Define columns for display and export
   const columns = [
     {
       title: 'Month',
+      dataIndex: 'monthDisplay',
       key: 'month',
-      sorter: true,
-      render: (record: MonthlyTarget) => (
+      render: (_: any, record: MonthlyTargetWithOrderBooker) => (
         <Space>
           <CalendarOutlined />
-          {dayjs()
-            .year(record.year)
-            .month(record.month - 1)
-            .format('MMM YYYY')}
+          {dayjs().year(record.year).month(record.month - 1).format('MMM YYYY')}
         </Space>
       ),
     },
     {
       title: 'Order Booker',
+      dataIndex: 'orderBookerName',
       key: 'orderBooker',
-      render: (record: MonthlyTargetWithOrderBooker) => <div>{record.orderBooker?.name}</div>,
+      render: (_: any, record: MonthlyTargetWithOrderBooker) => record.orderBooker?.name || '-',
     },
     {
       title: 'Target Amount',
       dataIndex: 'targetAmount',
       key: 'targetAmount',
       sorter: true,
-      render: (value: number) => (
-        <Text strong style={{ color: '#1890ff' }}>
-          <FormatNumber value={value} />
-        </Text>
-      ),
+      render: (value: number) => <FormatNumber value={value} />,
     },
     {
       title: 'Achieved Amount',
       dataIndex: 'achievedAmount',
       key: 'achievedAmount',
       sorter: true,
-      render: (value: number) => (
-        <Text strong style={{ color: '#52c41a' }}>
-          <FormatNumber value={value} />
-        </Text>
-      ),
+      render: (value: number) => <FormatNumber value={value} />,
     },
     {
       title: 'Remaining',
       dataIndex: 'remainingAmount',
       key: 'remainingAmount',
       sorter: true,
-      render: (value: number) => (
-        <Text strong style={{ color: value > 0 ? '#fa8c16' : '#52c41a' }}>
-          <FormatNumber value={value} />
-        </Text>
-      ),
+      render: (value: number) => <FormatNumber value={value} />,
     },
     {
-      title: 'Achievement',
+      title: 'Achievement %',
+      dataIndex: 'achievementPercentage',
       key: 'achievement',
-      sorter: (a: MonthlyTarget, b: MonthlyTarget) =>
-        a.achievementPercentage - b.achievementPercentage,
-      render: (record: MonthlyTarget) => (
-        <div style={{ width: 120 }}>
-          <Progress
-            percent={Math.min(record.achievementPercentage, 100)}
-            size="small"
-            showInfo={false}
-            strokeColor={
-              record.achievementPercentage >= 100
-                ? '#52c41a'
-                : record.achievementPercentage >= 80
-                  ? '#faad14'
-                  : '#ff4d4f'
-            }
-          />
-          <Text style={{ fontSize: '12px' }}>
-            <FormatNumber value={record.achievementPercentage} suffix="%"></FormatNumber>
-          </Text>
-        </div>
-      ),
+      sorter: true,
+      render: (value: number) => <FormatNumber value={value} suffix="%" />,
     },
     {
       title: 'Daily Target',
       dataIndex: 'dailyTargetAmount',
       key: 'dailyTargetAmount',
-      render: (value: number) => (
-        <div>
-          <Text>
-            <FormatNumber value={value} />
-          </Text>
-          <br />
-          <Text type="secondary" style={{ fontSize: '11px' }}>
-            per day
-          </Text>
-        </div>
-      ),
+      render: (value: number) => <FormatNumber value={value} />,
     },
     {
       title: 'Status',
+      dataIndex: 'statusDisplay',
       key: 'status',
-      render: (record: MonthlyTarget) => {
-        let color = 'default';
-        let text = 'Not Started';
-
-        if (record.achievementPercentage >= 100) {
-          color = 'green';
-          text = 'Achieved';
-        } else if (record.achievementPercentage >= 80) {
-          color = 'blue';
-          text = 'On Track';
-        } else if (record.achievementPercentage >= 50) {
-          color = 'orange';
-          text = 'Behind';
-        } else if (record.achievementPercentage > 0) {
-          color = 'red';
-          text = 'At Risk';
-        }
-
-        return <Tag color={color}>{text}</Tag>;
-      },
     },
     {
       title: 'Actions',
       key: 'actions',
-      width: 120,
-      render: (record: MonthlyTarget) => (
-        <Space>
-          <TableActions onEdit={() => onEdit(record)} onDelete={() => onDelete(record)} />
-        </Space>
+      render: (_: any, record: MonthlyTarget) => (
+        <TableActions onEdit={() => onEdit(record)} onDelete={() => onDelete(record)} />
       ),
     },
   ];
 
+  // Create export columns without JSX elements
+  const getExportColumns = (): ExportColumn[] => [
+    { title: 'Month', dataIndex: 'monthDisplay' },
+    { title: 'Order Booker', dataIndex: 'orderBookerName' },
+    { title: 'Target Amount', dataIndex: 'targetAmount' },
+    { title: 'Achieved Amount', dataIndex: 'achievedAmount' },
+    { title: 'Remaining', dataIndex: 'remainingAmount' },
+    { title: 'Achievement %', dataIndex: 'achievementPercentage' },
+    { title: 'Daily Target', dataIndex: 'dailyTargetAmount' },
+    { title: 'Status', dataIndex: 'statusDisplay' },
+  ];
+
+  const handleExport = async (format: string) => {
+    await exportData(format, data, getExportColumns());
+  };
+
   return (
-    <Table
-      {...tableProps}
-      columns={columns}
-      loading={loading}
-      rowKey="id"
-      size="small"
-      scroll={{ x: 1000 }}
-    />
+    <div>
+      <div style={{ textAlign: 'right', marginBottom: 16 }}>
+        <Space>
+          <button 
+            className="ant-btn ant-btn-default"
+            onClick={() => handleExport('excel')}
+            disabled={isExporting || !data.length}
+          >
+            Export to Excel
+          </button>
+          <button 
+            className="ant-btn ant-btn-default"
+            onClick={() => handleExport('pdf')}
+            disabled={isExporting || !data.length}
+          >
+            Export to PDF
+          </button>
+          <button 
+            className="ant-btn ant-btn-default"
+            onClick={() => handleExport('word')}
+            disabled={isExporting || !data.length}
+          >
+            Export to Word
+          </button>
+        </Space>
+      </div>
+      
+      <Table
+        {...tableProps}
+        columns={columns}
+        dataSource={data}
+        loading={loading || isExporting}
+        rowKey="id"
+        size="small"
+        scroll={{ x: 1000 }}
+      />
+    </div>
   );
 };

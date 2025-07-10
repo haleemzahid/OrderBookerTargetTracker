@@ -4,7 +4,7 @@ import { CopyOutlined } from '@ant-design/icons';
 import { useMonthlyTargetsByMonth } from '../api/queries';
 import { useDeleteMonthlyTarget, useCopyFromPreviousMonth } from '../api/mutations';
 import { useOrderBookers } from '../../order-bookers';
-import { MonthlyTargetForm, EnhancedMonthlyTargetTable } from '../components';
+import { MonthlyTargetForm, MonthlyTargetTable } from '../components';
 import { ActionBar, ListPageLayout } from '../../../shared/components';
 import dayjs, { Dayjs } from 'dayjs';
 import type { MonthlyTarget, MonthlyTargetWithOrderBooker } from '../types';
@@ -201,15 +201,13 @@ export const MonthlyTargetsListPage: React.FC = () => {
       }
     >
       <Space direction="vertical" size="small" style={{ width: '100%' }}>
-        <EnhancedMonthlyTargetTable
+        <MonthlyTargetTable
           data={filteredData}
           loading={isLoading}
           onEdit={handleEdit}
           onDelete={handleDelete}
           exportFileName={`monthly-targets-${filters.year}-${filters.month}`}
           exportTitle={`Monthly Targets - ${dayjs().year(filters.year).month(filters.month - 1).format('MMMM YYYY')}`}
-          year={filters.year}
-          month={filters.month}
         />
       </Space>
 
