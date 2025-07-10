@@ -1,7 +1,6 @@
 import { createRouter, createRootRoute, createRoute } from '@tanstack/react-router';
 import MainLayout from '../../components/layouts/MainLayout';
 import { OrderBookersListPage } from '../../features/order-bookers';
-import { DailyEntriesListPage } from '../../features/daily-entries';
 import { MonthlyTargetsListPage } from '../../features/monthly-targets';
 import { CompaniesListPage } from '../../features/companies/pages/CompaniesListPage';
 
@@ -18,7 +17,7 @@ const orderBookersRoute = createRoute({
 const dailyEntriesRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/daily-entries',
-  component: DailyEntriesListPage,
+  component: OrderBookersListPage,
 });
 
 const monthlyTargetsRoute = createRoute({
