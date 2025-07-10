@@ -47,8 +47,8 @@ export const useUpdateOrder = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.orders.summary() });
       queryClient.setQueryData(queryKeys.orders.detail(updatedOrder.id), updatedOrder);
     },
-    onError: (e) => {
-      console.error('Error updating order:', e);
+    onError: (error) => {
+      console.error('Error updating order:', error);
     }
   });
 };
@@ -64,8 +64,8 @@ export const useDeleteOrder = () => {
       queryClient.removeQueries({ queryKey: queryKeys.orders.detail(id) });
       queryClient.removeQueries({ queryKey: queryKeys.orderItems.byOrder(id) });
     },
-    onError: (e) => {
-      console.error('Error deleting order:', e);
+    onError: (error) => {
+      console.error('Error deleting order:', error);
     }
   });
 };
@@ -83,8 +83,8 @@ export const useCreateOrderItem = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.orders.lists() });
       queryClient.invalidateQueries({ queryKey: queryKeys.orders.summary() });
     },
-    onError: (e) => {
-      console.error('Error creating order item:', e);
+    onError: (error) => {
+      console.error('Error creating order item:', error);
     }
   });
 };
@@ -101,8 +101,8 @@ export const useUpdateOrderItem = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.orders.lists() });
       queryClient.invalidateQueries({ queryKey: queryKeys.orders.summary() });
     },
-    onError: (e) => {
-      console.error('Error updating order item:', e);
+    onError: (error) => {
+      console.error('Error updating order item:', error);
     }
   });
 };
@@ -118,8 +118,8 @@ export const useDeleteOrderItem = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.orders.lists() });
       queryClient.invalidateQueries({ queryKey: queryKeys.orders.summary() });
     },
-    onError: (e) => {
-      console.error('Error deleting order item:', e);
+    onError: (error) => {
+      console.error('Error deleting order item:', error);
     }
   });
 };

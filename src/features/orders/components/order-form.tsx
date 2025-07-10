@@ -1,11 +1,11 @@
-import React, { useEffect } from 'react';
-import { Form, Select, DatePicker, Input, Card, Row, Col, Divider } from 'antd';
+import React, { useEffect, useState } from 'react';
+import { Form, Select, DatePicker, Input, Card, Row, Col, Divider, message } from 'antd';
 import { useOrderBookers } from '../../order-bookers/api/queries';
 import { useCreateOrder, useUpdateOrder } from '../api/mutations';
 import { FormActions } from '../../../shared/components';
 import type { Order, CreateOrderRequest } from '../types';
 import dayjs from 'dayjs';
-import { OrderItemsTable } from '.';
+import { OrderItemsTable, type OrderItemData } from './OrderItemsTable';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -22,6 +22,7 @@ export const OrderForm: React.FC<OrderFormProps> = ({
   onCancel
 }) => {
   const [form] = Form.useForm();
+  const [orderItems, setOrderItems] = useState<OrderItemData[]>([]);
   const { data: orderBookers, isLoading: isLoadingOrderBookers } = useOrderBookers();
   
   const createMutation = useCreateOrder();
@@ -38,21 +39,35 @@ export const OrderForm: React.FC<OrderFormProps> = ({
         supplyDate: order.supplyDate ? dayjs(order.supplyDate) : null,
         notes: order.notes,
       });
+      // TODO: Load existing order items when editing
+      // This would require a query to get order items by order ID
     } else {
       form.setFieldsValue({
         orderDate: dayjs(),
       });
+      setOrderItems([]);
     }
   }, [order, form]);
   
   const handleSubmit = async (values: any) => {
     try {
+      // Validate that we have at least one item when creating a new order
+      if (!isEditing && orderItems.length === 0) {
+        message.error('Please add at least one product to the order');
+        return;
+      }
+
       const requestData: CreateOrderRequest = {
         orderBookerId: values.orderBookerId,
         orderDate: values.orderDate.toDate(),
         supplyDate: values.supplyDate?.toDate() || null,
         notes: values.notes,
-        items: [], // Items will be handled separately in the items table
+        items: orderItems.map(item => ({
+          productId: item.productId!,
+          quantity: item.quantity!,
+          costPrice: item.costPrice!,
+          sellPrice: item.sellPrice!,
+        })),
       };
 
       if (isEditing) {
@@ -65,15 +80,23 @@ export const OrderForm: React.FC<OrderFormProps> = ({
             notes: requestData.notes,
           }
         });
+        message.success('Order updated successfully');
       } else {
         await createMutation.mutateAsync(requestData);
+        message.success('Order created successfully');
       }
       
       form.resetFields();
+      setOrderItems([]);
       onSuccess?.();
     } catch (error) {
       console.error('Form submission error:', error);
+      message.error(isEditing ? 'Failed to update order' : 'Failed to create order');
     }
+  };
+
+  const handleItemsChange = (items: OrderItemData[]) => {
+    setOrderItems(items);
   };
 
   return (
@@ -152,22 +175,16 @@ export const OrderForm: React.FC<OrderFormProps> = ({
         </Row>
       </Card>
 
-      {isEditing && (
-        <>
-          <Divider />
-          <Card title="Order Items" size="small">
-            <OrderItemsTable
-              orderId={order.id}
-              items={[]} // Will be loaded by the component
-              products={[]} // Will be loaded by the component
-              onItemAdd={() => {}}
-              onItemUpdate={() => {}}
-              onItemDelete={() => {}}
-              editable={true}
-            />
-          </Card>
-        </>
-      )}
+      <Divider />
+      
+      <Card title="Order Items" size="small">
+        <OrderItemsTable
+          items={orderItems}
+          onItemsChange={handleItemsChange}
+          loading={isLoading}
+          allowReturns={isEditing} // Only allow returns when editing existing orders
+        />
+      </Card>
 
       <FormActions
         isLoading={isLoading}

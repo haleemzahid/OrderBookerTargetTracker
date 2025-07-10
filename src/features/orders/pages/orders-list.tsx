@@ -261,7 +261,7 @@ export const OrdersListPage: React.FC = () => {
         open={isDetailModalOpen}
         onCancel={handleDetailModalClose}
         footer={null}
-        width={1000}
+        width={1500}
       >
         {viewingOrder && (
           <OrderDetail order={viewingOrder} />
