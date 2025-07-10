@@ -1,6 +1,7 @@
 import React, { ReactNode } from 'react';
 import { Space, Input, Button, Dropdown } from 'antd';
 import { PlusOutlined, ExportOutlined, FilePdfOutlined, FileWordOutlined, FileExcelOutlined, DownOutlined } from '@ant-design/icons';
+import type { ButtonProps } from 'antd';
 
 const { Search } = Input;
 
@@ -23,6 +24,9 @@ export interface ActionBarProps {
   showAdd?: boolean;
   showExport?: boolean;
   extraActions?: ReactNode;
+  addButtonProps?: ButtonProps;
+  exportButtonProps?: ButtonProps;
+  searchInputProps?: Omit<React.ComponentProps<typeof Search>, 'onChange'>;
 }
 
 /**
@@ -42,6 +46,9 @@ export const ActionBar: React.FC<ActionBarProps> = ({
   showAdd = true,
   showExport = true,
   extraActions,
+  addButtonProps,
+  exportButtonProps,
+  searchInputProps,
 }) => {
   return (
     <Space size="small" wrap style={{ display: 'flex', justifyContent: 'flex-end' }}>
@@ -52,6 +59,7 @@ export const ActionBar: React.FC<ActionBarProps> = ({
           value={searchValue}
           onChange={(e) => onSearch?.(e.target.value)}
           style={{ width: 200 }}
+          {...searchInputProps}
         />
       )}
       
@@ -72,7 +80,7 @@ export const ActionBar: React.FC<ActionBarProps> = ({
             }))
           }}
         >
-          <Button>
+          <Button {...exportButtonProps}>
             <Space>
               <ExportOutlined />
               {exportLabel}
@@ -87,6 +95,7 @@ export const ActionBar: React.FC<ActionBarProps> = ({
           type="primary" 
           icon={<PlusOutlined />} 
           onClick={onAdd}
+          {...addButtonProps}
         >
           {addLabel}
         </Button>

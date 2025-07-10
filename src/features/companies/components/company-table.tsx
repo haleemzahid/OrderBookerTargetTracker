@@ -1,5 +1,5 @@
 import React from 'react';
-import { Table, Space} from 'antd';
+import { Table, Space } from 'antd';
 import { PhoneOutlined, MailOutlined, EnvironmentOutlined } from '@ant-design/icons';
 import { useTable } from '../../../shared/hooks/use-table';
 import type { Company } from '../types';
@@ -22,6 +22,8 @@ export const CompanyTable: React.FC<CompanyTableProps> = ({
     data,
     searchableFields: ['name', 'email', 'phone', 'address'],
   });
+
+  // Component setup
 
   const columns = [
     {
@@ -66,10 +68,14 @@ export const CompanyTable: React.FC<CompanyTableProps> = ({
       title: 'Actions',
       key: 'actions',
       render: (_: any, record: Company) => (
-        <TableActions onEdit={() => onEdit(record)} onDelete={() => onDelete(record)} />
+        <div data-tour="company-actions">
+          <TableActions onEdit={() => onEdit(record)} onDelete={() => onDelete(record)} />
+        </div>
       ),
     },
   ];
+
+
 
   return (
     <Table

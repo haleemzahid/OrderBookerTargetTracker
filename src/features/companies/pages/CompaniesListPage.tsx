@@ -1,18 +1,22 @@
-import React, { useState, useMemo } from 'react';
-import { Modal, message, Space } from 'antd';
+import React, { useState } from 'react';
+import { Modal, message, Space, Button } from 'antd';
 import { useCompanies } from '../hooks/queries';
 import { useDeleteCompany } from '../api/mutations';
 import { CompanyTable } from '../components/company-table';
 import { CompanyForm } from '../components/CompanyForm';
-import { ActionBar, ListPageLayout } from '../../../shared/components';
+import { ActionBar, ListPageLayout, GuidedTour } from '../../../shared/components';
 import { useExport } from '../../../shared/hooks';
 import { ExportColumn } from '../../../shared/utils/export/exportService';
 import type { Company } from '../types';
+import type { TourProps } from 'antd';
+import { QuestionCircleOutlined } from '@ant-design/icons';
 
 export const CompaniesListPage: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCompany, setEditingCompany] = useState<Company | null>(null);
   const [searchText, setSearchText] = useState('');
+  const [tourOpen, setTourOpen] = useState(false);
+
 
   // Set up export functionality
   const exportFileName = 'companies';
@@ -89,13 +93,57 @@ export const CompaniesListPage: React.FC = () => {
     await exportData(format, companies || [], getExportColumns());
   };
 
+  // // Define tour steps
+  // const steps: TourProps['steps'] = [
+  //   {
+  //     title: 'Companies Management',
+  //     description: 'This page helps you manage all your company records.',
+  //     target: () => document.querySelector('.ant-layout-content') as HTMLElement,
+  //   },
+  //   {
+  //     title: 'Search Companies',
+  //     description: 'Type here to search for companies by name, email, phone, or address.',
+  //     target: () => document.querySelector('.ant-input-search') as HTMLElement,
+  //   },
+  //   {
+  //     title: 'Add New Company',
+  //     description: 'Click here to add a new company to your system.',
+  //     target: () => document.querySelector('.ant-btn-primary') as HTMLElement,
+  //   },
+  //   {
+  //     title: 'Export Data',
+  //     description: 'Click here to export your company data to Excel or PDF format.',
+  //     target: () => document.querySelector('[data-tour="export-button"]') as HTMLElement,
+  //   },
+  //   {
+  //     title: 'Company Table',
+  //     description: 'This table displays all your companies with their key information.',
+  //     target: () => document.querySelector('.ant-table-wrapper') as HTMLElement,
+  //   },
+  //   {
+  //     title: 'Edit or Delete',
+  //     description: 'Use these actions to edit company details or remove companies from your system.',
+  //     target: () => document.querySelector('.ant-table-cell:last-child .ant-space') as HTMLElement,
+  //   },
+  // ];
+
   if (error) {
     return <div>Error loading companies</div>;
   }
 
   return (
     <ListPageLayout
-      title="Companies"
+      title={
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          Companies
+          <Button 
+            type="text"
+            icon={<QuestionCircleOutlined />}
+            onClick={() => setTourOpen(true)}
+            style={{ marginLeft: 8 }}
+          />
+        </div>
+      }
       extraActions={
         <ActionBar
           onSearch={setSearchText}
@@ -104,6 +152,7 @@ export const CompaniesListPage: React.FC = () => {
           onAdd={handleAdd}
           addLabel="Add Company"
           onExport={handleExport}
+          exportButtonProps={{ 'data-tour': 'export-button' }}
         />
       }
     >
@@ -129,6 +178,13 @@ export const CompaniesListPage: React.FC = () => {
           onCancel={handleModalClose}
         />
       </Modal>
+
+      {/* <GuidedTour
+        steps={steps}
+        open={tourOpen}
+        onClose={() => setTourOpen(false)}
+        tourKey="companies-page"
+      /> */}
     </ListPageLayout>
   );
 };
