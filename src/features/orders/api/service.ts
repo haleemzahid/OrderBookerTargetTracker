@@ -10,6 +10,7 @@ import {
   OrderSummary 
 } from '../types';
 import { v4 as uuidv4 } from 'uuid';
+import { calculateOrderItemTotals, updateOrderTotals } from '../utils/calculations';
 
 // Order CRUD Operations
 export const getOrderById = async (id: string): Promise<Order | null> => {
@@ -89,11 +90,11 @@ export const createOrder = async (orderData: CreateOrderRequest): Promise<Order>
   const now = new Date().toISOString();
   const orderId = uuidv4();
   
-  // Start transaction
-  console.log("transaction starting");
-  await db.execute('BEGIN TRANSACTION');
-  console.log("transaction started");
   try {
+    // Use just BEGIN for SQLite
+    await db.execute('BEGIN');
+    console.log("Transaction started");
+    
     // Create the order
     await db.execute(
       `INSERT INTO orders (
@@ -110,14 +111,26 @@ export const createOrder = async (orderData: CreateOrderRequest): Promise<Order>
         now
       ]
     );
-    console.log("added order");
-    // Create order items directly in the transaction
+    
+    // Create order items
     for (const item of orderData.items) {
       const itemId = uuidv4();
+      
+      // Calculate order item totals
+      const totals = await calculateOrderItemTotals(
+        item.productId,
+        item.quantity,
+        item.costPrice,
+        item.sellPrice,
+        0 // No return quantity for new items
+      );
+      
       await db.execute(
         `INSERT INTO order_items (
-          id, order_id, product_id, quantity, cost_price, sell_price, created_at, updated_at
-         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+          id, order_id, product_id, quantity, cost_price, sell_price, 
+          return_quantity, total_cost, total_amount, profit, cartons, 
+          return_amount, return_cartons, created_at, updated_at
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           itemId,
           orderId,
@@ -125,16 +138,24 @@ export const createOrder = async (orderData: CreateOrderRequest): Promise<Order>
           item.quantity,
           item.costPrice,
           item.sellPrice,
+          item.quantity,
+          totals.totalCost,
+          totals.totalAmount,
+          totals.profit,
+          totals.cartons,
+          totals.returnAmount,
+          totals.returnCartons,
           now,
           now
         ]
       );
-    console.log("added order item");
-
     }
-    console.log("comminting");
+    
+    // Update order totals
+    await updateOrderTotals(orderId);
+    
     await db.execute('COMMIT');
-    console.log("commited");
+    console.log("Transaction committed");
     
     const order = await getOrderById(orderId);
     if (!order) {
@@ -143,8 +164,12 @@ export const createOrder = async (orderData: CreateOrderRequest): Promise<Order>
     
     return order;
   } catch (error) {
-    console.log(error);
-    await db.execute('ROLLBACK');
+    console.log('Error:', error);
+    try {
+      await db.execute('ROLLBACK');
+    } catch (rollbackError) {
+      console.log('Rollback error:', rollbackError);
+    }
     throw error;
   }
 };
@@ -233,10 +258,21 @@ export const createOrderItem = async (orderId: string, itemData: CreateOrderItem
   const now = new Date().toISOString();
   const itemId = uuidv4();
   
+  // Calculate order item totals
+  const totals = await calculateOrderItemTotals(
+    itemData.productId,
+    itemData.quantity,
+    itemData.costPrice,
+    itemData.sellPrice,
+    0 // No return quantity for new items
+  );
+  
   await db.execute(
     `INSERT INTO order_items (
-      id, order_id, product_id, quantity, cost_price, sell_price, created_at, updated_at
-     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      id, order_id, product_id, quantity, cost_price, sell_price,
+      return_quantity, total_cost, total_amount, profit, cartons,
+      return_amount, return_cartons, created_at, updated_at
+     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       itemId,
       orderId,
@@ -244,10 +280,20 @@ export const createOrderItem = async (orderId: string, itemData: CreateOrderItem
       itemData.quantity,
       itemData.costPrice,
       itemData.sellPrice,
+      0,
+      totals.totalCost,
+      totals.totalAmount,
+      totals.profit,
+      totals.cartons,
+      totals.returnAmount,
+      totals.returnCartons,
       now,
       now
     ]
   );
+  
+  // Update order totals
+  await updateOrderTotals(orderId);
   
   const items = await getOrderItems(orderId);
   const newItem = items.find(item => item.id === itemId);
@@ -262,9 +308,37 @@ export const updateOrderItem = async (itemId: string, itemData: UpdateOrderItemR
   const db = getDatabase();
   const now = new Date().toISOString();
   
+  // Get current item data to calculate totals
+  const currentItemResult = await db.select<any[]>(
+    `SELECT order_id, product_id, quantity, cost_price, sell_price, return_quantity 
+     FROM order_items WHERE id = ?`,
+    [itemId]
+  );
+  
+  if (currentItemResult.length === 0) {
+    throw new Error(`Order item with ID ${itemId} not found`);
+  }
+  
+  const currentItem = currentItemResult[0];
+  const orderId = currentItem.order_id;
+  
   // Build dynamic update query
   const updateFields: string[] = [];
   const params: any[] = [];
+  
+  // Determine new values
+  const newQuantity = itemData.quantity !== undefined ? itemData.quantity : currentItem.quantity;
+  const newSellPrice = itemData.sellPrice !== undefined ? itemData.sellPrice : currentItem.sell_price;
+  const newReturnQuantity = itemData.returnQuantity !== undefined ? itemData.returnQuantity : currentItem.return_quantity;
+  
+  // Calculate new totals
+  const totals = await calculateOrderItemTotals(
+    currentItem.product_id,
+    newQuantity,
+    currentItem.cost_price,
+    newSellPrice,
+    newReturnQuantity
+  );
   
   if (itemData.quantity !== undefined) {
     updateFields.push(`quantity = ?`);
@@ -281,15 +355,35 @@ export const updateOrderItem = async (itemId: string, itemData: UpdateOrderItemR
     params.push(itemData.returnQuantity);
   }
   
-  // Add updated_at to fields and params
-  updateFields.push(`updated_at = ?`);
-  params.push(now);
+  // Add calculated fields
+  updateFields.push(
+    `total_cost = ?`,
+    `total_amount = ?`,
+    `profit = ?`,
+    `cartons = ?`,
+    `return_amount = ?`,
+    `return_cartons = ?`,
+    `updated_at = ?`
+  );
+  
+  params.push(
+    totals.totalCost,
+    totals.totalAmount,
+    totals.profit,
+    totals.cartons,
+    totals.returnAmount,
+    totals.returnCartons,
+    now
+  );
   
   // Add itemId parameter at the end
   params.push(itemId);
   
   const query = `UPDATE order_items SET ${updateFields.join(', ')} WHERE id = ?`;
   await db.execute(query, params);
+  
+  // Update order totals
+  await updateOrderTotals(orderId);
   
   // Get the updated order item
   const result = await db.select<any[]>(
@@ -314,7 +408,24 @@ export const updateOrderItem = async (itemId: string, itemData: UpdateOrderItemR
 
 export const deleteOrderItem = async (itemId: string): Promise<void> => {
   const db = getDatabase();
+  
+  // Get the order ID before deleting the item
+  const result = await db.select<any[]>(
+    'SELECT order_id FROM order_items WHERE id = ?',
+    [itemId]
+  );
+  
+  if (result.length === 0) {
+    throw new Error(`Order item with ID ${itemId} not found`);
+  }
+  
+  const orderId = result[0].order_id;
+  
+  // Delete the order item
   await db.execute(`DELETE FROM order_items WHERE id = ?`, [itemId]);
+  
+  // Update order totals
+  await updateOrderTotals(orderId);
 };
 
 // Summary and Analytics

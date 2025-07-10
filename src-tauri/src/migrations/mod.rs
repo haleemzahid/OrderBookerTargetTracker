@@ -15,6 +15,9 @@ pub mod migration_012_transform_daily_entries_structure;
 pub mod migration_013_create_orders_table;
 pub mod migration_014_create_order_items_table;
 pub mod migration_015_create_order_triggers;
+pub mod migration_016_alter_order_items_columns;
+pub mod migration_017_fix_order_calculations;
+pub mod migration_018_drop_order_triggers;
 
 /// Returns all database migrations in order
 pub fn get_migrations() -> Vec<Migration> {
@@ -34,5 +37,8 @@ pub fn get_migrations() -> Vec<Migration> {
         migration_013_create_orders_table::migration(),
         migration_014_create_order_items_table::migration(),
         migration_015_create_order_triggers::migration(),
+        migration_016_alter_order_items_columns::migration(),
+        migration_017_fix_order_calculations::migration(),
+        migration_018_drop_order_triggers::migration(),
     ]
 }

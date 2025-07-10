@@ -24,6 +24,7 @@ export const useCreateOrder = () => {
   return useMutation({
     mutationFn: (order: CreateOrderRequest) => createOrder(order),
     onSuccess: (newOrder: Order) => {
+      // Invalidate all order-related queries to ensure fresh data
       queryClient.invalidateQueries({ queryKey: queryKeys.orders.lists() });
       queryClient.invalidateQueries({ queryKey: queryKeys.orders.byOrderBooker(newOrder.orderBookerId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.orders.summary() });
@@ -78,8 +79,11 @@ export const useCreateOrderItem = () => {
     mutationFn: ({ orderId, data }: { orderId: string; data: CreateOrderItemRequest }) => 
       createOrderItem(orderId, data),
     onSuccess: (newItem: OrderItem) => {
+      // Invalidate order items for this order
       queryClient.invalidateQueries({ queryKey: queryKeys.orderItems.byOrder(newItem.orderId) });
+      // Invalidate the order detail to show updated totals
       queryClient.invalidateQueries({ queryKey: queryKeys.orders.detail(newItem.orderId) });
+      // Invalidate order lists to show updated totals
       queryClient.invalidateQueries({ queryKey: queryKeys.orders.lists() });
       queryClient.invalidateQueries({ queryKey: queryKeys.orders.summary() });
     },
@@ -96,8 +100,11 @@ export const useUpdateOrderItem = () => {
     mutationFn: ({ id, data }: { id: string; data: UpdateOrderItemRequest }) => 
       updateOrderItem(id, data),
     onSuccess: (updatedItem: OrderItem) => {
+      // Invalidate order items for this order
       queryClient.invalidateQueries({ queryKey: queryKeys.orderItems.byOrder(updatedItem.orderId) });
+      // Invalidate the order detail to show updated totals
       queryClient.invalidateQueries({ queryKey: queryKeys.orders.detail(updatedItem.orderId) });
+      // Invalidate order lists to show updated totals
       queryClient.invalidateQueries({ queryKey: queryKeys.orders.lists() });
       queryClient.invalidateQueries({ queryKey: queryKeys.orders.summary() });
     },
@@ -113,8 +120,11 @@ export const useDeleteOrderItem = () => {
   return useMutation({
     mutationFn: ({ id }: { id: string; orderId: string }) => deleteOrderItem(id),
     onSuccess: (_, { orderId }) => {
+      // Invalidate order items for this order
       queryClient.invalidateQueries({ queryKey: queryKeys.orderItems.byOrder(orderId) });
+      // Invalidate the order detail to show updated totals
       queryClient.invalidateQueries({ queryKey: queryKeys.orders.detail(orderId) });
+      // Invalidate order lists to show updated totals
       queryClient.invalidateQueries({ queryKey: queryKeys.orders.lists() });
       queryClient.invalidateQueries({ queryKey: queryKeys.orders.summary() });
     },
