@@ -31,7 +31,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
     if (path.startsWith('/daily-entries')) return 'daily-entries';
     if (path.startsWith('/monthly-targets')) return 'monthly-targets';
     if (path.startsWith('/reports')) return 'reports';
-    if (path.startsWith('/company')) return 'company';
+    if (path.startsWith('/companies')) return 'companies';
     return 'dashboard';
   };
 
@@ -49,11 +49,11 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
       case 'monthly-targets':
         navigate({ to: '/monthly-targets' });
         break;
-      case 'reports':
-        navigate({ to: '/reports' });
-        break;
-        case 'company':
-        navigate({ to: '/company' });
+      // case 'reports':
+      //   navigate({ to: '/reports' });
+      //   break;
+        case 'companies':
+        navigate({ to: '/companies' });
         break;
       default:
         navigate({ to: '/' });
@@ -67,7 +67,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
       label: 'Dashboard',
     },
       {
-      key: 'company',
+      key: 'companies',
       icon: <ShopOutlined />,
       label: 'Companies',
     },

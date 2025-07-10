@@ -32,6 +32,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         theme={{
           algorithm: appTheme === 'dark' ? theme.darkAlgorithm : theme.defaultAlgorithm,
         }}
+        componentSize='middle'
         locale={enUS}
       >
         {children}

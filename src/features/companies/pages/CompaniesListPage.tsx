@@ -1,28 +1,48 @@
-import React, { useState } from 'react';
-import { Card, Button, Table, Space, Input, message, Modal } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined } from '@ant-design/icons';
-import type { ColumnsType } from 'antd/es/table';
+import React, { useState, useMemo } from 'react';
+import { Modal, message, Space } from 'antd';
 import { useCompanies } from '../hooks/queries';
 import { useDeleteCompany } from '../api/mutations';
+import { CompanyTable } from '../components/company-table';
 import { CompanyForm } from '../components/CompanyForm';
+import { ActionBar, ListPageLayout } from '../../../shared/components';
+import { useExport } from '../../../shared/hooks';
+import { ExportColumn } from '../../../shared/utils/export/exportService';
 import type { Company } from '../types';
 
-const { Search } = Input;
-
 export const CompaniesListPage: React.FC = () => {
-  const [searchText, setSearchText] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCompany, setEditingCompany] = useState<Company | null>(null);
+  const [searchText, setSearchText] = useState('');
 
-  const { data: companies, isLoading } = useCompanies({ search: searchText });
+  // Set up export functionality
+  const exportFileName = 'companies';
+  const exportTitle = 'Companies';
+
+  const { exportData, isExporting } = useExport({
+    fileName: exportFileName,
+    title: exportTitle,
+  });
+
+  const {
+    data: companies,
+    isLoading,
+    error,
+  } = useCompanies({
+    search: searchText,
+  });
   const deleteMutation = useDeleteCompany();
+
+  const handleAdd = () => {
+    setEditingCompany(null);
+    setIsModalOpen(true);
+  };
 
   const handleEdit = (company: Company) => {
     setEditingCompany(company);
     setIsModalOpen(true);
   };
 
-  const handleDelete = (company: Company) => {
+  const handleDelete = async (company: Company) => {
     Modal.confirm({
       title: 'Delete Company',
       content: `Are you sure you want to delete "${company.name}"? This action cannot be undone.`,
@@ -45,106 +65,56 @@ export const CompaniesListPage: React.FC = () => {
     setEditingCompany(null);
   };
 
-  const columns: ColumnsType<Company> = [
-    {
-      title: 'Name',
-      dataIndex: 'name',
-      key: 'name',
-      sorter: (a, b) => a.name.localeCompare(b.name),
-    },
-    {
-      title: 'Address',
-      dataIndex: 'address',
-      key: 'address',
-      render: (address) => address || '-',
-    },
-    {
-      title: 'Email',
-      dataIndex: 'email',
-      key: 'email',
-      render: (email) => email || '-',
-    },
-    {
-      title: 'Phone',
-      dataIndex: 'phone',
-      key: 'phone',
-      render: (phone) => phone || '-',
-    },
-    {
-      title: 'Created At',
-      dataIndex: 'createdAt',
-      key: 'createdAt',
-      render: (date: Date) => date.toLocaleDateString(),
-      sorter: (a, b) => a.createdAt.getTime() - b.createdAt.getTime(),
-    },
-    {
-      title: 'Actions',
-      key: 'actions',
-      render: (_, record) => (
-        <Space size="small">
-          <Button
-            type="link"
-            icon={<EditOutlined />}
-            onClick={() => handleEdit(record)}
-          >
-            Edit
-          </Button>
-          <Button
-            type="link"
-            danger
-            icon={<DeleteOutlined />}
-            onClick={() => handleDelete(record)}
-          >
-            Delete
-          </Button>
-        </Space>
-      ),
+  const handleFormSuccess = () => {
+    handleModalClose();
+    message.success(
+      editingCompany ? 'Company updated successfully' : 'Company created successfully'
+    );
+  };
+
+  // Export functionality
+  const getExportColumns = (): ExportColumn[] => [
+    { title: 'Name', dataIndex: 'name' },
+    { title: 'Phone', dataIndex: 'phone' },
+    { title: 'Email', dataIndex: 'email' },
+    { title: 'Address', dataIndex: 'address' },
+    { 
+      title: 'Created At', 
+      dataIndex: 'createdAt', 
+      render: (value) => value ? new Date(value).toLocaleDateString() : '-' 
     },
   ];
 
-  return (
-    <div style={{ padding: '24px' }}>
-      <Card title="Companies Management">
-        <Space direction="vertical" size="large" style={{ width: '100%' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Search
-              placeholder="Search companies..."
-              allowClear
-              enterButton={<SearchOutlined />}
-              size="large"
-              onSearch={setSearchText}
-              onChange={(e) => {
-                if (!e.target.value) {
-                  setSearchText('');
-                }
-              }}
-              style={{ width: 300 }}
-            />
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              size="large"
-              onClick={() => setIsModalOpen(true)}
-            >
-              Add Company
-            </Button>
-          </div>
+  const handleExport = async (format: string) => {
+    await exportData(format, companies || [], getExportColumns());
+  };
 
-          <Table
-            dataSource={companies}
-            columns={columns}
-            loading={isLoading}
-            rowKey="id"
-            pagination={{
-              pageSize: 10,
-              showSizeChanger: true,
-              showQuickJumper: true,
-              showTotal: (total, range) =>
-                `${range[0]}-${range[1]} of ${total} companies`,
-            }}
-          />
-        </Space>
-      </Card>
+  if (error) {
+    return <div>Error loading companies</div>;
+  }
+
+  return (
+    <ListPageLayout
+      title="Companies"
+      extraActions={
+        <ActionBar
+          onSearch={setSearchText}
+          searchValue={searchText}
+          searchPlaceholder="Search companies..."
+          onAdd={handleAdd}
+          addLabel="Add Company"
+          onExport={handleExport}
+        />
+      }
+    >
+      <Space direction="vertical" size="small" style={{ width: '100%' }}>
+        <CompanyTable
+          data={companies || []}
+          loading={isLoading || isExporting}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
+      </Space>
 
       <Modal
         title={editingCompany ? 'Edit Company' : 'Add Company'}
@@ -155,10 +125,10 @@ export const CompaniesListPage: React.FC = () => {
       >
         <CompanyForm
           initialData={editingCompany}
-          onSuccess={handleModalClose}
+          onSuccess={handleFormSuccess}
           onCancel={handleModalClose}
         />
       </Modal>
-    </div>
+    </ListPageLayout>
   );
 };

@@ -28,7 +28,7 @@ const monthlyTargetsRoute = createRoute({
 });
 const companiesRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/company',
+  path: '/companies',
   component: CompaniesListPage,
 });
 
