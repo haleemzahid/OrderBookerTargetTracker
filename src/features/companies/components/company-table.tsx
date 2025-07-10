@@ -1,5 +1,5 @@
 import React from 'react';
-import { Table, Space, Tag } from 'antd';
+import { Table, Space} from 'antd';
 import { PhoneOutlined, MailOutlined, EnvironmentOutlined } from '@ant-design/icons';
 import { useTable } from '../../../shared/hooks/use-table';
 import type { Company } from '../types';
