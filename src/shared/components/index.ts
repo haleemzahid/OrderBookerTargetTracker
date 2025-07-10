@@ -1,4 +1,5 @@
 export * from './ActionBar';
+export * from './DataTable';
 export * from './FilterContainer';
 export * from './FormActions';
 export * from './TableActions';

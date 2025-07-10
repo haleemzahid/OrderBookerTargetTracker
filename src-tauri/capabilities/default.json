@@ -9,6 +9,24 @@
     "core:default",
     "opener:default",
     "sql:default",
-    "sql:allow-execute"
+    "sql:allow-execute",
+    "dialog:default",
+    "fs:default",
+     "fs:write-all",
+    {
+      "identifier": "fs:scope",
+      "allow": [
+        { "path": "**" }
+      ],
+      "deny": [
+        { "path": "/System/**" },
+        { "path": "/usr/**" },
+        { "path": "/bin/**" },
+        { "path": "/sbin/**" },
+        { "path": "C:\\Windows\\**" },
+        { "path": "C:\\Program Files\\**" },
+        { "path": "C:\\Program Files (x86)\\**" }
+      ]
+    }
   ]
 }

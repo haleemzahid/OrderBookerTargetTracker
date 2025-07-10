@@ -4,8 +4,7 @@ import { CopyOutlined } from '@ant-design/icons';
 import { useMonthlyTargetsByMonth } from '../api/queries';
 import { useDeleteMonthlyTarget, useCopyFromPreviousMonth } from '../api/mutations';
 import { useOrderBookers } from '../../order-bookers';
-import { MonthlyTargetTable } from '../components/monthly-target-table';
-import { MonthlyTargetForm } from '../components/monthly-target-form';
+import { MonthlyTargetForm, EnhancedMonthlyTargetTable } from '../components';
 import { ActionBar, ListPageLayout } from '../../../shared/components';
 import dayjs, { Dayjs } from 'dayjs';
 import type { MonthlyTarget, MonthlyTargetWithOrderBooker } from '../types';
@@ -34,7 +33,7 @@ export const MonthlyTargetsListPage: React.FC = () => {
   const deleteMutation = useDeleteMonthlyTarget();
   const copyMutation = useCopyFromPreviousMonth();
 
-  // Filter data based on search and order booker filter
+  // Filter data based on search and order booker filter and prepare for export
   const filteredData = useMemo(() => {
     if (!monthlyTargets) return [];
 
@@ -45,11 +44,31 @@ export const MonthlyTargetsListPage: React.FC = () => {
       filtered = filtered.filter((target) => filters.orderBookerIds.includes(target.orderBookerId));
     }
 
-    // Add order booker info to targets
-    const targetsWithOrderBooker: MonthlyTargetWithOrderBooker[] = filtered.map((target) => ({
-      ...target,
-      orderBooker: orderBookers?.find((ob) => ob.id === target.orderBookerId),
-    }));
+    // Add order booker info to targets and prepare display fields for export
+    const targetsWithOrderBooker: MonthlyTargetWithOrderBooker[] = filtered.map((target) => {
+      // Find order booker
+      const orderBooker = orderBookers?.find((ob) => ob.id === target.orderBookerId);
+      
+      // Determine status text
+      let statusDisplay = 'Not Started';
+      if (target.achievementPercentage >= 100) {
+        statusDisplay = 'Achieved';
+      } else if (target.achievementPercentage >= 80) {
+        statusDisplay = 'On Track';
+      } else if (target.achievementPercentage >= 50) {
+        statusDisplay = 'Behind';
+      } else if (target.achievementPercentage > 0) {
+        statusDisplay = 'At Risk';
+      }
+      
+      return {
+        ...target,
+        orderBooker,
+        orderBookerName: orderBooker?.name || '',
+        monthDisplay: dayjs().year(target.year).month(target.month - 1).format('MMM YYYY'),
+        statusDisplay,
+      };
+    });
 
     // Filter by search text
     if (searchText) {
@@ -165,6 +184,8 @@ export const MonthlyTargetsListPage: React.FC = () => {
     );
   };
 
+
+
   return (
     <ListPageLayout
       title="Monthly Targets"
@@ -175,17 +196,20 @@ export const MonthlyTargetsListPage: React.FC = () => {
           searchPlaceholder="Search targets..."
           onAdd={handleAdd}
           addLabel="Add Target"
-          onExport={() => {}}
           extraActions={renderExtraActions()}
         />
       }
     >
       <Space direction="vertical" size="small" style={{ width: '100%' }}>
-        <MonthlyTargetTable
+        <EnhancedMonthlyTargetTable
           data={filteredData}
           loading={isLoading}
           onEdit={handleEdit}
           onDelete={handleDelete}
+          exportFileName={`monthly-targets-${filters.year}-${filters.month}`}
+          exportTitle={`Monthly Targets - ${dayjs().year(filters.year).month(filters.month - 1).format('MMMM YYYY')}`}
+          year={filters.year}
+          month={filters.month}
         />
       </Space>
 

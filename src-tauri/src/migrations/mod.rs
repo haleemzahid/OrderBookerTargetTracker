@@ -1,4 +1,4 @@
-use tauri_plugin_sql::{Migration};
+use tauri_plugin_sql::Migration;
 
 mod migration_001_create_order_bookers_table;
 mod migration_002_create_daily_entries_table;
