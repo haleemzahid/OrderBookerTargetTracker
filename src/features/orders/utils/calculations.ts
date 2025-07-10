@@ -1,3 +1,4 @@
+import Database from '@tauri-apps/plugin-sql';
 import { getDatabase } from '../../../services/database';
 
 export interface OrderItemCalculation {
@@ -26,10 +27,9 @@ export const calculateOrderItemTotals = async (
   quantity: number,
   costPrice: number,
   sellPrice: number,
+  db: Database,
   returnQuantity: number = 0
 ): Promise<OrderItemCalculation> => {
-  const db = getDatabase();
-  
   // Get unit per carton from product
   const productResult = await db.select<any[]>(
     'SELECT unit_per_carton FROM products WHERE id = ?',
@@ -113,72 +113,4 @@ export const updateOrderTotals = async (orderId: string): Promise<void> => {
       orderId
     ]
   );
-};
-
-/**
- * Recalculate all order item totals and order totals
- * Useful for fixing data that might have missing calculations
- */
-export const recalculateAllOrderTotals = async (): Promise<void> => {
-  const db = getDatabase();
-  
-  console.log('Starting recalculation of all order totals...');
-  
-  try {
-    // Get all order items that need recalculation
-    const orderItems = await db.select<any[]>(
-      `SELECT oi.id, oi.order_id, oi.product_id, oi.quantity, 
-              oi.cost_price, oi.sell_price, oi.return_quantity,
-              p.unit_per_carton
-       FROM order_items oi
-       JOIN products p ON oi.product_id = p.id`
-    );
-    
-    console.log(`Found ${orderItems.length} order items to recalculate`);
-    
-    // Update each order item with calculated totals
-    for (const item of orderItems) {
-      const totals = await calculateOrderItemTotals(
-        item.product_id,
-        item.quantity,
-        item.cost_price,
-        item.sell_price,
-        item.return_quantity || 0
-      );
-      
-      await db.execute(
-        `UPDATE order_items SET
-          total_cost = ?,
-          total_amount = ?,
-          profit = ?,
-          cartons = ?,
-          return_amount = ?,
-          return_cartons = ?,
-          updated_at = datetime('now')
-         WHERE id = ?`,
-        [
-          totals.totalCost,
-          totals.totalAmount,
-          totals.profit,
-          totals.cartons,
-          totals.returnAmount,
-          totals.returnCartons,
-          item.id
-        ]
-      );
-    }
-    
-    // Get all orders and update their totals
-    const orders = await db.select<any[]>('SELECT id FROM orders');
-    console.log(`Found ${orders.length} orders to recalculate`);
-    
-    for (const order of orders) {
-      await updateOrderTotals(order.id);
-    }
-    
-    console.log('Finished recalculating all order totals');
-  } catch (error) {
-    console.error('Error recalculating order totals:', error);
-    throw error;
-  }
 };

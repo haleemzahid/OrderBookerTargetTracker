@@ -10,7 +10,7 @@ import {
   OrderSummary 
 } from '../types';
 import { v4 as uuidv4 } from 'uuid';
-import { calculateOrderItemTotals, updateOrderTotals } from '../utils/calculations';
+import { updateOrderTotals } from '../utils/calculations';
 
 // Order CRUD Operations
 export const getOrderById = async (id: string): Promise<Order | null> => {
@@ -95,11 +95,57 @@ export const createOrder = async (orderData: CreateOrderRequest): Promise<Order>
     await db.execute('BEGIN');
     console.log("Transaction started");
     
-    // Create the order
+    // Calculate order item totals first
+    const orderItemsWithTotals = [];
+    let orderTotalAmount = 0;
+    let orderTotalCost = 0;
+    let orderTotalProfit = 0;
+    let orderTotalCartons = 0;
+    let orderReturnCartons = 0;
+    let orderReturnAmount = 0;
+    
+    for (const item of orderData.items) {
+      const itemId = uuidv4();
+      
+      // Simple inline calculations without external method calls
+      const totalCost = item.quantity * item.costPrice;
+      const totalAmount = item.quantity * item.sellPrice;
+      const profit = totalAmount - totalCost;
+      const cartons = Math.floor(item.quantity / 12); // Assuming 12 units per carton
+      const returnCartons = 0; // No returns for new orders
+      const returnAmount = 0; // No returns for new orders
+      
+      const totals = {
+        totalCost,
+        totalAmount,
+        profit,
+        cartons,
+        returnCartons,
+        returnAmount
+      };
+      
+      orderItemsWithTotals.push({
+        itemId,
+        item,
+        totals
+      });
+      
+      // Accumulate order totals
+      orderTotalAmount += totals.totalAmount;
+      orderTotalCost += totals.totalCost;
+      orderTotalProfit += totals.profit;
+      orderTotalCartons += totals.cartons;
+      orderReturnCartons += totals.returnCartons;
+      orderReturnAmount += totals.returnAmount;
+    }
+    
+    // Create the order with calculated totals
     await db.execute(
       `INSERT INTO orders (
-        id, order_booker_id, order_date, supply_date, status, notes, created_at, updated_at
-       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        id, order_booker_id, order_date, supply_date, status, notes,
+        total_amount, total_cost, total_profit, total_cartons,
+        return_cartons, return_amount, created_at, updated_at
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         orderId,
         orderData.orderBookerId,
@@ -107,24 +153,19 @@ export const createOrder = async (orderData: CreateOrderRequest): Promise<Order>
         orderData.supplyDate ? orderData.supplyDate.toISOString().split('T')[0] : null,
         'pending',
         orderData.notes || null,
+        orderTotalAmount,
+        orderTotalCost,
+        orderTotalProfit,
+        orderTotalCartons,
+        orderReturnCartons,
+        orderReturnAmount,
         now,
         now
       ]
     );
     
-    // Create order items
-    for (const item of orderData.items) {
-      const itemId = uuidv4();
-      
-      // Calculate order item totals
-      const totals = await calculateOrderItemTotals(
-        item.productId,
-        item.quantity,
-        item.costPrice,
-        item.sellPrice,
-        0 // No return quantity for new items
-      );
-      
+    // Create order items with pre-calculated totals
+    for (const { itemId, item, totals } of orderItemsWithTotals) {
       await db.execute(
         `INSERT INTO order_items (
           id, order_id, product_id, quantity, cost_price, sell_price, 
@@ -138,7 +179,7 @@ export const createOrder = async (orderData: CreateOrderRequest): Promise<Order>
           item.quantity,
           item.costPrice,
           item.sellPrice,
-          item.quantity,
+          0, // No return quantity for new items
           totals.totalCost,
           totals.totalAmount,
           totals.profit,
@@ -150,9 +191,6 @@ export const createOrder = async (orderData: CreateOrderRequest): Promise<Order>
         ]
       );
     }
-    
-    // Update order totals
-    await updateOrderTotals(orderId);
     
     await db.execute('COMMIT');
     console.log("Transaction committed");
@@ -258,14 +296,13 @@ export const createOrderItem = async (orderId: string, itemData: CreateOrderItem
   const now = new Date().toISOString();
   const itemId = uuidv4();
   
-  // Calculate order item totals
-  const totals = await calculateOrderItemTotals(
-    itemData.productId,
-    itemData.quantity,
-    itemData.costPrice,
-    itemData.sellPrice,
-    0 // No return quantity for new items
-  );
+  // Simple inline calculations
+  const totalCost = itemData.quantity * itemData.costPrice;
+  const totalAmount = itemData.quantity * itemData.sellPrice;
+  const profit = totalAmount - totalCost;
+  const cartons = Math.floor(itemData.quantity / 12); // Assuming 12 units per carton
+  const returnAmount = 0; // No returns for new items
+  const returnCartons = 0; // No returns for new items
   
   await db.execute(
     `INSERT INTO order_items (
@@ -281,12 +318,12 @@ export const createOrderItem = async (orderId: string, itemData: CreateOrderItem
       itemData.costPrice,
       itemData.sellPrice,
       0,
-      totals.totalCost,
-      totals.totalAmount,
-      totals.profit,
-      totals.cartons,
-      totals.returnAmount,
-      totals.returnCartons,
+      totalCost,
+      totalAmount,
+      profit,
+      cartons,
+      returnAmount,
+      returnCartons,
       now,
       now
     ]
@@ -331,14 +368,13 @@ export const updateOrderItem = async (itemId: string, itemData: UpdateOrderItemR
   const newSellPrice = itemData.sellPrice !== undefined ? itemData.sellPrice : currentItem.sell_price;
   const newReturnQuantity = itemData.returnQuantity !== undefined ? itemData.returnQuantity : currentItem.return_quantity;
   
-  // Calculate new totals
-  const totals = await calculateOrderItemTotals(
-    currentItem.product_id,
-    newQuantity,
-    currentItem.cost_price,
-    newSellPrice,
-    newReturnQuantity
-  );
+  // Simple inline calculations
+  const totalCost = newQuantity * currentItem.cost_price;
+  const totalAmount = newQuantity * newSellPrice;
+  const profit = totalAmount - totalCost;
+  const cartons = Math.floor(newQuantity / 12); // Assuming 12 units per carton
+  const returnAmount = newReturnQuantity * newSellPrice;
+  const returnCartons = Math.floor(newReturnQuantity / 12);
   
   if (itemData.quantity !== undefined) {
     updateFields.push(`quantity = ?`);
@@ -367,12 +403,12 @@ export const updateOrderItem = async (itemId: string, itemData: UpdateOrderItemR
   );
   
   params.push(
-    totals.totalCost,
-    totals.totalAmount,
-    totals.profit,
-    totals.cartons,
-    totals.returnAmount,
-    totals.returnCartons,
+    totalCost,
+    totalAmount,
+    profit,
+    cartons,
+    returnAmount,
+    returnCartons,
     now
   );
   
