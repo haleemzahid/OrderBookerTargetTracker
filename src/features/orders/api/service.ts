@@ -90,8 +90,9 @@ export const createOrder = async (orderData: CreateOrderRequest): Promise<Order>
   const orderId = uuidv4();
   
   // Start transaction
+  console.log("transaction starting");
   await db.execute('BEGIN TRANSACTION');
-  
+  console.log("transaction started");
   try {
     // Create the order
     await db.execute(
@@ -109,7 +110,7 @@ export const createOrder = async (orderData: CreateOrderRequest): Promise<Order>
         now
       ]
     );
-    
+    console.log("added order");
     // Create order items directly in the transaction
     for (const item of orderData.items) {
       const itemId = uuidv4();
@@ -128,9 +129,12 @@ export const createOrder = async (orderData: CreateOrderRequest): Promise<Order>
           now
         ]
       );
+    console.log("added order item");
+
     }
-    
+    console.log("comminting");
     await db.execute('COMMIT');
+    console.log("commited");
     
     const order = await getOrderById(orderId);
     if (!order) {
@@ -139,6 +143,7 @@ export const createOrder = async (orderData: CreateOrderRequest): Promise<Order>
     
     return order;
   } catch (error) {
+    console.log(error);
     await db.execute('ROLLBACK');
     throw error;
   }
