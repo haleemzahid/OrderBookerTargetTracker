@@ -130,6 +130,80 @@ export const OrderItemsTable: React.FC<OrderItemsTableProps> = ({
   
   const { data: products = [], isLoading: isLoadingProducts } = useProducts();
 
+  const save = async (key: React.Key) => {
+    try {
+      const row = await form.validateFields();
+      const product = products.find(p => p.id === row.productId);
+      
+      if (!product) {
+        return;
+      }
+
+      const calculatedRow = calculateValues(row, row.productId);
+      const newData = [...data];
+      const index = newData.findIndex((item) => key === item.key);
+      
+      if (index > -1) {
+        const item = newData[index];
+        const updatedItem = {
+          ...item,
+          ...calculatedRow,
+          productName: product.name,
+          isNew: false,
+        };
+        newData.splice(index, 1, updatedItem);
+        
+        // If this was a new row, add another empty row and auto-edit it
+        if (item.isNew) {
+          const newEmptyRow: OrderItemData = {
+            key: `new-${Date.now()}`,
+            isNew: true,
+          };
+          newData.push(newEmptyRow);
+          
+          // Auto-edit the new empty row
+          setTimeout(() => {
+            setEditingKey(newEmptyRow.key);
+            form.setFieldsValue({
+              productId: '',
+              quantity: 1,
+              costPrice: 0,
+              sellPrice: 0,
+              returnQuantity: 0,
+            });
+          }, 0);
+        } else {
+          setEditingKey('');
+        }
+        
+        setData(newData);
+        onItemsChange(newData.filter(item => !item.isNew && item.productId));
+      }
+    } catch (errInfo) {
+      console.log('Validate Failed:', errInfo);
+    }
+  };
+
+  // Handle clicks outside the table to save editing row
+  useEffect(() => {
+    const handleDocumentClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      const isEditableElement = target.closest('.ant-form-item') || 
+                               target.closest('input') || 
+                               target.closest('.ant-select') ||
+                               target.closest('.ant-table');
+      
+      if (!isEditableElement && editingKey) {
+        save(editingKey);
+      }
+    };
+
+    document.addEventListener('click', handleDocumentClick);
+    return () => {
+      document.removeEventListener('click', handleDocumentClick);
+    };
+  }, [editingKey]);
+
   useEffect(() => {
     setData(items);
   }, [items]);
@@ -141,24 +215,22 @@ export const OrderItemsTable: React.FC<OrderItemsTableProps> = ({
         key: `new-${Date.now()}`,
         isNew: true,
       };
-      setData(prev => [...prev, newEmptyRow]);
+      const newData = [...data, newEmptyRow];
+      setData(newData);
+      
+      // Auto-edit the new empty row
+      setTimeout(() => {
+        setEditingKey(newEmptyRow.key);
+        form.setFieldsValue({
+          productId: '',
+          quantity: 1,
+          costPrice: 0,
+          sellPrice: 0,
+          returnQuantity: 0,
+        });
+      }, 0);
     }
-  }, [data]);
-
-  useEffect(() => {
-    // Auto-edit the new empty row if no other row is being edited
-    const lastRow = data[data.length - 1];
-    if (lastRow?.isNew && editingKey === '') {
-      setEditingKey(lastRow.key);
-      form.setFieldsValue({
-        productId: '',
-        quantity: 1,
-        costPrice: 0,
-        sellPrice: 0,
-        returnQuantity: 0,
-      });
-    }
-  }, [data, editingKey, form]);
+  }, [data, form]);
 
   const isEditing = (record: OrderItemData) => record.key === editingKey;
 
@@ -208,77 +280,6 @@ export const OrderItemsTable: React.FC<OrderItemsTableProps> = ({
       returnAmount,
       returnCartons,
     };
-  };
-
-  const save = async (key: React.Key) => {
-    try {
-      const row = await form.validateFields();
-      const product = products.find(p => p.id === row.productId);
-      
-      if (!product) {
-        return;
-      }
-
-      const calculatedRow = calculateValues(row, row.productId);
-      const newData = [...data];
-      const index = newData.findIndex((item) => key === item.key);
-      
-      if (index > -1) {
-        const item = newData[index];
-        const updatedItem = {
-          ...item,
-          ...calculatedRow,
-          productName: product.name,
-          isNew: false,
-        };
-        newData.splice(index, 1, updatedItem);
-        
-        // If this was a new row, add another empty row and auto-edit it
-        if (item.isNew) {
-          const newEmptyRow: OrderItemData = {
-            key: `new-${Date.now()}`,
-            isNew: true,
-          };
-          newData.push(newEmptyRow);
-          
-          // Auto-edit the new empty row
-          setTimeout(() => {
-            setEditingKey(newEmptyRow.key);
-            form.setFieldsValue({
-              productId: '',
-              quantity: 1,
-              costPrice: 0,
-              sellPrice: 0,
-              returnQuantity: 0,
-            });
-          }, 0);
-        } else {
-          // If editing an existing row, check if we need to auto-edit the last new row
-          const lastRow = newData[newData.length - 1];
-          if (lastRow?.isNew) {
-            setTimeout(() => {
-              setEditingKey(lastRow.key);
-              form.setFieldsValue({
-                productId: '',
-                quantity: 1,
-                costPrice: 0,
-                sellPrice: 0,
-                returnQuantity: 0,
-              });
-            }, 0);
-          } else {
-            setEditingKey('');
-          }
-        }
-        
-        setData(newData);
-        onItemsChange(newData.filter(item => !item.isNew && item.productId));
-        
-        // Don't clear editingKey here as we set it above
-      }
-    } catch (errInfo) {
-      console.log('Validate Failed:', errInfo);
-    }
   };
 
   const handleBlur = async (key: React.Key) => {
@@ -494,8 +495,9 @@ export const OrderItemsTable: React.FC<OrderItemsTableProps> = ({
         loading={loading || isLoadingProducts}
         onRow={(record) => ({
           onDoubleClick: () => {
-            console.log(editingKey);
+            if (!isEditing(record)) {
               edit(record);
+            }
           },
         })}
         summary={(pageData) => {
