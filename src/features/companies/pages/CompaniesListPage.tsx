@@ -4,18 +4,16 @@ import { useCompanies } from '../hooks/queries';
 import { useDeleteCompany } from '../api/mutations';
 import { CompanyTable } from '../components/company-table';
 import { CompanyForm } from '../components/CompanyForm';
-import { ActionBar, ListPageLayout, GuidedTour } from '../../../shared/components';
+import { ActionBar, ListPageLayout } from '../../../shared/components';
 import { useExport } from '../../../shared/hooks';
 import { ExportColumn } from '../../../shared/utils/export/exportService';
 import type { Company } from '../types';
-import type { TourProps } from 'antd';
 import { QuestionCircleOutlined } from '@ant-design/icons';
 
 export const CompaniesListPage: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCompany, setEditingCompany] = useState<Company | null>(null);
   const [searchText, setSearchText] = useState('');
-  const [tourOpen, setTourOpen] = useState(false);
 
 
   // Set up export functionality
@@ -139,7 +137,7 @@ export const CompaniesListPage: React.FC = () => {
           <Button 
             type="text"
             icon={<QuestionCircleOutlined />}
-            onClick={() => setTourOpen(true)}
+            // onClick={() => setTourOpen(true)}
             style={{ marginLeft: 8 }}
           />
         </div>

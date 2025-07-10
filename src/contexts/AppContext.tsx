@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useMemo, ReactNode } from '
 import { ConfigProvider, theme } from 'antd';
 import enUS from 'antd/locale/en_US';
 import type { Theme } from '../types';
+import { lightTheme, darkTheme } from '../config/theme';
 
 interface AppContextType {
   theme: Theme;
@@ -31,6 +32,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       <ConfigProvider
         theme={{
           algorithm: appTheme === 'dark' ? theme.darkAlgorithm : theme.defaultAlgorithm,
+          ...(appTheme === 'dark' ? darkTheme : lightTheme),
         }}
         componentSize='middle'
         locale={enUS}
