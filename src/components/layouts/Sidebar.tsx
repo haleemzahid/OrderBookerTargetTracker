@@ -8,7 +8,8 @@ import {
   AimOutlined,
   BarChartOutlined,
   SettingOutlined,
-  ShopOutlined
+  ShopOutlined,
+  ShoppingOutlined
 } from '@ant-design/icons';
 
 const { Sider } = Layout;
@@ -32,6 +33,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
     if (path.startsWith('/monthly-targets')) return 'monthly-targets';
     if (path.startsWith('/reports')) return 'reports';
     if (path.startsWith('/companies')) return 'companies';
+    if (path.startsWith('/products')) return 'products';
     return 'dashboard';
   };
 
@@ -48,6 +50,9 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
         break;
       case 'monthly-targets':
         navigate({ to: '/monthly-targets' });
+        break;
+      case 'products':
+        navigate({ to: '/products' });
         break;
       // case 'reports':
       //   navigate({ to: '/reports' });
@@ -66,10 +71,15 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
       icon: <DashboardOutlined />,
       label: 'Dashboard',
     },
-      {
+    {
       key: 'companies',
       icon: <ShopOutlined />,
       label: 'Companies',
+    },
+    {
+      key: 'products',
+      icon: <ShoppingOutlined />,
+      label: 'Products',
     },
     {
       key: 'order-bookers',

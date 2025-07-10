@@ -3,6 +3,7 @@ import MainLayout from '../../components/layouts/MainLayout';
 import { OrderBookersListPage } from '../../features/order-bookers';
 import { MonthlyTargetsListPage } from '../../features/monthly-targets';
 import { CompaniesListPage } from '../../features/companies/pages/CompaniesListPage';
+import { ProductsListPage } from '../../features/products/pages/products-list';
 
 const rootRoute = createRootRoute({
   component: MainLayout,
@@ -31,11 +32,18 @@ const companiesRoute = createRoute({
   component: CompaniesListPage,
 });
 
+const productsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/products',
+  component: ProductsListPage,
+});
+
 const routeTree = rootRoute.addChildren([
   orderBookersRoute,
   dailyEntriesRoute,
   monthlyTargetsRoute,
-  companiesRoute
+  companiesRoute,
+  productsRoute
 ]);
 
 export const router = createRouter({ routeTree });
