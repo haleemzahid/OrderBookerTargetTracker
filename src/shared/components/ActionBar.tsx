@@ -1,8 +1,14 @@
 import React, { ReactNode } from 'react';
-import { Space, Input, Button } from 'antd';
-import { PlusOutlined, ExportOutlined } from '@ant-design/icons';
+import { Space, Input, Button, Dropdown, Menu } from 'antd';
+import { PlusOutlined, ExportOutlined, FilePdfOutlined, FileWordOutlined, FileExcelOutlined } from '@ant-design/icons';
 
 const { Search } = Input;
+
+export interface ExportFormat {
+  key: string;
+  label: string;
+  icon?: ReactNode;
+}
 
 export interface ActionBarProps {
   onSearch?: (value: string) => void;
@@ -10,8 +16,9 @@ export interface ActionBarProps {
   searchPlaceholder?: string;
   onAdd?: () => void;
   addLabel?: string;
-  onExport?: () => void;
+  onExport?: (format: string) => void;
   exportLabel?: string;
+  exportFormats?: ExportFormat[];
   showSearch?: boolean;
   showAdd?: boolean;
   showExport?: boolean;
@@ -30,6 +37,7 @@ export const ActionBar: React.FC<ActionBarProps> = ({
   addLabel = 'Add',
   onExport,
   exportLabel = 'Export',
+  exportFormats,
   showSearch = true,
   showAdd = true,
   showExport = true,
@@ -50,12 +58,24 @@ export const ActionBar: React.FC<ActionBarProps> = ({
       {extraActions}
       
       {showExport && (
-        <Button 
-          icon={<ExportOutlined />} 
-          onClick={onExport}
+        <Dropdown
+          menu={{
+            items: (exportFormats || [
+              { key: 'excel', label: 'Excel', icon: <FileExcelOutlined /> },
+              { key: 'pdf', label: 'PDF', icon: <FilePdfOutlined /> },
+              { key: 'word', label: 'Word', icon: <FileWordOutlined /> },
+            ]).map(format => ({
+              key: format.key,
+              label: format.label,
+              icon: format.icon,
+              onClick: () => onExport?.(format.key)
+            }))
+          }}
         >
-          {exportLabel}
-        </Button>
+          <Button icon={<ExportOutlined />}>
+            {exportLabel} <i className="fa fa-caret-down" />
+          </Button>
+        </Dropdown>
       )}
       
       {showAdd && (
