@@ -1,3 +1,6 @@
+---
+applyTo: '**'
+---
 # Design System Guidelines for Order Booker Target Tracker
 
 ## Overview
@@ -22,8 +25,8 @@ This document outlines the design system approach for the Order Booker Target Tr
 
 ### 3. Cultural Context
 - Use language and imagery appropriate for Pakistani business context
-- Support Urdu language integration where needed
 - Consider local business practices in workflow design
+- Use Rs. for currency
 
 ## Component Usage Guidelines
 
