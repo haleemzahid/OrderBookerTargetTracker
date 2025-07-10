@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Table, Button, Space, Tag, Popconfirm, Typography } from 'antd';
 import { EditOutlined, DeleteOutlined, CalendarOutlined } from '@ant-design/icons';
 import { useTable } from '../../../shared/hooks/use-table';
@@ -20,8 +20,36 @@ export const DailyEntryTable: React.FC<DailyEntryTableProps> = ({
   onEdit,
   onDelete,
 }) => {
+  // Enhance data with calculated metrics
+  const enhancedData = useMemo(() => {
+    return data.map(entry => {
+      const totalQuantity = entry.items?.reduce((sum, item) => sum + item.quantitySold, 0) || 0;
+      const returnQuantity = entry.items?.reduce((sum, item) => sum + item.quantityReturned, 0) || 0;
+      const netQuantity = totalQuantity - returnQuantity;
+      
+      const salesReturnRate = entry.totalAmount > 0 
+        ? (entry.totalReturnAmount / entry.totalAmount) * 100 
+        : 0;
+      
+      const quantityReturnRate = totalQuantity > 0 
+        ? (returnQuantity / totalQuantity) * 100 
+        : 0;
+        
+      return {
+        ...entry,
+        _calculated: {
+          totalQuantity,
+          returnQuantity,
+          netQuantity,
+          salesReturnRate,
+          quantityReturnRate
+        }
+      };
+    });
+  }, [data]);
+  
   const { tableProps } = useTable({
-    data,
+    data: enhancedData,
     searchableFields: ['notes'],
   });
 
@@ -52,8 +80,8 @@ export const DailyEntryTable: React.FC<DailyEntryTableProps> = ({
     },
     {
       title: 'Sales',
-      dataIndex: 'sales',
-      key: 'sales',
+      dataIndex: 'totalAmount',
+      key: 'totalAmount',
       sorter: true,
       render: (value: number) => (
         <Text strong style={{ color: '#52c41a' }}>
@@ -63,8 +91,8 @@ export const DailyEntryTable: React.FC<DailyEntryTableProps> = ({
     },
     {
       title: 'Returns',
-      dataIndex: 'returns',
-      key: 'returns',
+      dataIndex: 'totalReturnAmount',
+      key: 'totalReturnAmount',
       sorter: true,
       render: (value: number) => (
         <Text style={{ color: '#ff4d4f' }}>
@@ -74,8 +102,8 @@ export const DailyEntryTable: React.FC<DailyEntryTableProps> = ({
     },
     {
       title: 'Net Sales',
-      dataIndex: 'netSales',
-      key: 'netSales',
+      dataIndex: 'netAmount',
+      key: 'netAmount',
       sorter: true,
       render: (value: number) => (
         <Text strong style={{ color: value >= 0 ? '#52c41a' : '#ff4d4f' }}>
@@ -84,28 +112,29 @@ export const DailyEntryTable: React.FC<DailyEntryTableProps> = ({
       ),
     },
     {
-      title: 'Cartons',
-      key: 'cartons',
-      render: (record: DailyEntry) => (
-        <div>
+      title: 'Quantities',
+      key: 'quantities',
+      render: (record: any) => {
+        return (
           <div>
-            <Text>Total: {record.totalCarton}</Text>
+            <div>
+              <Text>Total: {record._calculated.totalQuantity}</Text>
+            </div>
+            <div>
+              <Text type="secondary">Returns: {record._calculated.returnQuantity}</Text>
+            </div>
+            <div>
+              <Text strong>Net: {record._calculated.netQuantity}</Text>
+            </div>
           </div>
-          <div>
-            <Text type="secondary">Returns: {record.returnCarton}</Text>
-          </div>
-          <div>
-            <Text strong>Net: {record.totalCarton - record.returnCarton}</Text>
-          </div>
-        </div>
-      ),
+        );
+      },
     },
     {
       title: 'Return Rate',
       key: 'returnRate',
-      render: (record: DailyEntry) => {
-        const salesReturnRate = record.sales > 0 ? (record.returns / record.sales) * 100 : 0;
-        const cartonReturnRate = record.totalCarton > 0 ? (record.returnCarton / record.totalCarton) * 100 : 0;
+      render: (record: any) => {
+        const { salesReturnRate, quantityReturnRate } = record._calculated;
         
         return (
           <div>
@@ -115,8 +144,8 @@ export const DailyEntryTable: React.FC<DailyEntryTableProps> = ({
               </Tag>
             </div>
             <div style={{ marginTop: 4 }}>
-              <Tag color={cartonReturnRate > 20 ? 'red' : cartonReturnRate > 10 ? 'orange' : 'green'}>
-                Cartons: {cartonReturnRate.toFixed(1)}%
+              <Tag color={quantityReturnRate > 20 ? 'red' : quantityReturnRate > 10 ? 'orange' : 'green'}>
+                Quantity: {quantityReturnRate.toFixed(1)}%
               </Tag>
             </div>
           </div>

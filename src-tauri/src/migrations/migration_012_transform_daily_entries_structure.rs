@@ -84,7 +84,7 @@ pub fn migration() -> Migration {
                 de.return_carton as quantity_returned,
                 (de.total_carton - de.return_carton) as net_quantity,
                 (de.total_carton - de.return_carton) * 100 as total_cost,
-                de.total_amount as total_revenue,
+                de.sales as total_revenue,
                 de.created_at,
                 de.updated_at
             FROM daily_entries_backup de;

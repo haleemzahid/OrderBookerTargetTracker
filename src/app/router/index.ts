@@ -1,19 +1,11 @@
 import { createRouter, createRootRoute, createRoute } from '@tanstack/react-router';
 import MainLayout from '../../components/layouts/MainLayout';
-import { DashboardPage } from '../../features/dashboard';
 import { OrderBookersListPage } from '../../features/order-bookers';
 import { DailyEntriesListPage } from '../../features/daily-entries';
 import { MonthlyTargetsListPage } from '../../features/monthly-targets';
-import { ReportsPage } from '../../features/reports';
 
 const rootRoute = createRootRoute({
   component: MainLayout,
-});
-
-const dashboardRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/',
-  component: DashboardPage,
 });
 
 const orderBookersRoute = createRoute({
@@ -34,18 +26,10 @@ const monthlyTargetsRoute = createRoute({
   component: MonthlyTargetsListPage,
 });
 
-const reportsRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/reports',
-  component: ReportsPage,
-});
-
 const routeTree = rootRoute.addChildren([
-  dashboardRoute,
   orderBookersRoute,
   dailyEntriesRoute,
   monthlyTargetsRoute,
-  reportsRoute,
 ]);
 
 export const router = createRouter({ routeTree });
