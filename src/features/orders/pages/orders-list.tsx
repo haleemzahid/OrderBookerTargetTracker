@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Modal, message, Space, Select, DatePicker, Tag } from 'antd';
+import { useNavigate } from '@tanstack/react-router';
 import { useOrders, useOrderSummary } from '../api/queries';
 import { useDeleteOrder } from '../api/mutations';
 import { useOrderBookers } from '../../order-bookers/api/queries';
@@ -8,7 +9,7 @@ import { useExport } from '../../../shared/hooks';
 import { ExportColumn } from '../../../shared/utils/export/exportService';
 import type { Order, OrderFilters } from '../types';
 import dayjs from 'dayjs';
-import { OrderDetail, OrderForm, OrderTable } from '..';
+import { OrderDetail, OrderTable } from '..';
 
 const { Option } = Select;
 const { RangePicker } = DatePicker;
@@ -20,9 +21,8 @@ interface FilterState {
 }
 
 export const OrdersListPage: React.FC = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const navigate = useNavigate();
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-  const [editingOrder, setEditingOrder] = useState<Order | null>(null);
   const [viewingOrder, setViewingOrder] = useState<Order | null>(null);
   const [searchText, setSearchText] = useState('');
   const [filters, setFilters] = useState<FilterState>({
@@ -62,13 +62,11 @@ export const OrdersListPage: React.FC = () => {
   const deleteMutation = useDeleteOrder();
 
   const handleAdd = () => {
-    setEditingOrder(null);
-    setIsModalOpen(true);
+    navigate({ to: '/orders/create' });
   };
 
   const handleEdit = (order: Order) => {
-    setEditingOrder(order);
-    setIsModalOpen(true);
+    navigate({ to: '/orders/$orderId/edit', params: { orderId: order.id } });
   };
 
   const handleView = (order: Order) => {
@@ -83,11 +81,6 @@ export const OrdersListPage: React.FC = () => {
     } catch (error) {
       message.error('Failed to delete order');
     }
-  };
-
-  const handleModalClose = () => {
-    setIsModalOpen(false);
-    setEditingOrder(null);
   };
 
   const handleDetailModalClose = () => {
@@ -241,20 +234,6 @@ export const OrdersListPage: React.FC = () => {
           onView={handleView}
         />
       </Space>
-
-      <Modal
-        title={editingOrder ? 'Edit Order' : 'Add Order'}
-        open={isModalOpen}
-        onCancel={handleModalClose}
-        footer={null}
-        width={800}
-      >
-        <OrderForm
-          order={editingOrder || undefined}
-          onCancel={handleModalClose}
-          onSuccess={handleModalClose}
-        />
-      </Modal>
 
       <Modal
         title="Order Details"
