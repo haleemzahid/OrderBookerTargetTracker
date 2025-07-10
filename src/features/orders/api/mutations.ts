@@ -29,8 +29,8 @@ export const useCreateOrder = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.orders.summary() });
       queryClient.setQueryData(queryKeys.orders.detail(newOrder.id), newOrder);
     },
-    onError: (e) => {
-      console.error('Error creating order:', e);
+    onError: (error) => {
+      console.error('Error creating order:', error);
     }
   });
 };

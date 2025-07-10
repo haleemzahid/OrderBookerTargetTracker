@@ -110,9 +110,24 @@ export const createOrder = async (orderData: CreateOrderRequest): Promise<Order>
       ]
     );
     
-    // Create order items
+    // Create order items directly in the transaction
     for (const item of orderData.items) {
-      await createOrderItem(orderId, item);
+      const itemId = uuidv4();
+      await db.execute(
+        `INSERT INTO order_items (
+          id, order_id, product_id, quantity, cost_price, sell_price, created_at, updated_at
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          itemId,
+          orderId,
+          item.productId,
+          item.quantity,
+          item.costPrice,
+          item.sellPrice,
+          now,
+          now
+        ]
+      );
     }
     
     await db.execute('COMMIT');
@@ -135,38 +150,41 @@ export const updateOrder = async (id: string, orderData: UpdateOrderRequest): Pr
   
   // Build dynamic update query
   const updateFields: string[] = [];
-  const params: any[] = [id];
+  const params: any[] = [];
   
   if (orderData.orderBookerId !== undefined) {
-    updateFields.push(`order_booker_id = $${params.length + 1}`);
+    updateFields.push(`order_booker_id = ?`);
     params.push(orderData.orderBookerId);
   }
   
   if (orderData.orderDate !== undefined) {
-    updateFields.push(`order_date = $${params.length + 1}`);
+    updateFields.push(`order_date = ?`);
     params.push(orderData.orderDate.toISOString().split('T')[0]);
   }
   
   if (orderData.supplyDate !== undefined) {
-    updateFields.push(`supply_date = $${params.length + 1}`);
+    updateFields.push(`supply_date = ?`);
     params.push(orderData.supplyDate ? orderData.supplyDate.toISOString().split('T')[0] : null);
   }
   
   if (orderData.status !== undefined) {
-    updateFields.push(`status = $${params.length + 1}`);
+    updateFields.push(`status = ?`);
     params.push(orderData.status);
   }
   
   if (orderData.notes !== undefined) {
-    updateFields.push(`notes = $${params.length + 1}`);
+    updateFields.push(`notes = ?`);
     params.push(orderData.notes);
   }
   
   // Add updated_at to fields and params
-  updateFields.push(`updated_at = $${params.length + 1}`);
+  updateFields.push(`updated_at = ?`);
   params.push(now);
   
-  const query = `UPDATE orders SET ${updateFields.join(', ')} WHERE id = $1`;
+  // Add id parameter at the end
+  params.push(id);
+  
+  const query = `UPDATE orders SET ${updateFields.join(', ')} WHERE id = ?`;
   await db.execute(query, params);
   
   // Get the updated order
@@ -182,7 +200,7 @@ export const deleteOrder = async (id: string): Promise<void> => {
   const db = getDatabase();
   
   // Order items will be deleted automatically via CASCADE
-  await db.execute(`DELETE FROM orders WHERE id = $1`, [id]);
+  await db.execute(`DELETE FROM orders WHERE id = ?`, [id]);
 };
 
 // Order Items CRUD Operations
@@ -241,28 +259,31 @@ export const updateOrderItem = async (itemId: string, itemData: UpdateOrderItemR
   
   // Build dynamic update query
   const updateFields: string[] = [];
-  const params: any[] = [itemId];
+  const params: any[] = [];
   
   if (itemData.quantity !== undefined) {
-    updateFields.push(`quantity = $${params.length + 1}`);
+    updateFields.push(`quantity = ?`);
     params.push(itemData.quantity);
   }
   
   if (itemData.sellPrice !== undefined) {
-    updateFields.push(`sell_price = $${params.length + 1}`);
+    updateFields.push(`sell_price = ?`);
     params.push(itemData.sellPrice);
   }
   
   if (itemData.returnQuantity !== undefined) {
-    updateFields.push(`return_quantity = $${params.length + 1}`);
+    updateFields.push(`return_quantity = ?`);
     params.push(itemData.returnQuantity);
   }
   
   // Add updated_at to fields and params
-  updateFields.push(`updated_at = $${params.length + 1}`);
+  updateFields.push(`updated_at = ?`);
   params.push(now);
   
-  const query = `UPDATE order_items SET ${updateFields.join(', ')} WHERE id = $1`;
+  // Add itemId parameter at the end
+  params.push(itemId);
+  
+  const query = `UPDATE order_items SET ${updateFields.join(', ')} WHERE id = ?`;
   await db.execute(query, params);
   
   // Get the updated order item
@@ -288,7 +309,7 @@ export const updateOrderItem = async (itemId: string, itemData: UpdateOrderItemR
 
 export const deleteOrderItem = async (itemId: string): Promise<void> => {
   const db = getDatabase();
-  await db.execute(`DELETE FROM order_items WHERE id = $1`, [itemId]);
+  await db.execute(`DELETE FROM order_items WHERE id = ?`, [itemId]);
 };
 
 // Summary and Analytics
