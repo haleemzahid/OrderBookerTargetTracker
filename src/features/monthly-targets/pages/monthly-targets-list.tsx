@@ -128,52 +128,42 @@ export const MonthlyTargetsListPage: React.FC = () => {
     );
   };
 
-  const renderFilters = () => (
-    <FilterContainer gutter={12}>
-      <FilterItem span={6} md={6} lg={4}>
-        <Form.Item label="Month & Year" style={{ marginBottom: 0 }}>
-          <DatePicker
-            picker="month"
-            value={dayjs()
-              .year(filters.year)
-              .month(filters.month - 1)}
-            onChange={handleMonthYearChange}
-            style={{ width: '100%' }}
-          />
-        </Form.Item>
-      </FilterItem>
-      <FilterItem span={8} md={8} lg={6}>
-        <Form.Item label="Order Booker" style={{ marginBottom: 0 }}>
-          <Select
-            mode="multiple"
-            id="filterByOrderBooker"
-            placeholder="Filter by Order Booker"
-            value={filters.orderBookerIds}
-            onChange={handleOrderBookerFilter}
-            style={{ width: '100%' }}
-            maxTagCount="responsive"
-          >
-            {orderBookers?.map((orderBooker) => (
-              <Option key={orderBooker.id} value={orderBooker.id}>
-                {orderBooker.name}
-              </Option>
-            ))}
-          </Select>
-        </Form.Item>
-      </FilterItem>
-    </FilterContainer>
-  );
-
-  const renderExtraActions = () => (
-    <Button
-      icon={<CopyOutlined />}
-      onClick={handleCopyFromPrevious}
-      loading={copyMutation.isPending}
-      size="small"
-    >
-      Copy From Previous
-    </Button>
-  );
+  const renderExtraActions = () => {
+    return (
+      <Space size="small">
+        <Button
+          icon={<CopyOutlined />}
+          onClick={handleCopyFromPrevious}
+          loading={copyMutation.isPending}
+        >
+          Copy From Previous
+        </Button>
+        <DatePicker
+          picker="month"
+          value={dayjs()
+            .year(filters.year)
+            .month(filters.month - 1)}
+          onChange={handleMonthYearChange}
+          style={{ width: 120 }}
+        />
+        <Select
+          mode="multiple"
+          id="filterByOrderBooker"
+          placeholder="Filter by Order Booker"
+          value={filters.orderBookerIds}
+          onChange={handleOrderBookerFilter}
+          style={{ width: 200 }}
+          maxTagCount="responsive"
+        >
+          {orderBookers?.map((orderBooker) => (
+            <Option key={orderBooker.id} value={orderBooker.id}>
+              {orderBooker.name}
+            </Option>
+          ))}
+        </Select>
+      </Space>
+    );
+  };
 
   return (
     <ListPageLayout
@@ -191,8 +181,6 @@ export const MonthlyTargetsListPage: React.FC = () => {
       }
     >
       <Space direction="vertical" size="small" style={{ width: '100%' }}>
-        {renderFilters()}
-
         <MonthlyTargetTable
           data={filteredData}
           loading={isLoading}
