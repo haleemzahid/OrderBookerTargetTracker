@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { Form, Input, InputNumber, Select, Button, Row, Col, Space } from 'antd';
+import { useCompanies } from '../../../features/companies/hooks/queries';
 import type { ProductFormProps } from '../types';
 
 const { Option } = Select;
@@ -12,6 +13,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   isEdit 
 }) => {
   const [form] = Form.useForm();
+  const { data: companies, isLoading: isLoadingCompanies } = useCompanies();
 
   // Reset form when initialValues changes
   useEffect(() => {
@@ -50,9 +52,12 @@ export const ProductForm: React.FC<ProductFormProps> = ({
           label="Company"
           rules={[{ required: true, message: 'Please select a company' }]}
         >
-          <Select placeholder="Select company">
-            {/* Ideally, these would come from a companies query */}
-            <Option value="default-company">Default Company</Option>
+          <Select placeholder="Select company" loading={isLoadingCompanies}>
+            {companies?.map(company => (
+              <Option key={company.id} value={company.id}>
+                {company.name}
+              </Option>
+            ))}
           </Select>
         </Form.Item>
       )}

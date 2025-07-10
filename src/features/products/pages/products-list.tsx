@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Modal, message, Space, Select } from 'antd';
 import { useProducts } from '../api/queries';
 import { useDeleteProduct } from '../api/mutations';
+import { useCompanies } from '../../companies/hooks/queries';
 import { ProductTable } from '../components/product-table';
 import { ProductForm } from '../components/product-form';
 import { ActionBar, ListPageLayout } from '../../../shared/components';
@@ -22,6 +23,9 @@ export const ProductsListPage: React.FC = () => {
   const [filters, setFilters] = useState<FilterState>({
     companyId: undefined,
   });
+
+  // Load companies data
+  const { data: companies, isLoading: isLoadingCompanies } = useCompanies();
 
   // Set up export functionality
   const exportFileName = 'products';
@@ -126,8 +130,12 @@ export const ProductsListPage: React.FC = () => {
           onChange={handleCompanyFilter}
           style={{ width: 180 }}
           allowClear
+          loading={isLoadingCompanies}
         >
           <Option value={undefined}>All Companies</Option>
+          {companies?.map(company => (
+            <Option key={company.id} value={company.id}>{company.name}</Option>
+          ))}
         </Select>
       </Space>
     );

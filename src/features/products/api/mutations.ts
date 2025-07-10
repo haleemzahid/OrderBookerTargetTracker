@@ -13,6 +13,9 @@ export const useCreateProduct = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.products.byCompany(newProduct.companyId) });
       queryClient.setQueryData(queryKeys.products.detail(newProduct.id), newProduct);
     },
+    onError:(e)=>{
+        console.log(e);
+    }
   });
 };
 
