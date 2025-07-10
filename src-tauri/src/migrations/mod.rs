@@ -12,6 +12,9 @@ mod migration_009_add_carton_fields_to_daily_entries;
 pub mod migration_010_create_companies_table;
 pub mod migration_011_create_products_table;
 pub mod migration_012_transform_daily_entries_structure;
+pub mod migration_013_create_orders_table;
+pub mod migration_014_create_order_items_table;
+pub mod migration_015_create_order_triggers;
 
 /// Returns all database migrations in order
 pub fn get_migrations() -> Vec<Migration> {
@@ -28,5 +31,8 @@ pub fn get_migrations() -> Vec<Migration> {
         migration_010_create_companies_table::migration(),
         migration_011_create_products_table::migration(),
         migration_012_transform_daily_entries_structure::migration(),
+        migration_013_create_orders_table::migration(),
+        migration_014_create_order_items_table::migration(),
+        migration_015_create_order_triggers::migration(),
     ]
 }
