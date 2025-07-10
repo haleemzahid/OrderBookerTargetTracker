@@ -6,6 +6,8 @@ import { useDeleteMonthlyTarget, useCopyFromPreviousMonth } from '../api/mutatio
 import { useOrderBookers } from '../../order-bookers';
 import { MonthlyTargetForm, MonthlyTargetTable } from '../components';
 import { ActionBar, ListPageLayout } from '../../../shared/components';
+import { useExport } from '../../../shared/hooks';
+import { ExportColumn } from '../../../shared/utils/export/exportService';
 import dayjs, { Dayjs } from 'dayjs';
 import type { MonthlyTarget, MonthlyTargetWithOrderBooker } from '../types';
 
@@ -32,6 +34,15 @@ export const MonthlyTargetsListPage: React.FC = () => {
   const { data: monthlyTargets, isLoading } = useMonthlyTargetsByMonth(filters.year, filters.month);
   const deleteMutation = useDeleteMonthlyTarget();
   const copyMutation = useCopyFromPreviousMonth();
+  
+  // Set up export functionality
+  const exportFileName = `monthly-targets-${filters.year}-${filters.month}`;
+  const exportTitle = `Monthly Targets - ${dayjs().year(filters.year).month(filters.month - 1).format('MMMM YYYY')}`;
+  
+  const { exportData, isExporting } = useExport({
+    fileName: exportFileName,
+    title: exportTitle,
+  });
 
   // Filter data based on search and order booker filter and prepare for export
   const filteredData = useMemo(() => {
@@ -147,6 +158,22 @@ export const MonthlyTargetsListPage: React.FC = () => {
     );
   };
 
+  // Export functionality
+  const getExportColumns = (): ExportColumn[] => [
+    { title: 'Month', dataIndex: 'monthDisplay' },
+    { title: 'Order Booker', dataIndex: 'orderBookerName' },
+    { title: 'Target Amount', dataIndex: 'targetAmount' },
+    { title: 'Achieved Amount', dataIndex: 'achievedAmount' },
+    { title: 'Remaining', dataIndex: 'remainingAmount' },
+    { title: 'Achievement %', dataIndex: 'achievementPercentage' },
+    { title: 'Daily Target', dataIndex: 'dailyTargetAmount' },
+    { title: 'Status', dataIndex: 'statusDisplay' },
+  ];
+
+  const handleExport = async (format: string) => {
+    await exportData(format, filteredData, getExportColumns());
+  };
+
   const renderExtraActions = () => {
     return (
       <Space size="small">
@@ -196,6 +223,7 @@ export const MonthlyTargetsListPage: React.FC = () => {
           searchPlaceholder="Search targets..."
           onAdd={handleAdd}
           addLabel="Add Target"
+          onExport={handleExport}
           extraActions={renderExtraActions()}
         />
       }
@@ -203,11 +231,9 @@ export const MonthlyTargetsListPage: React.FC = () => {
       <Space direction="vertical" size="small" style={{ width: '100%' }}>
         <MonthlyTargetTable
           data={filteredData}
-          loading={isLoading}
+          loading={isLoading || isExporting}
           onEdit={handleEdit}
           onDelete={handleDelete}
-          exportFileName={`monthly-targets-${filters.year}-${filters.month}`}
-          exportTitle={`Monthly Targets - ${dayjs().year(filters.year).month(filters.month - 1).format('MMMM YYYY')}`}
         />
       </Space>
 
