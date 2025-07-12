@@ -60,6 +60,7 @@ const EditableCell: React.FC<React.PropsWithChildren<EditableCellProps>> = ({
     inputNode = (
       <CartonQuantityInput
         unitPerCarton={unitPerCarton}
+        value={{ cartons: record[dataIndex] || 0, units: (record[dataIndex] || 0) * unitPerCarton }}
         onChange={(value: CartonQuantityValue) => {
           onValueChange?.(record.key, dataIndex, value.cartons);
         }}
@@ -92,6 +93,7 @@ const EditableCell: React.FC<React.PropsWithChildren<EditableCellProps>> = ({
           onValueChange?.(record.key, dataIndex, value);
         }}
         onBlur={() => onCellBlur?.(record.key)}
+        dropdownMatchSelectWidth={false}
       >
         {products.map(product => (
           <Option key={product.id} value={product.id}>
@@ -208,8 +210,8 @@ export const OrderItemsTable: React.FC<OrderItemsTableProps> = ({
         };
         newData.splice(index, 1, updatedItem);
         
-        // If this was a new row, add another empty row
-        if (item.isNew) {
+        // Only add a new row if this was a new row and has valid cartons
+        if (item.isNew && row.cartons && row.cartons > 0) {
           const newEmptyRow: OrderItemData = {
             key: `new-${Date.now()}`,
             isNew: true,
@@ -246,10 +248,15 @@ export const OrderItemsTable: React.FC<OrderItemsTableProps> = ({
       const isEditableElement = target.closest('.ant-form-item') || 
                                target.closest('input') || 
                                target.closest('.ant-select') ||
-                               target.closest('.ant-table');
+                               target.closest('.ant-table') ||
+                               target.closest('.ant-select-dropdown');
       
       if (!isEditableElement && editingKey) {
-        save(editingKey);
+        // Only save if we have both product and cartons
+        const values = form.getFieldsValue();
+        if (values.productId && values.cartons && values.cartons > 0) {
+          save(editingKey);
+        }
       }
     };
 
@@ -257,7 +264,7 @@ export const OrderItemsTable: React.FC<OrderItemsTableProps> = ({
     return () => {
       document.removeEventListener('click', handleDocumentClick);
     };
-  }, [editingKey]);
+  }, [editingKey, form]);
 
   useEffect(() => {
     setData(items);
@@ -335,11 +342,15 @@ export const OrderItemsTable: React.FC<OrderItemsTableProps> = ({
   };
 
   const handleBlur = async (key: React.Key) => {
-    // Only try to save if we have a complete row with product and cartons
+    // Only save if we have complete data and it's not just a product selection
     try {
       const values = form.getFieldsValue();
       if (values.productId && values.cartons && values.cartons > 0) {
-        await save(key);
+        // Check if this is a new row and if it has valid data
+        const currentItem = data.find(item => item.key === key);
+        if (currentItem?.isNew) {
+          await save(key);
+        }
       }
     } catch (error) {
       // If validation fails, don't exit editing mode
@@ -365,9 +376,24 @@ export const OrderItemsTable: React.FC<OrderItemsTableProps> = ({
       };
       form.setFieldsValue(updatedValues);
       
-      // Update form fields for cost and sell price
+      // Update form fields for cost and sell price without triggering save
       form.setFieldValue('costPrice', product.costPrice);
       form.setFieldValue('sellPrice', product.sellPrice);
+      
+      // Update the data state with new product info
+      const newData = data.map(item => {
+        if (item.key === editingKey) {
+          return {
+            ...item,
+            productId,
+            productName: product.name,
+            costPrice: product.costPrice,
+            sellPrice: product.sellPrice,
+          };
+        }
+        return item;
+      });
+      setData(newData);
     }
   };
 
@@ -375,7 +401,7 @@ export const OrderItemsTable: React.FC<OrderItemsTableProps> = ({
     {
       title: 'Product',
       dataIndex: 'productId',
-      width: '25%',
+      width: '30%',
       editable: true,
       render: (_: any, record: OrderItemData) => {
         return record.productName || (record.isNew ? '' : 'Select Product');
@@ -384,53 +410,63 @@ export const OrderItemsTable: React.FC<OrderItemsTableProps> = ({
     {
       title: 'Cartons',
       dataIndex: 'cartons',
-      width: '10%',
+      width: '15%',
       editable: true,
       render: (value: number) => value || '',
     },
     {
-      title: 'Cost Price',
-      dataIndex: 'costPrice',
-      width: '12%',
-      editable: true,
-      render: (value: number) => value ? <FormatNumber value={value} prefix="Rs. " /> : '',
+      title: 'Prices',
+      children: [
+        {
+          title: 'Cost',
+          dataIndex: 'costPrice',
+          width: '10%',
+          editable: true,
+          render: (value: number) => value ? <FormatNumber value={value} prefix="Rs. " /> : '',
+        },
+        {
+          title: 'Sell',
+          dataIndex: 'sellPrice',
+          width: '10%',
+          editable: true,
+          render: (value: number) => value ? <FormatNumber value={value} prefix="Rs. " /> : '',
+        },
+      ],
     },
     {
-      title: 'Sell Price',
-      dataIndex: 'sellPrice',
-      width: '12%',
-      editable: true,
-      render: (value: number) => value ? <FormatNumber value={value} prefix="Rs. " /> : '',
-    },
-    {
-      title: 'Total Cost',
-      dataIndex: 'totalCost',
-      width: '12%',
-      render: (value: number) => value ? <FormatNumber value={value} prefix="Rs. " /> : '',
-    },
-    {
-      title: 'Total Amount',
-      dataIndex: 'totalAmount',
-      width: '12%',
-      render: (value: number) => value ? <FormatNumber value={value} prefix="Rs. " /> : '',
-    },
-    {
-      title: 'Profit',
-      dataIndex: 'profit',
-      width: '10%',
-      render: (value: number) => value ? <FormatNumber value={value} prefix="Rs. " /> : '',
+      title: 'Totals',
+      children: [
+        {
+          title: 'Cost',
+          dataIndex: 'totalCost',
+          width: '10%',
+          render: (value: number) => value ? <FormatNumber value={value} prefix="Rs. " /> : '',
+        },
+        {
+          title: 'Amount',
+          dataIndex: 'totalAmount',
+          width: '10%',
+          render: (value: number) => value ? <FormatNumber value={value} prefix="Rs. " /> : '',
+        },
+        {
+          title: 'Profit',
+          dataIndex: 'profit',
+          width: '8%',
+          render: (value: number) => value ? <FormatNumber value={value} prefix="Rs. " /> : '',
+        },
+      ],
     },
     {
       title: 'Return Cartons',
       dataIndex: 'returnCartons',
-      width: '10%',
+      width: '15%',
       editable: true,
       render: (value: number) => value || 0,
     },
     {
       title: 'Actions',
       dataIndex: 'operation',
-      width: '10%',
+      width: '7%',
       render: (_: any, record: OrderItemData) => {
        return (
           <span>
@@ -458,19 +494,18 @@ export const OrderItemsTable: React.FC<OrderItemsTableProps> = ({
       return col;
     }
     return {
-      ...col,
-      onCell: (record: OrderItemData) => ({
-        record,
-        inputType: col.dataIndex === 'productId' ? 'select' : 
-                  col.dataIndex === 'cartons' ? 'carton' :
-                  ['costPrice', 'sellPrice', 'returnCartons'].includes(col.dataIndex) ? 'number' : 'text',
-        dataIndex: col.dataIndex,
-        title: col.title,
-        editing: isEditing(record),
-        products,
-        onCellBlur: handleBlur,
-        onValueChange: handleValueChange,
-      }),
+      ...col,        onCell: (record: OrderItemData) => ({
+          record,
+          inputType: col.dataIndex === 'productId' ? 'select' : 
+                    (col.dataIndex === 'cartons' || col.dataIndex === 'returnCartons') ? 'carton' :
+                    ['costPrice', 'sellPrice'].includes(col.dataIndex) ? 'number' : 'text',
+          dataIndex: col.dataIndex,
+          title: col.title,
+          editing: isEditing(record),
+          products,
+          onCellBlur: handleBlur,
+          onValueChange: handleValueChange,
+        }),
     };
   });
 
@@ -478,15 +513,6 @@ export const OrderItemsTable: React.FC<OrderItemsTableProps> = ({
     <Form 
       form={form} 
       component={false}
-      onValuesChange={(changedValues) => {
-        // Handle real-time updates for any field changes
-        const changedField = Object.keys(changedValues)[0];
-        const changedValue = changedValues[changedField];
-        
-        if (editingKey && changedField) {
-          handleValueChange(editingKey, changedField, changedValue);
-        }
-      }}
     >
       <Table<OrderItemData>
         components={{
@@ -517,8 +543,7 @@ export const OrderItemsTable: React.FC<OrderItemsTableProps> = ({
               <Table.Summary.Row style={{ backgroundColor: '#fafafa', fontWeight: 'bold' }}>
                 <Table.Summary.Cell index={0}>Total</Table.Summary.Cell>
                 <Table.Summary.Cell index={1}>{totalCartons}</Table.Summary.Cell>
-                <Table.Summary.Cell index={2}></Table.Summary.Cell>
-                <Table.Summary.Cell index={3}></Table.Summary.Cell>
+                <Table.Summary.Cell index={2} colSpan={2}></Table.Summary.Cell>
                 <Table.Summary.Cell index={4}>
                   <FormatNumber value={totalCost} prefix="Rs. " />
                 </Table.Summary.Cell>
