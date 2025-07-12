@@ -29,33 +29,14 @@ export const SalesTrendWidget: React.FC<SalesTrendWidgetProps> = React.memo(({
     staleTime: refreshInterval / 2,
     gcTime: refreshInterval * 2
   });
-  
-  if (isLoading) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-        <Spin size="large" tip="Loading sales trends..." />
-      </div>
-    );
-  }
-  
-  if (isError || response?.status === 'error') {
-    return (
-      <Alert
-        message="Error Loading Sales Trends"
-        description={response?.error || error?.message || 'Failed to load sales trend data'}
-        type="error"
-        showIcon
-      />
-    );
-  }
-  
+
   const trendData: SalesTrendData = response?.data || {
     dailySales: [],
     movingAverages: { sevenDay: 0, thirtyDay: 0 }
   };
-  
+
   // Format currency for Pakistani context
-  const formatCurrency = (amount: number) => {
+  const formatCurrency = React.useCallback((amount: number) => {
     return new Intl.NumberFormat('en-PK', {
       style: 'currency',
       currency: 'PKR',
@@ -63,15 +44,15 @@ export const SalesTrendWidget: React.FC<SalesTrendWidgetProps> = React.memo(({
       maximumFractionDigits: 0,
       notation: amount > 1000000 ? 'compact' : 'standard'
     }).format(amount);
-  };
-  
+  }, []);
+
   // Prepare chart data
   const chartData = React.useMemo(() => {
     if (!trendData.dailySales.length) return [];
     
     const data = trendData.dailySales.map(item => ({
       date: item.date,
-      value: selectedMetric === 'sales' ? item.sales : item.orders,
+      value: selectedMetric === 'sales' ? (item.sales ?? 0) : (item.orders ?? 0),
       type: selectedMetric === 'sales' ? 'Sales' : 'Orders'
     }));
     
@@ -81,7 +62,7 @@ export const SalesTrendWidget: React.FC<SalesTrendWidgetProps> = React.memo(({
       data.forEach((item, index) => {
         if (index >= 6) {
           const window = data.slice(index - 6, index + 1);
-          const avg = window.reduce((sum, d) => sum + d.value, 0) / 7;
+          const avg = window.reduce((sum, d) => sum + (d.value ?? 0), 0) / 7;
           data.push({
             date: item.date,
             value: avg,
@@ -91,11 +72,16 @@ export const SalesTrendWidget: React.FC<SalesTrendWidgetProps> = React.memo(({
       });
     }
     
+    // Debug: Log the final chart data
+    console.log('Chart data prepared:', data);
+    console.log('Selected metric:', selectedMetric);
+    console.log('Trend data daily sales:', trendData.dailySales);
+    
     return data;
   }, [trendData.dailySales, selectedMetric, showMovingAverage]);
-  
+
   // Calculate trend direction and percentage
-  const getTrendAnalysis = () => {
+  const getTrendAnalysis = React.useCallback(() => {
     if (trendData.dailySales.length < 2) return { direction: 'stable', percentage: 0 };
     
     const recent = trendData.dailySales.slice(-7);
@@ -110,28 +96,28 @@ export const SalesTrendWidget: React.FC<SalesTrendWidgetProps> = React.memo(({
     const direction = percentage > 5 ? 'up' : percentage < -5 ? 'down' : 'stable';
     
     return { direction, percentage: Math.abs(percentage) };
-  };
-  
-  const trendAnalysis = getTrendAnalysis();
-  
-  const getTrendIcon = (direction: string) => {
+  }, [trendData.dailySales]);
+
+  const trendAnalysis = React.useMemo(() => getTrendAnalysis(), [getTrendAnalysis]);
+
+  const getTrendIcon = React.useCallback((direction: string) => {
     switch (direction) {
       case 'up': return <RiseOutlined style={{ color: '#52c41a' }} />;
       case 'down': return <FallOutlined style={{ color: '#ff4d4f' }} />;
       default: return <LineChartOutlined style={{ color: '#1890ff' }} />;
     }
-  };
-  
-  const getTrendColor = (direction: string) => {
+  }, []);
+
+  const getTrendColor = React.useCallback((direction: string) => {
     switch (direction) {
       case 'up': return '#52c41a';
       case 'down': return '#ff4d4f';
       default: return '#1890ff';
     }
-  };
-  
+  }, []);
+
   // Chart configuration
-  const chartConfig = {
+  const chartConfig = React.useMemo(() => ({
     data: chartData,
     xField: 'date',
     yField: 'value',
@@ -168,20 +154,61 @@ export const SalesTrendWidget: React.FC<SalesTrendWidgetProps> = React.memo(({
       },
     },
     tooltip: {
-      formatter: (datum: any) => {
-        return {
-          name: datum.type,
-          value: selectedMetric === 'sales' 
-            ? formatCurrency(datum.value)
-            : `${datum.value} orders`
-        };
-      },
+      shared: true,
+      showMarkers: true,
+      customContent: (title: any, items: any[]) => {
+        if (!items || items.length === 0) return null;
+        console.log(items);
+        // Debug log to see what we're getting
+        console.log('Tooltip customContent - title:', title, 'items:', items);
+        
+        return `
+          <div style="padding: 8px; background: white; border: 1px solid #ccc; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <div style="font-weight: 500; margin-bottom: 4px;">${title}</div>
+            ${items.map(item => {
+              const value = item.value ?? item.data?.value ?? 0;
+              const name = item.name ?? item.data?.type ?? 'Data';
+              const formattedValue = selectedMetric === 'sales' 
+                ? formatCurrency(Number(value))
+                : `${Math.round(Number(value))} orders`;
+              
+              return `
+                <div style="display: flex; align-items: center; margin: 2px 0;">
+                  <span style="display: inline-block; width: 8px; height: 8px; background: ${item.color}; border-radius: 50%; margin-right: 6px;"></span>
+                  <span style="color: #666;">${name}:</span>
+                  <span style="font-weight: 500; margin-left: 4px;">${formattedValue}</span>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        `;
+      }
     },
     legend: {
       position: 'bottom' as const,
     },
     height: 200,
-  };
+  }), [chartData, selectedMetric, formatCurrency]);
+
+  // Early returns after all hooks are called
+  if (isLoading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+        <Spin size="large" tip="Loading sales trends..." />
+      </div>
+    );
+  }
+  
+  if (isError || response?.status === 'error') {
+    return (
+      <Alert
+        message="Error Loading Sales Trends"
+        description={response?.error || error?.message || 'Failed to load sales trend data'}
+        type="error"
+        showIcon
+      />
+    );
+  }
   
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>

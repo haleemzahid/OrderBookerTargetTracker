@@ -574,6 +574,15 @@ export class WidgetDataService {
       const db = getDatabase();
       const { dateRange } = filters;
       
+      // Debug: Log the filters being used
+      console.log('getSalesTrends filters:', {
+        dateRange: {
+          start: dateRange.start.toISOString().split('T')[0],
+          end: dateRange.end.toISOString().split('T')[0]
+        },
+        orderBookerIds: filters.orderBookerIds
+      });
+      
       const query = `
         SELECT 
           order_date as date,
@@ -592,13 +601,31 @@ export class WidgetDataService {
         ...(filters.orderBookerIds || [])
       ];
       
+      // Debug: Log the actual SQL query and parameters
+      console.log('getSalesTrends SQL:', query);
+      console.log('getSalesTrends params:', params);
+      
       const result = await db.select<any[]>(query, params);
+      
+      // Debug: Log the raw database result
+      console.log('getSalesTrends raw result:', result);
+      
+      // Also check if there are any orders in the date range at all
+      const countQuery = `SELECT COUNT(*) as total FROM orders WHERE order_date >= ? AND order_date <= ?`;
+      const countResult = await db.select<any[]>(countQuery, [
+        dateRange.start.toISOString().split('T')[0],
+        dateRange.end.toISOString().split('T')[0]
+      ]);
+      console.log('Total orders in date range:', countResult[0]?.total || 0);
       
       const dailySales = result.map(row => ({
         date: row.date,
         sales: row.sales || 0,
         orders: row.orders || 0
       }));
+      
+      // Debug: Log the processed daily sales
+      console.log('getSalesTrends processed dailySales:', dailySales);
       
       // Calculate moving averages
       const calculateMovingAverage = (data: number[], window: number) => {
