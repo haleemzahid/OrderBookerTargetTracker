@@ -82,6 +82,10 @@ The design system prioritizes clarity, business-focused layouts, and cultural ap
    - Keep type definitions close to their implementation
    - Use namespaces sparingly, prefer ES modules
 
+5. **General Instructions**
+   - 1. we use dashboard-store naming convention
+   - 2. We don't have different users
+   - 3. We dont use it on mobile 
 ## Design System References
 - Theme configuration: `src/config/theme.ts`
 - Application context: `src/contexts/AppContext.tsx`
