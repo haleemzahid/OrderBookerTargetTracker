@@ -5,9 +5,7 @@ export interface OrderItemCalculation {
   totalCost: number;
   totalAmount: number;
   profit: number;
-  cartons: number;
   returnAmount: number;
-  returnCartons: number;
 }
 
 export interface OrderCalculation {
@@ -20,15 +18,44 @@ export interface OrderCalculation {
 }
 
 /**
- * Calculate totals for an order item
+ * Calculate totals for an order item based on cartons (UI-friendly version)
+ * This is the primary calculation method that should be used everywhere
+ */
+export const calculateOrderItemTotalsFromCartons = (
+  cartons: number,
+  costPrice: number,
+  sellPrice: number,
+  unitPerCarton: number,
+  returnCartons: number = 0
+): OrderItemCalculation => {
+  // Convert cartons to total units
+  const totalUnits = cartons * unitPerCarton;
+  const returnUnits = returnCartons * unitPerCarton;
+  
+  // Calculate totals based on units
+  const totalCost = totalUnits * costPrice;
+  const totalAmount = totalUnits * sellPrice;
+  const profit = totalAmount - totalCost;
+  const returnAmount = returnUnits * sellPrice;
+  
+  return {
+    totalCost,
+    totalAmount,
+    profit,
+    returnAmount
+  };
+};
+
+/**
+ * Calculate totals for an order item with product lookup (service version)
  */
 export const calculateOrderItemTotals = async (
   productId: string,
-  quantity: number,
+  cartons: number,
   costPrice: number,
   sellPrice: number,
   db: Database,
-  returnQuantity: number = 0
+  returnCartons: number = 0
 ): Promise<OrderItemCalculation> => {
   // Get unit per carton from product
   const productResult = await db.select<any[]>(
@@ -38,21 +65,13 @@ export const calculateOrderItemTotals = async (
   
   const unitPerCarton = productResult[0]?.unit_per_carton || 1;
   
-  const totalCost = quantity * costPrice;
-  const totalAmount = quantity * sellPrice;
-  const profit = totalAmount - totalCost;
-  const cartons = unitPerCarton > 0 ? quantity / unitPerCarton : 0;
-  const returnAmount = returnQuantity * sellPrice;
-  const returnCartons = unitPerCarton > 0 ? returnQuantity / unitPerCarton : 0;
-  
-  return {
-    totalCost,
-    totalAmount,
-    profit,
+  return calculateOrderItemTotalsFromCartons(
     cartons,
-    returnAmount,
+    costPrice,
+    sellPrice,
+    unitPerCarton,
     returnCartons
-  };
+  );
 };
 
 /**

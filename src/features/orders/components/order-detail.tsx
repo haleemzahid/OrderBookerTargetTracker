@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, Row, Col, Descriptions, Tag, Divider } from 'antd';
-import { OrderItemsTable } from './order-items-table';
+import { ViewOrderItemsTable } from './view-order-items-table';
 import { useOrderBookers } from '../../order-bookers/api/queries';
 import { FormatNumber } from '../../../shared/components';
 import type { Order } from '../types';
@@ -94,14 +94,8 @@ export const OrderDetail: React.FC<OrderDetailProps> = ({ order }) => {
       </Card>
 
       <Card title="Order Items" size="small">
-        <OrderItemsTable
+        <ViewOrderItemsTable
           orderId={order.id}
-          items={[]} // Will be loaded by the component
-          products={[]} // Will be loaded by the component
-          onItemAdd={() => {}}
-          onItemUpdate={() => {}}
-          onItemDelete={() => {}}
-          editable={false} // View-only mode
         />
       </Card>
     </div>

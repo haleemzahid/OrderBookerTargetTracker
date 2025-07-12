@@ -11,7 +11,7 @@ import {
 } from '../types';
 import { getProductById } from '../../products/api/service';
 import { v4 as uuidv4 } from 'uuid';
-import { updateOrderTotals } from '../utils/calculations';
+import { updateOrderTotals, calculateOrderItemTotals } from '../utils/calculations';
 
 // Order CRUD Operations
 export const getOrderById = async (id: string): Promise<Order | null> => {
@@ -109,22 +109,20 @@ export const createOrder = async (orderData: CreateOrderRequest): Promise<Order>
         throw new Error(`Product with ID ${item.productId} not found`);
       }
       
-      // Calculate totals based on cartons
-      // Convert cartons to total units for calculation using actual units per carton
-      const totalUnits = item.cartons * product.unitPerCarton;
-      const totalCost = totalUnits * item.costPrice;
-      const totalAmount = totalUnits * item.sellPrice;
-      const profit = totalAmount - totalCost;
-      const returnCartons = item.returnCartons || 0;
-      const returnAmount = returnCartons * product.unitPerCarton * item.sellPrice; // Calculate return amount
+      // Use centralized calculation function
+      const calculatedTotals = await calculateOrderItemTotals(
+        item.productId,
+        item.cartons,
+        item.costPrice,
+        item.sellPrice,
+        db,
+        item.returnCartons || 0
+      );
       
       const totals = {
-        totalCost,
-        totalAmount,
-        profit,
+        ...calculatedTotals,
         cartons: item.cartons,
-        returnCartons,
-        returnAmount
+        returnCartons: item.returnCartons || 0,
       };
       
       orderItemsWithTotals.push({
@@ -293,13 +291,15 @@ export const createOrderItem = async (orderId: string, itemData: CreateOrderItem
     throw new Error(`Product with ID ${itemData.productId} not found`);
   }
   
-  // Calculate totals using actual units per carton from product
-  const totalUnits = itemData.cartons * product.unitPerCarton;
-  const totalCost = totalUnits * itemData.costPrice;
-  const totalAmount = totalUnits * itemData.sellPrice;
-  const profit = totalAmount - totalCost;
-  const returnAmount = 0; // No returns for new items
-  const returnCartons = 0; // No returns for new items
+  // Use centralized calculation function
+  const calculatedTotals = await calculateOrderItemTotals(
+    itemData.productId,
+    itemData.cartons,
+    itemData.costPrice,
+    itemData.sellPrice,
+    db,
+    itemData.returnCartons || 0
+  );
   
   await db.execute(
     `INSERT INTO order_items (
@@ -314,13 +314,13 @@ export const createOrderItem = async (orderId: string, itemData: CreateOrderItem
       itemData.cartons,
       itemData.costPrice,
       itemData.sellPrice,
-      itemData.returnCartons,
-      totalCost,
-      totalAmount,
-      profit,
+      itemData.returnCartons || 0,
+      calculatedTotals.totalCost,
+      calculatedTotals.totalAmount,
+      calculatedTotals.profit,
       itemData.cartons,
-      returnAmount,
-      returnCartons,
+      calculatedTotals.returnAmount,
+      itemData.returnCartons || 0,
       now,
       now
     ]
@@ -371,13 +371,15 @@ export const updateOrderItem = async (itemId: string, itemData: UpdateOrderItemR
   const newSellPrice = itemData.sellPrice !== undefined ? itemData.sellPrice : currentItem.sell_price;
   const newReturnQuantity = itemData.returnCartons !== undefined ? itemData.returnCartons: currentItem.return_quantity;
   
-  // Calculate totals using actual units per carton from product
-  const totalUnits = newQuantity * product.unitPerCarton;
-  const totalCost = totalUnits * currentItem.cost_price;
-  const totalAmount = totalUnits * newSellPrice;
-  const profit = totalAmount - totalCost;
-  const returnAmount = newReturnQuantity * product.unitPerCarton * newSellPrice;
-  const returnCartons = newReturnQuantity;
+  // Use centralized calculation function
+  const calculatedTotals = await calculateOrderItemTotals(
+    currentItem.product_id,
+    newQuantity,
+    currentItem.cost_price,
+    newSellPrice,
+    db,
+    newReturnQuantity
+  );
   
   if (itemData.cartons !== undefined) {
     updateFields.push(`quantity = ?`);
@@ -406,12 +408,12 @@ export const updateOrderItem = async (itemId: string, itemData: UpdateOrderItemR
   );
   
   params.push(
-    totalCost,
-    totalAmount,
-    profit,
+    calculatedTotals.totalCost,
+    calculatedTotals.totalAmount,
+    calculatedTotals.profit,
     newQuantity,
-    returnAmount,
-    returnCartons,
+    calculatedTotals.returnAmount,
+    newReturnQuantity,
     now
   );
   

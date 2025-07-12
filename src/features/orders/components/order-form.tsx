@@ -5,7 +5,7 @@ import { useCreateOrder, useUpdateOrder } from '../api/mutations';
 import { FormActions } from '../../../shared/components';
 import type { Order, CreateOrderRequest } from '../types';
 import dayjs from 'dayjs';
-import { OrderItemsTable, type OrderItemData } from './OrderItemsTable';
+import { OrderItemsTable, type OrderItemData } from './order-items-table';
 
 const { Option } = Select;
 const { TextArea } = Input;

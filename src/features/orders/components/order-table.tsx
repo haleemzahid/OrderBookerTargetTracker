@@ -146,7 +146,7 @@ export const OrderTable: React.FC<OrderTableProps> = ({
         return (
           <Table.Summary fixed>
             <Table.Summary.Row style={{ backgroundColor: '#fafafa', fontWeight: 'bold' }}>
-              <Table.Summary.Cell index={0}>Page Total</Table.Summary.Cell>
+              <Table.Summary.Cell index={0}>Totals</Table.Summary.Cell>
               <Table.Summary.Cell index={1}></Table.Summary.Cell>
               <Table.Summary.Cell index={2}>
                 <Tag color="blue">

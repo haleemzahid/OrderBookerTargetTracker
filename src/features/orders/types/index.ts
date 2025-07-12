@@ -88,10 +88,14 @@ export interface OrderTableProps {
   onView: (order: Order) => void;
 }
 
+export interface ViewOrderItemsTableProps {
+  orderId: string;
+}
+
 export interface OrderItemsTableProps {
   orderId: string;
   items: OrderItem[];
-  products: any[]; // Will be typed as Product[] when imported
+  products: any[];
   onItemAdd: (item: CreateOrderItemRequest) => void;
   onItemUpdate: (itemId: string, updates: UpdateOrderItemRequest) => void;
   onItemDelete: (itemId: string) => void;

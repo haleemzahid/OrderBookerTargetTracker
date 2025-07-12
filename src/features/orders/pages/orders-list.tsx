@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import { Modal, message, Space, Select, DatePicker, Tag } from 'antd';
+import { Modal, message, Space, Select, DatePicker } from 'antd';
 import { useNavigate } from '@tanstack/react-router';
-import { useOrders, useOrderSummary } from '../api/queries';
+import { useOrders } from '../api/queries';
 import { useDeleteOrder } from '../api/mutations';
 import { useOrderBookers } from '../../order-bookers/api/queries';
 import { ActionBar, ListPageLayout } from '../../../shared/components';
@@ -55,7 +55,6 @@ export const OrdersListPage: React.FC = () => {
     error,
   } = useOrders(queryFilters);
 
-  const { data: orderSummary } = useOrderSummary(queryFilters);
   const deleteMutation = useDeleteOrder();
 
   const handleAdd = () => {
@@ -137,27 +136,6 @@ export const OrdersListPage: React.FC = () => {
     return <div>Error loading orders: {error?.toString()}</div>;
   }
 
-  const renderSummaryCards = () => {
-    if (!orderSummary) return null;
-
-    return (
-      <Space size="large" style={{ marginBottom: 16 }}>
-        <div>
-          <strong>Total Orders:</strong> {orderSummary.totalOrders}
-        </div>
-        <div>
-          <strong>Total Amount:</strong> Rs. {orderSummary.totalAmount.toLocaleString()}
-        </div>
-        <div>
-          <strong>Total Profit:</strong> Rs. {orderSummary.totalProfit.toLocaleString()}
-        </div>
-        <div>
-          <strong>Total Cartons:</strong> {orderSummary.totalCartons}
-        </div>
-      </Space>
-    );
-  };
-
   const renderExtraActions = () => {
     return (
       <Space size="small">
@@ -200,7 +178,6 @@ export const OrdersListPage: React.FC = () => {
       }
     >
       <Space direction="vertical" size="small" style={{ width: '100%' }}>
-        {renderSummaryCards()}
         <OrderTable
           data={filteredData}
           loading={isLoading || isExporting}
