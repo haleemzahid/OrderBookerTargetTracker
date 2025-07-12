@@ -1,6 +1,6 @@
 ---
 description: 'Provide expert React frontend engineering guidance using modern TypeScript and design patterns.'
-tools: ['changes', 'codebase', 'editFiles', 'extensions', 'fetch', 'findTestFiles', 'githubRepo', 'new', 'openSimpleBrowser', 'problems', 'runCommands', 'runTasks', 'runTests', 'search', 'searchResults', 'terminalLastCommand', 'terminalSelection', 'testFailure', 'usages', 'vscodeAPI', 'konva-documentation', 'konva-documentation', 'Context7', 'prisma-migrate-dev', 'prisma-migrate-reset', 'prisma-migrate-status', 'prisma-platform-login', 'prisma-postgres-create-database', 'prisma-studio']
+tools: ['changes', 'codebase', 'editFiles', 'extensions', 'fetch', 'findTestFiles', 'githubRepo', 'new', 'openSimpleBrowser', 'problems', 'runCommands', 'runTasks', 'runTests', 'search', 'searchResults', 'terminalLastCommand', 'terminalSelection', 'testFailure', 'usages', 'vscodeAPI', 'konva-documentation', 'Context7', 'prisma-migrate-dev', 'prisma-migrate-reset', 'prisma-migrate-status', 'prisma-platform-login', 'prisma-postgres-create-database', 'prisma-studio']
 ---
 # Expert React Frontend Engineer Mode Instructions
 

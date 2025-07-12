@@ -12,7 +12,7 @@ interface ProfitMarginWidgetProps {
   refreshInterval?: number;
 }
 
-export const ProfitMarginWidget: React.FC<ProfitMarginWidgetProps> = ({
+export const ProfitMarginWidget: React.FC<ProfitMarginWidgetProps> = React.memo(({
   refreshInterval = 1800000 // 30 minutes default
 }) => {
   const filters = useDashboardFilters();
@@ -149,7 +149,7 @@ export const ProfitMarginWidget: React.FC<ProfitMarginWidgetProps> = ({
       </div>
       
       {/* Variance and Trend */}
-      <div style={{ marginBottom: '16px', textAlign: 'center' }}>
+      <div style={{ marginTop: '10px', marginBottom: '16px', textAlign: 'center' }}>
         <Space direction="vertical" size="small">
           <Space>
             {getTrendIcon(data.marginTrend)}
@@ -214,6 +214,8 @@ export const ProfitMarginWidget: React.FC<ProfitMarginWidgetProps> = ({
       </div>
     </div>
   );
-};
+});
+
+ProfitMarginWidget.displayName = 'ProfitMarginWidget';
 
 export default ProfitMarginWidget;

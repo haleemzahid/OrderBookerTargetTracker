@@ -26,7 +26,7 @@ const defaultWidgets: DashboardWidget[] = [
     title: 'Revenue Performance',
     type: 'metric',
     size: 'large',
-    position: { x: 0, y: 0, w: 4, h: 3 },
+        position: { x: 7, y: 0, w: 3, h: 3 },
     isVisible: true,
     refreshInterval: 1800000, // 30 minutes
     priority: 'critical'
@@ -36,7 +36,7 @@ const defaultWidgets: DashboardWidget[] = [
     title: 'Profit Margin',
     type: 'gauge',
     size: 'medium',
-    position: { x: 4, y: 0, w: 3, h: 3 },
+    position: { x: 4, y: 4, w: 3, h: 3 },
     isVisible: true,
     refreshInterval: 1800000, // 30 minutes
     priority: 'critical'
@@ -124,22 +124,24 @@ const defaultWidgets: DashboardWidget[] = [
   }
 ];
 
-// Default layout configuration
+// Simplified default layout - just responsive grid configurations
 const defaultLayout: DashboardLayout = {
   layouts: {
-    lg: defaultWidgets.map(w => w.position),
+    lg: defaultWidgets.map(w => ({ ...w.position, i: w.id })),
     md: defaultWidgets.map(w => ({
       ...w.position,
+      i: w.id,
       w: Math.max(2, Math.floor(w.position.w * 0.8)),
       h: Math.max(2, Math.floor(w.position.h * 0.9))
     })),
     sm: defaultWidgets.map(w => ({
       ...w.position,
+      i: w.id,
       w: Math.max(2, Math.floor(w.position.w * 0.6)),
       h: Math.max(2, Math.floor(w.position.h * 0.8))
     }))
   },
-  widgets: defaultWidgets,
+  widgets: [], // Remove duplicate storage
   lastModified: new Date()
 };
 
@@ -165,33 +167,45 @@ export const useDashboardStore = create<DashboardStore>()(
 
       // Widget management actions
       setWidgetVisibility: (widgetId: string, isVisible: boolean) => {
-        set((state) => ({
-          widgets: state.widgets.map(widget =>
+        set((state) => {
+          const updatedWidgets = state.widgets.map(widget =>
             widget.id === widgetId ? { ...widget, isVisible } : widget
-          ),
-          layout: {
-            ...state.layout,
-            widgets: state.layout.widgets.map(widget =>
-              widget.id === widgetId ? { ...widget, isVisible } : widget
-            ),
-            lastModified: new Date()
-          }
-        }));
+          );
+          
+          return {
+            widgets: updatedWidgets,
+            layout: {
+              ...state.layout,
+              lastModified: new Date()
+            }
+          };
+        });
       },
 
       updateWidgetPosition: (widgetId: string, position: DashboardWidget['position']) => {
-        set((state) => ({
-          widgets: state.widgets.map(widget =>
-            widget.id === widgetId ? { ...widget, position } : widget
-          ),
-          layout: {
-            ...state.layout,
-            widgets: state.layout.widgets.map(widget =>
-              widget.id === widgetId ? { ...widget, position } : widget
-            ),
-            lastModified: new Date()
+        set((state) => {
+          // Check if position actually changed to prevent unnecessary updates
+          const existingWidget = state.widgets.find(w => w.id === widgetId);
+          if (existingWidget && 
+              existingWidget.position.x === position.x &&
+              existingWidget.position.y === position.y &&
+              existingWidget.position.w === position.w &&
+              existingWidget.position.h === position.h) {
+            return state; // No change, return current state
           }
-        }));
+
+          const updatedWidgets = state.widgets.map(widget =>
+            widget.id === widgetId ? { ...widget, position } : widget
+          );
+
+          return {
+            widgets: updatedWidgets,
+            layout: {
+              ...state.layout,
+              lastModified: new Date()
+            }
+          };
+        });
       },
 
       updateWidgetConfig: (widgetId: string, config: Record<string, any>) => {
@@ -201,9 +215,6 @@ export const useDashboardStore = create<DashboardStore>()(
           ),
           layout: {
             ...state.layout,
-            widgets: state.layout.widgets.map(widget =>
-              widget.id === widgetId ? { ...widget, config: { ...widget.config, ...config } } : widget
-            ),
             lastModified: new Date()
           }
         }));
@@ -224,19 +235,21 @@ export const useDashboardStore = create<DashboardStore>()(
           widgets: template.widgets,
           layout: {
             layouts: {
-              lg: template.widgets.map(w => w.position),
+              lg: template.widgets.map(w => ({ ...w.position, i: w.id })),
               md: template.widgets.map(w => ({
                 ...w.position,
+                i: w.id,
                 w: Math.max(2, Math.floor(w.position.w * 0.8)),
                 h: Math.max(2, Math.floor(w.position.h * 0.9))
               })),
               sm: template.widgets.map(w => ({
                 ...w.position,
+                i: w.id,
                 w: Math.max(2, Math.floor(w.position.w * 0.6)),
                 h: Math.max(2, Math.floor(w.position.h * 0.8))
               }))
             },
-            widgets: template.widgets,
+            widgets: [], // Simplified - no duplicate storage
             lastModified: new Date()
           }
         }));
@@ -283,25 +296,33 @@ export const useDashboardStore = create<DashboardStore>()(
   )
 );
 
-// Selector hooks for better performance
+// Optimized selector hooks - return raw data for components to memoize
 export const useDashboardFilters = () => useDashboardStore(state => state.filters);
 export const useDashboardWidgets = () => useDashboardStore(state => state.widgets);
 export const useDashboardLayout = () => useDashboardStore(state => state.layout);
-export const useVisibleWidgets = () => useDashboardStore(state => 
-  state.widgets.filter(widget => widget.isVisible)
-);
-export const useCriticalWidgets = () => useDashboardStore(state =>
-  state.widgets.filter(widget => widget.priority === 'critical' && widget.isVisible)
-);
 
-// Action selectors
-export const useDashboardActions = () => useDashboardStore(state => ({
-  setFilters: state.setFilters,
-  setWidgetVisibility: state.setWidgetVisibility,
-  updateWidgetPosition: state.updateWidgetPosition,
-  updateWidgetConfig: state.updateWidgetConfig,
-  saveLayout: state.saveLayout,
-  loadTemplate: state.loadTemplate,
-  resetToDefault: state.resetToDefault,
-  refreshAll: state.refreshAll
-}));
+// These will be memoized in the consuming components
+export const useVisibleWidgets = () => useDashboardStore(state => state.widgets);
+export const useCriticalWidgets = () => useDashboardStore(state => state.widgets);
+
+// Individual action hooks to prevent object recreation and infinite re-renders
+export const useSetFilters = () => useDashboardStore(state => state.setFilters);
+export const useSetWidgetVisibility = () => useDashboardStore(state => state.setWidgetVisibility);
+export const useUpdateWidgetPosition = () => useDashboardStore(state => state.updateWidgetPosition);
+export const useUpdateWidgetConfig = () => useDashboardStore(state => state.updateWidgetConfig);
+export const useSaveLayout = () => useDashboardStore(state => state.saveLayout);
+export const useLoadTemplate = () => useDashboardStore(state => state.loadTemplate);
+export const useResetToDefault = () => useDashboardStore(state => state.resetToDefault);
+export const useRefreshAll = () => useDashboardStore(state => state.refreshAll);
+
+// Backward compatibility - but use individual hooks above to prevent re-renders
+export const useDashboardActions = () => ({
+  setFilters: useSetFilters(),
+  setWidgetVisibility: useSetWidgetVisibility(),
+  updateWidgetPosition: useUpdateWidgetPosition(),
+  updateWidgetConfig: useUpdateWidgetConfig(),
+  saveLayout: useSaveLayout(),
+  loadTemplate: useLoadTemplate(),
+  resetToDefault: useResetToDefault(),
+  refreshAll: useRefreshAll()
+});

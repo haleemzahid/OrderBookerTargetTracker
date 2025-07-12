@@ -12,7 +12,7 @@ interface RevenuePerformanceWidgetProps {
   refreshInterval?: number;
 }
 
-export const RevenuePerformanceWidget: React.FC<RevenuePerformanceWidgetProps> = ({
+export const RevenuePerformanceWidget: React.FC<RevenuePerformanceWidgetProps> = React.memo(({
   refreshInterval = 1800000 // 30 minutes default
 }) => {
   const filters = useDashboardFilters();
@@ -183,6 +183,8 @@ export const RevenuePerformanceWidget: React.FC<RevenuePerformanceWidgetProps> =
       </div>
     </div>
   );
-};
+});
+
+RevenuePerformanceWidget.displayName = 'RevenuePerformanceWidget';
 
 export default RevenuePerformanceWidget;

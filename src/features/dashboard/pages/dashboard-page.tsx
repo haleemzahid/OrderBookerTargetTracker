@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Layout, Typography, Button, Space, Drawer } from 'antd';
 import { SettingOutlined, ReloadOutlined } from '@ant-design/icons';
 import { DashboardGrid } from '../components/dashboard-grid';
-import { useDashboardActions } from '../stores/dashboard-store';
+import { useRefreshAll } from '../stores/dashboard-store';
 import { RevenuePerformanceWidget } from '../components/widgets/revenue-performance-widget';
 import { ProfitMarginWidget } from '../components/widgets/profit-margin-widget';
 import type { DashboardWidget } from '../types';
@@ -13,10 +13,10 @@ const { Title } = Typography;
 export const DashboardPage: React.FC = () => {
   const [configDrawerVisible, setConfigDrawerVisible] = useState(false);
   const [selectedWidget, setSelectedWidget] = useState<DashboardWidget | null>(null);
-  const { refreshAll } = useDashboardActions();
+  const refreshAll = useRefreshAll();
 
-  // Widget renderer function
-  const renderWidget = (widget: DashboardWidget): React.ReactNode => {
+  // Memoized widget renderer function to prevent unnecessary re-renders
+  const renderWidget = React.useCallback((widget: DashboardWidget): React.ReactNode => {
     switch (widget.id) {
       case 'revenue-performance':
         return <RevenuePerformanceWidget refreshInterval={widget.refreshInterval} />;
@@ -35,18 +35,18 @@ export const DashboardPage: React.FC = () => {
           </div>
         );
     }
-  };
+  }, []);
 
   // Handle widget configuration
-  const handleWidgetConfig = (widget: DashboardWidget) => {
+  const handleWidgetConfig = React.useCallback((widget: DashboardWidget) => {
     setSelectedWidget(widget);
     setConfigDrawerVisible(true);
-  };
+  }, []);
 
   // Handle global refresh
-  const handleRefreshAll = () => {
+  const handleRefreshAll = React.useCallback(() => {
     refreshAll();
-  };
+  }, [refreshAll]);
 
   return (
     <Layout style={{ minHeight: '100vh', backgroundColor: '#f5f5f5' }}>

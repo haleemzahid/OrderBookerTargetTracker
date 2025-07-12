@@ -35,11 +35,11 @@ export interface GlobalDashboardFilters {
 // Dashboard layout configuration
 export interface DashboardLayout {
   layouts: {
-    lg: DashboardWidget['position'][];
-    md: DashboardWidget['position'][];
-    sm: DashboardWidget['position'][];
+    lg: Array<DashboardWidget['position'] & { i: string }>;
+    md: Array<DashboardWidget['position'] & { i: string }>;
+    sm: Array<DashboardWidget['position'] & { i: string }>;
   };
-  widgets: DashboardWidget[];
+  widgets: DashboardWidget[]; // Keep for backward compatibility, but will be simplified
   lastModified: Date;
 }
 

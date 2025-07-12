@@ -1,5 +1,5 @@
 import React, { useMemo, useCallback } from 'react';
-import { Responsive, WidthProvider, Layout } from 'react-grid-layout';
+import { Responsive, WidthProvider } from 'react-grid-layout';
 import { Card, Button, Space, Tooltip } from 'antd';
 import { 
   DragOutlined, 
@@ -8,11 +8,12 @@ import {
   ReloadOutlined,
   FullscreenOutlined
 } from '@ant-design/icons';
-import { useDashboardStore, useDashboardActions, useVisibleWidgets } from '../stores/dashboard-store';
-import type { DashboardWidget, DashboardLayout } from '../types';
+import { useDashboardGrid } from '../hooks/use-dashboard-grid';
+import type { DashboardWidget } from '../types';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 
+// Create ResponsiveGridLayout at module level (this is safe and recommended)
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
 interface DashboardGridProps {
@@ -28,7 +29,7 @@ interface WidgetWrapperProps {
   onRefresh?: (widgetId: string) => void;
 }
 
-const WidgetWrapper: React.FC<WidgetWrapperProps> = ({
+const WidgetWrapper: React.FC<WidgetWrapperProps> = React.memo(({
   widget,
   children,
   onConfig,
@@ -111,123 +112,60 @@ const WidgetWrapper: React.FC<WidgetWrapperProps> = ({
       {children}
     </Card>
   );
-};
+});
+
+WidgetWrapper.displayName = 'WidgetWrapper';
 
 export const DashboardGrid: React.FC<DashboardGridProps> = ({
   onWidgetConfig,
   renderWidget
 }) => {
-  const layout = useDashboardStore(state => state.layout);
-  const visibleWidgets = useVisibleWidgets();
-  const { updateWidgetPosition, setWidgetVisibility, saveLayout } = useDashboardActions();
+  const { 
+    visibleWidgets, 
+    layouts, 
+    gridConfig, 
+    handleLayoutChange, 
+    handleWidgetHide 
+  } = useDashboardGrid();
 
-  // Convert widgets to grid layouts
-  const layouts = useMemo(() => {
-    const createLayout = (widgets: DashboardWidget[]) => 
-      widgets
-        .filter(widget => widget.isVisible)
-        .map(widget => ({
-          i: widget.id,
-          x: widget.position.x,
-          y: widget.position.y,
-          w: widget.position.w,
-          h: widget.position.h,
-          minW: 2,
-          minH: 2,
-          maxW: 12,
-          maxH: 10
-        }));
-
-    return {
-      lg: createLayout(visibleWidgets),
-      md: createLayout(visibleWidgets),
-      sm: createLayout(visibleWidgets)
-    };
-  }, [visibleWidgets]);
-
-  // Handle layout changes from drag and resize
-  const handleLayoutChange = useCallback((newLayout: Layout[], allLayouts: { [key: string]: Layout[] }) => {
-    // Update widget positions in store
-    newLayout.forEach(layoutItem => {
-      const widget = visibleWidgets.find(w => w.id === layoutItem.i);
-      if (widget) {
-        const newPosition = {
-          x: layoutItem.x,
-          y: layoutItem.y,
-          w: layoutItem.w,
-          h: layoutItem.h
-        };
-        
-        // Only update if position actually changed
-        if (
-          widget.position.x !== newPosition.x ||
-          widget.position.y !== newPosition.y ||
-          widget.position.w !== newPosition.w ||
-          widget.position.h !== newPosition.h
-        ) {
-          updateWidgetPosition(widget.id, newPosition);
-        }
-      }
-    });
-
-    // Save the updated layout with proper typing
-    const updatedLayout: DashboardLayout = {
-      ...layout,
-      layouts: {
-        lg: allLayouts.lg?.map(item => ({ x: item.x, y: item.y, w: item.w, h: item.h })) || layout.layouts.lg,
-        md: allLayouts.md?.map(item => ({ x: item.x, y: item.y, w: item.w, h: item.h })) || layout.layouts.md,
-        sm: allLayouts.sm?.map(item => ({ x: item.x, y: item.y, w: item.w, h: item.h })) || layout.layouts.sm
-      },
-      lastModified: new Date()
-    };
-    saveLayout(updatedLayout);
-  }, [visibleWidgets, updateWidgetPosition, saveLayout, layout]);
-
-  // Handle widget hiding
-  const handleWidgetHide = useCallback((widgetId: string) => {
-    setWidgetVisibility(widgetId, false);
-  }, [setWidgetVisibility]);
-
-  // Handle widget refresh (placeholder for now)
   const handleWidgetRefresh = useCallback((widgetId: string) => {
     console.log(`Refreshing widget: ${widgetId}`);
-    // This will trigger individual widget refresh in the future
   }, []);
 
-  // Breakpoints for responsive design (desktop only)
-  const breakpoints = { lg: 1200, md: 996, sm: 768 };
-  const cols = { lg: 12, md: 10, sm: 6 };
+  const renderedChildren = useMemo(() => 
+    visibleWidgets.map(widget => (
+      <div key={widget.id} data-grid={widget.position}>
+        <WidgetWrapper
+          widget={widget}
+          onConfig={onWidgetConfig}
+          onHide={handleWidgetHide}
+          onRefresh={handleWidgetRefresh}
+        >
+          {renderWidget(widget)}
+        </WidgetWrapper>
+      </div>
+    ))
+  , [visibleWidgets, onWidgetConfig, handleWidgetHide, handleWidgetRefresh, renderWidget]);
 
   return (
     <div className="dashboard-grid">
       <ResponsiveGridLayout
         className="layout"
         layouts={layouts}
-        breakpoints={breakpoints}
-        cols={cols}
+        breakpoints={gridConfig.breakpoints}
+        cols={gridConfig.cols}
         onLayoutChange={handleLayoutChange}
         isDraggable={true}
         isResizable={true}
-        margin={[16, 16]}
-        containerPadding={[16, 16]}
+        margin={gridConfig.margin}
+        containerPadding={gridConfig.containerPadding}
         draggableHandle=".drag-handle"
         useCSSTransforms={true}
         measureBeforeMount={false}
         compactType="vertical"
         preventCollision={false}
       >
-        {visibleWidgets.map(widget => (
-          <div key={widget.id} data-grid={widget.position}>
-            <WidgetWrapper
-              widget={widget}
-              onConfig={onWidgetConfig}
-              onHide={handleWidgetHide}
-              onRefresh={handleWidgetRefresh}
-            >
-              {renderWidget(widget)}
-            </WidgetWrapper>
-          </div>
-        ))}
+        {renderedChildren}
       </ResponsiveGridLayout>
 
       <style dangerouslySetInnerHTML={{
