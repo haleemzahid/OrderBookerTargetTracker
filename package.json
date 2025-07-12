@@ -15,7 +15,8 @@
     "test": "vitest",
     "test:run": "vitest run",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "seed": "node src/utils/seed-cli.ts"
   },
   "dependencies": {
     "@ant-design/charts": "^2.6.0",
