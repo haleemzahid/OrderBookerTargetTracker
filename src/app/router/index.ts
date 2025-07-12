@@ -6,9 +6,16 @@ import { CompaniesListPage } from '../../features/companies/pages/CompaniesListP
 import { ProductsListPage } from '../../features/products/pages/products-list';
 import { OrdersListPage, OrderFormPage } from '../../features/orders';
 import { DailySalesReportListPage } from '../../features/daily-sales-report';
+import { DashboardPage } from '../../features/dashboard';
 
 const rootRoute = createRootRoute({
   component: MainLayout,
+});
+
+const dashboardRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/dashboard',
+  component: DashboardPage,
 });
 
 const orderBookersRoute = createRoute({
@@ -71,6 +78,7 @@ const dsrRoute = createRoute({
 });
 
 const routeTree = rootRoute.addChildren([
+  dashboardRoute,
   orderBookersRoute,
   dailyEntriesRoute,
   monthlyTargetsRoute,

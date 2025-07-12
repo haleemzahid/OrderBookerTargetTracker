@@ -28,7 +28,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
   // Get current path to determine selected key
   const getCurrentKey = () => {
     const path = location.pathname;
-    if (path === '/') return 'dashboard';
+    if (path === '/' || path === '/dashboard') return 'dashboard';
     if (path.startsWith('/order-bookers')) return 'order-bookers';
     if (path.startsWith('/daily-entries')) return 'daily-entries';
     if (path.startsWith('/monthly-targets')) return 'monthly-targets';
@@ -43,7 +43,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
   const handleMenuClick = (key: string) => {
     switch (key) {
       case 'dashboard':
-        navigate({ to: '/' });
+        navigate({ to: '/dashboard' });
         break;
       case 'order-bookers':
         navigate({ to: '/order-bookers' });
