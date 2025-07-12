@@ -24,23 +24,23 @@ export const useDashboardGrid = () => {
 
   // Convert widgets to grid layouts - memoized to prevent recreation
   const layouts = useMemo(() => {
-    const createLayout = (widgets: DashboardWidget[]) => 
+    const createLayout = (widgets: DashboardWidget[], scaleFactor = 1) => 
       widgets.map(widget => ({
         i: widget.id,
-        x: widget.position.x,
+        x: Math.floor(widget.position.x * scaleFactor),
         y: widget.position.y,
-        w: widget.position.w,
+        w: Math.max(1, Math.floor(widget.position.w * scaleFactor)),
         h: widget.position.h,
-        minW: 2,
+        minW: 1,
         minH: 2,
         maxW: 12,
-        maxH: 10
+        maxH: 6
       }));
 
     return {
-      lg: createLayout(visibleWidgets),
-      md: createLayout(visibleWidgets),
-      sm: createLayout(visibleWidgets)
+      lg: createLayout(visibleWidgets, 1),      // 12 columns
+      md: createLayout(visibleWidgets, 0.83),   // 10 columns
+      sm: createLayout(visibleWidgets, 0.5)     // 6 columns
     };
   }, [visibleWidgets]);
 
@@ -88,7 +88,7 @@ export const useDashboardGrid = () => {
   const gridConfig = useMemo(() => ({
     breakpoints: { lg: 1200, md: 996, sm: 768 },
     cols: { lg: 12, md: 10, sm: 6 },
-    margin: [16, 16] as [number, number],
+    margin: [12, 12] as [number, number],
     containerPadding: [16, 16] as [number, number]
   }), []);
 

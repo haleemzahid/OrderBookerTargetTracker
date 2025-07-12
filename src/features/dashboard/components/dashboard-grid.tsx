@@ -162,8 +162,10 @@ export const DashboardGrid: React.FC<DashboardGridProps> = ({
         draggableHandle=".drag-handle"
         useCSSTransforms={true}
         measureBeforeMount={false}
-        compactType="vertical"
+        compactType={null}
         preventCollision={false}
+        allowOverlap={false}
+        rowHeight={60}
       >
         {renderedChildren}
       </ResponsiveGridLayout>

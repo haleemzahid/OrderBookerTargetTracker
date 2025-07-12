@@ -26,7 +26,7 @@ const defaultWidgets: DashboardWidget[] = [
     title: 'Revenue Performance',
     type: 'metric',
     size: 'large',
-        position: { x: 7, y: 0, w: 3, h: 3 },
+    position: { x: 0, y: 0, w: 3, h: 2 },
     isVisible: true,
     refreshInterval: 1800000, // 30 minutes
     priority: 'critical'
@@ -36,7 +36,7 @@ const defaultWidgets: DashboardWidget[] = [
     title: 'Profit Margin',
     type: 'gauge',
     size: 'medium',
-    position: { x: 4, y: 4, w: 3, h: 3 },
+    position: { x: 3, y: 0, w: 3, h: 2 },
     isVisible: true,
     refreshInterval: 1800000, // 30 minutes
     priority: 'critical'
@@ -46,7 +46,7 @@ const defaultWidgets: DashboardWidget[] = [
     title: 'Alert Center',
     type: 'alert',
     size: 'medium',
-    position: { x: 7, y: 0, w: 3, h: 3 },
+    position: { x: 6, y: 0, w: 3, h: 2 },
     isVisible: true,
     refreshInterval: 300000, // 5 minutes
     priority: 'critical'
@@ -56,7 +56,7 @@ const defaultWidgets: DashboardWidget[] = [
     title: 'Target Achievement Progress',
     type: 'progress',
     size: 'large',
-    position: { x: 0, y: 3, w: 6, h: 4 },
+    position: { x: 9, y: 0, w: 3, h: 2 },
     isVisible: true,
     refreshInterval: 900000, // 15 minutes
     priority: 'high'
@@ -66,7 +66,7 @@ const defaultWidgets: DashboardWidget[] = [
     title: 'Top Performers',
     type: 'table',
     size: 'medium',
-    position: { x: 10, y: 0, w: 4, h: 6 },
+    position: { x: 0, y: 2, w: 6, h: 3 },
     isVisible: true,
     refreshInterval: 900000, // 15 minutes
     priority: 'high'
@@ -76,7 +76,7 @@ const defaultWidgets: DashboardWidget[] = [
     title: 'Sales Trend',
     type: 'chart',
     size: 'large',
-    position: { x: 0, y: 7, w: 8, h: 4 },
+    position: { x: 6, y: 2, w: 6, h: 3 },
     isVisible: true,
     refreshInterval: 1800000, // 30 minutes
     priority: 'high'
@@ -86,7 +86,7 @@ const defaultWidgets: DashboardWidget[] = [
     title: 'Return Rate Monitor',
     type: 'metric',
     size: 'medium',
-    position: { x: 8, y: 7, w: 4, h: 4 },
+    position: { x: 0, y: 5, w: 4, h: 2 },
     isVisible: true,
     refreshInterval: 900000, // 15 minutes
     priority: 'medium'
@@ -97,7 +97,7 @@ const defaultWidgets: DashboardWidget[] = [
     title: 'Product Performance Matrix',
     type: 'chart',
     size: 'large',
-    position: { x: 0, y: 11, w: 8, h: 5 },
+    position: { x: 4, y: 5, w: 8, h: 3 },
     isVisible: false,
     refreshInterval: 3600000, // 60 minutes
     priority: 'low'
@@ -107,7 +107,7 @@ const defaultWidgets: DashboardWidget[] = [
     title: 'Cash Flow Summary',
     type: 'metric',
     size: 'medium',
-    position: { x: 8, y: 11, w: 4, h: 3 },
+    position: { x: 0, y: 8, w: 4, h: 2 },
     isVisible: false,
     refreshInterval: 1800000, // 30 minutes
     priority: 'low'
@@ -117,7 +117,7 @@ const defaultWidgets: DashboardWidget[] = [
     title: 'Order Velocity',
     type: 'metric',
     size: 'medium',
-    position: { x: 8, y: 14, w: 4, h: 3 },
+    position: { x: 4, y: 8, w: 4, h: 2 },
     isVisible: false,
     refreshInterval: 1800000, // 30 minutes
     priority: 'low'
@@ -256,6 +256,8 @@ export const useDashboardStore = create<DashboardStore>()(
       },
 
       resetToDefault: () => {
+        // Clear persisted data to force reload of default configuration
+        localStorage.removeItem('dashboard-store');
         set(() => ({
           filters: defaultFilters,
           widgets: defaultWidgets,

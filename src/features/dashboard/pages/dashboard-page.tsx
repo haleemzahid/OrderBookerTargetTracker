@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Layout, Typography, Button, Space, Drawer } from 'antd';
 import { SettingOutlined, ReloadOutlined } from '@ant-design/icons';
 import { DashboardGrid } from '../components/dashboard-grid';
-import { useRefreshAll } from '../stores/dashboard-store';
+import { useRefreshAll, useResetToDefault } from '../stores/dashboard-store';
 import { RevenuePerformanceWidget } from '../components/widgets/revenue-performance-widget';
 import { ProfitMarginWidget } from '../components/widgets/profit-margin-widget';
 import type { DashboardWidget } from '../types';
@@ -14,6 +14,7 @@ export const DashboardPage: React.FC = () => {
   const [configDrawerVisible, setConfigDrawerVisible] = useState(false);
   const [selectedWidget, setSelectedWidget] = useState<DashboardWidget | null>(null);
   const refreshAll = useRefreshAll();
+  const resetToDefault = useResetToDefault();
 
   // Memoized widget renderer function to prevent unnecessary re-renders
   const renderWidget = React.useCallback((widget: DashboardWidget): React.ReactNode => {
@@ -48,6 +49,11 @@ export const DashboardPage: React.FC = () => {
     refreshAll();
   }, [refreshAll]);
 
+  // Handle reset to default layout
+  const handleResetLayout = React.useCallback(() => {
+    resetToDefault();
+  }, [resetToDefault]);
+
   return (
     <Layout style={{ minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
       <Header style={{ 
@@ -69,6 +75,12 @@ export const DashboardPage: React.FC = () => {
             onClick={handleRefreshAll}
           >
             Refresh All
+          </Button>
+          <Button
+            type="default"
+            onClick={handleResetLayout}
+          >
+            Reset Layout
           </Button>
           <Button
             type="primary"
