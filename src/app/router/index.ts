@@ -14,7 +14,7 @@ const rootRoute = createRootRoute({
 
 const dashboardRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/dashboard',
+  path: '/',
   component: DashboardPage,
 });
 

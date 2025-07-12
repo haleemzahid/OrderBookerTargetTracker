@@ -97,7 +97,7 @@ export const RevenuePerformanceWidget: React.FC<RevenuePerformanceWidgetProps> =
             
             <Statistic
               title="Growth"
-              value={Math.abs(data.growthPercentage)}
+              value={data.growthPercentage.toFixed(2)}
               suffix="%"
               prefix={growthIcon}
               valueStyle={{ 
