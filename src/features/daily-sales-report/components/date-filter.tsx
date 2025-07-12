@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { DatePicker, Space, Button, Segmented } from 'antd';
-import { ClearOutlined } from '@ant-design/icons';
+import { DatePicker, Space, Segmented } from 'antd';
 import type { DateFilterProps } from '../types';
 import dayjs, { Dayjs } from 'dayjs';
 
@@ -18,11 +17,9 @@ export const DateFilter: React.FC<DateFilterProps> = ({ value, onChange, loading
     { label: 'This Month', value: 'thisMonth' },
   ];
 
-  // Convert date range to dayjs for RangePicker
   const dateRange: [Dayjs, Dayjs] | null =
     value?.fromDate && value?.toDate ? [dayjs(value.fromDate), dayjs(value.toDate)] : null;
 
-  // Default to today if no value is provided
   const getDateRange = (period: string): [Dayjs, Dayjs] => {
     switch (period) {
       case 'today':
@@ -49,16 +46,11 @@ export const DateFilter: React.FC<DateFilterProps> = ({ value, onChange, loading
         fromDate: dates[0].toDate(),
         toDate: dates[1].toDate(),
       });
-      setSelectedPeriod(undefined); // Clear selected period when custom date is chosen
+      setSelectedPeriod(undefined);
     } else {
       onChange({});
       setSelectedPeriod(undefined);
     }
-  };
-
-  const handleClear = () => {
-    onChange({});
-    setSelectedPeriod(undefined);
   };
 
   const handlePeriodChange = (period: string) => {
