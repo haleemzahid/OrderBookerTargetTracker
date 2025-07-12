@@ -123,7 +123,7 @@ interface RevenueMetricData, ProfitMarginData, etc.
 
 #### [ ] Task 3: Implement Global Dashboard Store
 **What**: Create zustand store for global dashboard state management
-**Why**: Share filters and configuration across all widgets efficiently using dashboard-store naming convention
+**Why**: Share filters and configuration across all widgets efficiently using kebab-case naming convention
 **How**: Create `src/features/dashboard/stores/dashboard-store.ts`
 - Manage global filters (date range, order booker selection)
 - Handle widget visibility and layout preferences
@@ -134,7 +134,7 @@ interface RevenueMetricData, ProfitMarginData, etc.
 #### [ ] Task 4: Create Dashboard Layout System
 **What**: Implement drag-and-drop grid system for widget positioning
 **Why**: Allow users to customize their dashboard layout for optimal workflow
-**How**: Create `src/features/dashboard/components/DashboardGrid.tsx`
+**How**: Create `src/features/dashboard/components/dashboard-grid.tsx`
 - Use react-grid-layout library for drag-and-drop functionality
 - Implement responsive breakpoints for desktop screen sizes only
 - Save layout preferences to localStorage
@@ -146,7 +146,7 @@ interface RevenueMetricData, ProfitMarginData, etc.
 #### [ ] Task 5: Revenue Performance Widget
 **What**: Display current revenue metrics and trends
 **Why**: Answer "Are we making money?" - most critical business question
-**How**: Create `src/features/dashboard/components/widgets/RevenuePerformanceWidget.tsx`
+**How**: Create `src/features/dashboard/components/widgets/revenue-performance-widget.tsx`
 - Show current month revenue vs target
 - Display growth percentage vs last month
 - Include trend sparkline chart
@@ -157,7 +157,7 @@ interface RevenueMetricData, ProfitMarginData, etc.
 #### [ ] Task 6: Profit Margin Gauge Widget  
 **What**: Visual gauge showing overall profit margin percentage
 **Why**: Immediate visibility into business profitability health
-**How**: Create `src/features/dashboard/components/widgets/ProfitMarginWidget.tsx`
+**How**: Create `src/features/dashboard/components/widgets/profit-margin-widget.tsx`
 - Circular gauge showing current profit margin %
 - Color coding: Red (<15%), Yellow (15-25%), Green (>25%)
 - Target margin indicator line
@@ -168,7 +168,7 @@ interface RevenueMetricData, ProfitMarginData, etc.
 #### [ ] Task 7: Top Performers Leaderboard Widget
 **What**: Ranking of order bookers by target achievement
 **Why**: Identify top performers and those needing support
-**How**: Create `src/features/dashboard/components/widgets/TopPerformersWidget.tsx`
+**How**: Create `src/features/dashboard/components/widgets/top-performers-widget.tsx`
 - List top 5-10 order bookers by achievement %
 - Progress bars showing target completion
 - Trend indicators (up/down arrows)
@@ -179,7 +179,7 @@ interface RevenueMetricData, ProfitMarginData, etc.
 #### [ ] Task 8: Sales Trend Chart Widget
 **What**: Time series chart of daily sales over selected period
 **Why**: Visualize sales patterns and identify trends
-**How**: Create `src/features/dashboard/components/widgets/SalesTrendWidget.tsx`
+**How**: Create `src/features/dashboard/components/widgets/sales-trend-widget.tsx`
 - Line chart showing daily sales over time
 - Moving average overlay (7-day, 30-day)
 - Highlight weekends and holidays
@@ -190,7 +190,7 @@ interface RevenueMetricData, ProfitMarginData, etc.
 #### [ ] Task 9: Product Performance Matrix Widget
 **What**: Scatter plot of products by volume vs profit
 **Why**: Identify star products and candidates for phase-out
-**How**: Create `src/features/dashboard/components/widgets/ProductPerformanceWidget.tsx`
+**How**: Create `src/features/dashboard/components/widgets/product-performance-widget.tsx`
 - X-axis: Sales volume (cartons)
 - Y-axis: Profit margin %
 - Bubble size: Total revenue
@@ -201,7 +201,7 @@ interface RevenueMetricData, ProfitMarginData, etc.
 #### [ ] Task 10: Return Rate Monitor Widget
 **What**: Track and alert on high return rates
 **Why**: Early warning system for quality or operational issues
-**How**: Create `src/features/dashboard/components/widgets/ReturnRateWidget.tsx`
+**How**: Create `src/features/dashboard/components/widgets/return-rate-widget.tsx`
 - Overall return rate % with trend
 - Return rate by product (top offenders)
 - Return rate by order booker
@@ -214,18 +214,20 @@ interface RevenueMetricData, ProfitMarginData, etc.
 #### [ ] Task 11: Target Achievement Progress Widget
 **What**: Visual progress bars for monthly targets
 **Why**: Track progress toward goals and identify at-risk targets
-**How**: Create `src/features/dashboard/components/widgets/TargetProgressWidget.tsx`
+**How**: Create `src/features/dashboard/components/widgets/target-progress-widget.tsx`
 - Progress bars for each active order booker
 - Days remaining in month indicator
 - Required daily sales to meet target
 - Color coding for on-track/at-risk/missed
 - **Data Source**: monthly_targets table with current achievement
 - **Refresh**: Every 15 minutes
+- **Data Source**: monthly_targets table with current achievement
+- **Refresh**: Every 15 minutes
 
 #### [ ] Task 12: Cash Flow Summary Widget
 **What**: Overview of money flow and outstanding amounts
 **Why**: Monitor cash position and collection efficiency
-**How**: Create `src/features/dashboard/components/widgets/CashFlowWidget.tsx`
+**How**: Create `src/features/dashboard/components/widgets/cash-flow-widget.tsx`
 - Net sales vs returns ratio
 - Outstanding orders value
 - Average collection time
@@ -236,7 +238,7 @@ interface RevenueMetricData, ProfitMarginData, etc.
 #### [ ] Task 13: Order Velocity Widget
 **What**: Track speed of order processing and fulfillment
 **Why**: Monitor operational efficiency and customer satisfaction
-**How**: Create `src/features/dashboard/components/widgets/OrderVelocityWidget.tsx`
+**How**: Create `src/features/dashboard/components/widgets/order-velocity-widget.tsx`
 - Average orders per day
 - Order processing time (order to supply)
 - Pending orders count and aging
@@ -247,7 +249,7 @@ interface RevenueMetricData, ProfitMarginData, etc.
 #### [ ] Task 14: Alert Center Widget
 **What**: Centralized notification system for business alerts
 **Why**: Immediate attention to issues requiring action
-**How**: Create `src/features/dashboard/components/widgets/AlertCenterWidget.tsx`
+**How**: Create `src/features/dashboard/components/widgets/alert-center-widget.tsx`
 - High return rate alerts (>5% for product/booker)
 - Target miss risk alerts (current pace won't meet target)
 - Unusual pattern alerts (sudden drop in sales)
@@ -260,7 +262,7 @@ interface RevenueMetricData, ProfitMarginData, etc.
 #### [ ] Task 15: Widget Configuration Panel
 **What**: Interface for users to customize dashboard widgets
 **Why**: Allow personalization and adaptation to different user needs
-**How**: Create `src/features/dashboard/components/WidgetConfigPanel.tsx`
+**How**: Create `src/features/dashboard/components/widget-config-panel.tsx`
 - Widget visibility toggles
 - Refresh interval settings
 - Size and position controls
@@ -362,7 +364,7 @@ interface RevenueMetricData, ProfitMarginData, etc.
 - Use TypeScript strictly - no `any` types
 - Implement proper error boundaries and loading states
 - Follow Ant Design component patterns and design system guidelines
-- **Naming Convention**: Use `dashboard-store` pattern for store files (e.g., `dashboard-store.ts`)
+- **Naming Convention**: Use kebab-case for all file names (all lowercase with dashes: `dashboard-store.ts`, `revenue-performance-widget.tsx`)
 - **State Management**: Use Zustand for all global state management, avoid React Context for complex state
 
 ### Data Considerations
