@@ -1,26 +1,47 @@
-import React from 'react';
-import { DatePicker, Space, Button } from 'antd';
+import React, { useState } from 'react';
+import { DatePicker, Space, Button, Segmented } from 'antd';
 import { ClearOutlined } from '@ant-design/icons';
 import type { DateFilterProps } from '../types';
 import dayjs, { Dayjs } from 'dayjs';
 
 const { RangePicker } = DatePicker;
 
-export const DateFilter: React.FC<DateFilterProps> = ({
-  value,
-  onChange,
-  loading = false,
-}) => {
-  // Convert date range to dayjs for RangePicker
-  const dateRange: [Dayjs, Dayjs] | null = value?.fromDate && value?.toDate 
-    ? [dayjs(value.fromDate), dayjs(value.toDate)]
-    : null;
+export const DateFilter: React.FC<DateFilterProps> = ({ value, onChange, loading = false }) => {
+  const [selectedPeriod, setSelectedPeriod] = useState<string | undefined>(undefined);
 
-  // Default to current month if no value is provided
-  const defaultDateRange: [Dayjs, Dayjs] = [
-    dayjs().startOf('month'),
-    dayjs().endOf('month')
+  // Segmented control options
+  const periodOptions = [
+    { label: 'Today', value: 'today' },
+    { label: 'Yesterday', value: 'yesterday' },
+    { label: 'This Week', value: 'thisWeek' },
+    { label: 'Prev Week', value: 'prevWeek' },
+    { label: 'This Month', value: 'thisMonth' },
   ];
+
+  // Convert date range to dayjs for RangePicker
+  const dateRange: [Dayjs, Dayjs] | null =
+    value?.fromDate && value?.toDate ? [dayjs(value.fromDate), dayjs(value.toDate)] : null;
+
+  // Default to today if no value is provided
+  const getDateRange = (period: string): [Dayjs, Dayjs] => {
+    switch (period) {
+      case 'today':
+        return [dayjs().startOf('day'), dayjs().endOf('day')];
+      case 'yesterday':
+        return [dayjs().subtract(1, 'day').startOf('day'), dayjs().subtract(1, 'day').endOf('day')];
+      case 'thisWeek':
+        return [dayjs().startOf('week'), dayjs().endOf('week')];
+      case 'prevWeek':
+        return [
+          dayjs().subtract(1, 'week').startOf('week'),
+          dayjs().subtract(1, 'week').endOf('week'),
+        ];
+      case 'thisMonth':
+        return [dayjs().startOf('month'), dayjs().endOf('month')];
+      default:
+        return [dayjs().startOf('day'), dayjs().endOf('day')];
+    }
+  };
 
   const handleDateRangeChange = (dates: [Dayjs | null, Dayjs | null] | null) => {
     if (dates && dates[0] && dates[1]) {
@@ -28,24 +49,29 @@ export const DateFilter: React.FC<DateFilterProps> = ({
         fromDate: dates[0].toDate(),
         toDate: dates[1].toDate(),
       });
+      setSelectedPeriod(undefined); // Clear selected period when custom date is chosen
     } else {
       onChange({});
+      setSelectedPeriod(undefined);
     }
   };
 
   const handleClear = () => {
     onChange({});
+    setSelectedPeriod(undefined);
   };
 
-  const handleSetCurrentMonth = () => {
+  const handlePeriodChange = (period: string) => {
+    const [fromDate, toDate] = getDateRange(period);
     onChange({
-      fromDate: defaultDateRange[0].toDate(),
-      toDate: defaultDateRange[1].toDate(),
+      fromDate: fromDate.toDate(),
+      toDate: toDate.toDate(),
     });
+    setSelectedPeriod(period);
   };
 
   return (
-    <Space.Compact>
+    <Space direction="horizontal" size="small">
       <RangePicker
         placeholder={['From Date', 'To Date']}
         value={dateRange}
@@ -55,20 +81,12 @@ export const DateFilter: React.FC<DateFilterProps> = ({
         allowClear={true}
         style={{ width: 280 }}
       />
-      <Button
-        icon={<ClearOutlined />}
-        onClick={handleClear}
-        disabled={loading || (!value?.fromDate && !value?.toDate)}
-        title="Clear dates"
-      />
-      <Button
-        onClick={handleSetCurrentMonth}
+      <Segmented
+        options={periodOptions}
+        value={selectedPeriod}
+        onChange={handlePeriodChange}
         disabled={loading}
-        type="default"
-        size="small"
-      >
-        This Month
-      </Button>
-    </Space.Compact>
+      />
+    </Space>
   );
 };

@@ -12,8 +12,8 @@ import dayjs from 'dayjs';
 export const DailySalesReportListPage: React.FC = () => {
   const [searchText, setSearchText] = useState('');
   const [filters, setFilters] = useState<DailySalesReportFilters>({
-    fromDate: dayjs().startOf('month').toDate(),
-    toDate: dayjs().endOf('month').toDate(),
+    fromDate: dayjs().startOf('day').toDate(),
+    toDate: dayjs().endOf('day').toDate(),
   });
 
   // Set up export functionality
