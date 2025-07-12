@@ -4,6 +4,8 @@ import { DeleteOutlined } from '@ant-design/icons';
 import type { TableProps } from 'antd';
 import { useProducts } from '../../products/api/queries';
 import { FormatNumber } from '../../../shared/components';
+import { CartonQuantityInput } from '../../../components/common/CartonQuantityInput';
+import type { CartonQuantityValue } from '../../../components/common/CartonQuantityInput';
 import { calculateOrderItemTotalsFromCartons } from '../utils/calculations';
 import type { Product } from '../../products/types';
 
@@ -28,11 +30,12 @@ interface EditableCellProps extends React.HTMLAttributes<HTMLElement> {
   editing: boolean;
   dataIndex: string;
   title: any;
-  inputType: 'number' | 'text' | 'select';
+  inputType: 'number' | 'text' | 'select' | 'carton';
   record: OrderItemData;
   index: number;
   products?: Product[];
   onCellBlur?: (key: React.Key) => void;
+  onValueChange?: (key: React.Key, dataIndex: string, value: any) => void;
 }
 
 const EditableCell: React.FC<React.PropsWithChildren<EditableCellProps>> = ({
@@ -45,16 +48,33 @@ const EditableCell: React.FC<React.PropsWithChildren<EditableCellProps>> = ({
   children,
   products = [],
   onCellBlur,
+  onValueChange,
   ...restProps
 }) => {
   let inputNode: React.ReactNode;
 
-  if (inputType === 'number') {
+  if (inputType === 'carton') {
+    const product = products.find(p => p.id === record.productId);
+    const unitPerCarton = product?.unitPerCarton || 1;
+    
+    inputNode = (
+      <CartonQuantityInput
+        unitPerCarton={unitPerCarton}
+        onChange={(value: CartonQuantityValue) => {
+          onValueChange?.(record.key, dataIndex, value.cartons);
+        }}
+        allowDecimals={true}
+      />
+    );
+  } else if (inputType === 'number') {
     inputNode = (
       <InputNumber 
         style={{ width: '100%' }} 
         min={0} 
         step={0.01}
+        onChange={(value) => {
+          onValueChange?.(record.key, dataIndex, value || 0);
+        }}
         onBlur={() => onCellBlur?.(record.key)}
       />
     );
@@ -68,6 +88,9 @@ const EditableCell: React.FC<React.PropsWithChildren<EditableCellProps>> = ({
         filterOption={(input, option) =>
           (option?.children as unknown as string)?.toLowerCase().includes(input.toLowerCase())
         }
+        onChange={(value) => {
+          onValueChange?.(record.key, dataIndex, value);
+        }}
         onBlur={() => onCellBlur?.(record.key)}
       >
         {products.map(product => (
@@ -80,6 +103,9 @@ const EditableCell: React.FC<React.PropsWithChildren<EditableCellProps>> = ({
   } else {
     inputNode = (
       <Input 
+        onChange={(e) => {
+          onValueChange?.(record.key, dataIndex, e.target.value);
+        }}
         onBlur={() => onCellBlur?.(record.key)}
       />
     );
@@ -125,6 +151,40 @@ export const OrderItemsTable: React.FC<OrderItemsTableProps> = ({
   
   const { data: products = [], isLoading: isLoadingProducts } = useProducts();
 
+  // Real-time calculation function
+  const updateCalculatedValues = (updatedData: OrderItemData[], targetKey: string, changedField: string, value: any) => {
+    return updatedData.map(item => {
+      if (item.key !== targetKey) return item;
+      
+      const updatedItem = { ...item, [changedField]: value };
+      
+      // Only calculate if we have the required fields
+      if (updatedItem.productId && updatedItem.cartons) {
+        const product = products.find(p => p.id === updatedItem.productId);
+        if (product) {
+          const calculatedValues = calculateValues(updatedItem, updatedItem.productId);
+          return { ...updatedItem, ...calculatedValues };
+        }
+      }
+      
+      return updatedItem;
+    });
+  };
+
+  // Handle real-time value changes
+  const handleValueChange = (key: React.Key, dataIndex: string, value: any) => {
+    const newData = updateCalculatedValues(data, key as string, dataIndex, value);
+    setData(newData);
+    
+    // Update form field
+    form.setFieldValue(dataIndex, value);
+    
+    // If this is a product selection, update the cost and sell prices
+    if (dataIndex === 'productId') {
+      handleProductChange(value);
+    }
+  };
+
   const save = async (key: React.Key) => {
     try {
       const row = await form.validateFields();
@@ -134,12 +194,12 @@ export const OrderItemsTable: React.FC<OrderItemsTableProps> = ({
         return;
       }
 
-      const calculatedRow = calculateValues(row, row.productId);
       const newData = [...data];
       const index = newData.findIndex((item) => key === item.key);
       
       if (index > -1) {
         const item = newData[index];
+        const calculatedRow = calculateValues(row, row.productId);
         const updatedItem = {
           ...item,
           ...calculatedRow,
@@ -148,7 +208,7 @@ export const OrderItemsTable: React.FC<OrderItemsTableProps> = ({
         };
         newData.splice(index, 1, updatedItem);
         
-        // If this was a new row, add another empty row and auto-edit it
+        // If this was a new row, add another empty row
         if (item.isNew) {
           const newEmptyRow: OrderItemData = {
             key: `new-${Date.now()}`,
@@ -156,16 +216,17 @@ export const OrderItemsTable: React.FC<OrderItemsTableProps> = ({
           };
           newData.push(newEmptyRow);
           
-          // Auto-edit the new empty row
+          // Auto-edit the new empty row after a short delay
           setTimeout(() => {
-            setEditingKey(newEmptyRow.key);        form.setFieldsValue({
-          productId: '',
-          cartons: 1,
-          costPrice: 0,
-          sellPrice: 0,
-          returnCartons: 0,
-        });
-          }, 0);
+            setEditingKey(newEmptyRow.key);
+            form.setFieldsValue({
+              productId: '',
+              cartons: 1,
+              costPrice: 0,
+              sellPrice: 0,
+              returnCartons: 0,
+            });
+          }, 100);
         } else {
           setEditingKey('');
         }
@@ -274,15 +335,15 @@ export const OrderItemsTable: React.FC<OrderItemsTableProps> = ({
   };
 
   const handleBlur = async (key: React.Key) => {
-    // Auto-save on blur if the row has valid data
+    // Only try to save if we have a complete row with product and cartons
     try {
       const values = form.getFieldsValue();
-      if (values.productId && values.cartons) {
+      if (values.productId && values.cartons && values.cartons > 0) {
         await save(key);
       }
     } catch (error) {
-      // If validation fails, just exit editing mode
-      setEditingKey('');
+      // If validation fails, don't exit editing mode
+      console.log('Validation failed on blur:', error);
     }
   };
 
@@ -303,6 +364,10 @@ export const OrderItemsTable: React.FC<OrderItemsTableProps> = ({
         sellPrice: product.sellPrice,
       };
       form.setFieldsValue(updatedValues);
+      
+      // Update form fields for cost and sell price
+      form.setFieldValue('costPrice', product.costPrice);
+      form.setFieldValue('sellPrice', product.sellPrice);
     }
   };
 
@@ -356,12 +421,6 @@ export const OrderItemsTable: React.FC<OrderItemsTableProps> = ({
       render: (value: number) => value ? <FormatNumber value={value} prefix="Rs. " /> : '',
     },
     {
-      title: 'Cartons',
-      dataIndex: 'cartons',
-      width: '8%',
-      render: (value: number) => value || '',
-    },
-    {
       title: 'Return Cartons',
       dataIndex: 'returnCartons',
       width: '10%',
@@ -403,12 +462,14 @@ export const OrderItemsTable: React.FC<OrderItemsTableProps> = ({
       onCell: (record: OrderItemData) => ({
         record,
         inputType: col.dataIndex === 'productId' ? 'select' : 
-                  ['cartons', 'costPrice', 'sellPrice', 'returnCartons'].includes(col.dataIndex) ? 'number' : 'text',
+                  col.dataIndex === 'cartons' ? 'carton' :
+                  ['costPrice', 'sellPrice', 'returnCartons'].includes(col.dataIndex) ? 'number' : 'text',
         dataIndex: col.dataIndex,
         title: col.title,
         editing: isEditing(record),
         products,
         onCellBlur: handleBlur,
+        onValueChange: handleValueChange,
       }),
     };
   });
@@ -418,8 +479,12 @@ export const OrderItemsTable: React.FC<OrderItemsTableProps> = ({
       form={form} 
       component={false}
       onValuesChange={(changedValues) => {
-        if (changedValues.productId) {
-          handleProductChange(changedValues.productId);
+        // Handle real-time updates for any field changes
+        const changedField = Object.keys(changedValues)[0];
+        const changedValue = changedValues[changedField];
+        
+        if (editingKey && changedField) {
+          handleValueChange(editingKey, changedField, changedValue);
         }
       }}
     >
