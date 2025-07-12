@@ -18,15 +18,6 @@ export const OrderDetail: React.FC<OrderDetailProps> = ({ order }) => {
     return orderBooker?.name || orderBookerId;
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending': return 'orange';
-      case 'supplied': return 'blue';
-      case 'completed': return 'green';
-      default: return 'default';
-    }
-  };
-
   const profitMargin = order.totalCost > 0 ? (order.totalProfit / order.totalCost) * 100 : 0;
 
   return (
@@ -40,14 +31,6 @@ export const OrderDetail: React.FC<OrderDetailProps> = ({ order }) => {
               </Descriptions.Item>
               <Descriptions.Item label="Order Date">
                 {dayjs(order.orderDate).format('DD/MM/YYYY')}
-              </Descriptions.Item>
-              <Descriptions.Item label="Supply Date">
-                {order.supplyDate ? dayjs(order.supplyDate).format('DD/MM/YYYY') : '-'}
-              </Descriptions.Item>
-              <Descriptions.Item label="Status">
-                <Tag color={getStatusColor(order.status)}>
-                  {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                </Tag>
               </Descriptions.Item>
             </Descriptions>
           </Col>

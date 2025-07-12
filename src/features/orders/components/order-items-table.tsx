@@ -21,7 +21,7 @@ export const OrderItemsTable: React.FC<OrderItemsTableProps> = ({
   onItemAdd,
   onItemUpdate,
   onItemDelete,
-  editable = true,
+  editable = false, // Changed default to false since this is view-only
 }) => {
   const [editingItems, setEditingItems] = useState<EditableOrderItem[]>([]);
   const [newItem, setNewItem] = useState<Partial<CreateOrderItemRequest>>({});
@@ -43,7 +43,7 @@ export const OrderItemsTable: React.FC<OrderItemsTableProps> = ({
     if (product) {
       setNewItem({
         productId,
-        quantity: 1,
+        cartons: 1,
         costPrice: product.costPrice,
         sellPrice: product.sellPrice,
       });
@@ -51,7 +51,7 @@ export const OrderItemsTable: React.FC<OrderItemsTableProps> = ({
   };
 
   const handleAddItem = async () => {
-    if (!newItem.productId || !newItem.quantity || !newItem.costPrice || !newItem.sellPrice) {
+    if (!newItem.productId || !newItem.cartons || !newItem.costPrice || !newItem.sellPrice) {
       message.error('Please fill all required fields');
       return;
     }
@@ -61,7 +61,7 @@ export const OrderItemsTable: React.FC<OrderItemsTableProps> = ({
         orderId,
         data: {
           productId: newItem.productId,
-          quantity: newItem.quantity,
+          cartons: newItem.cartons,
           costPrice: newItem.costPrice,
           sellPrice: newItem.sellPrice,
         }
@@ -87,9 +87,9 @@ export const OrderItemsTable: React.FC<OrderItemsTableProps> = ({
       await updateItemMutation.mutateAsync({
         id: itemId,
         data: {
-          quantity: item.quantity,
+          cartons: item.cartons,
           sellPrice: item.sellPrice,
-          returnQuantity: item.returnQuantity,
+          returnCartons: item.returnCartons,
         }
       });
       setEditingItems(prev => 
@@ -98,9 +98,9 @@ export const OrderItemsTable: React.FC<OrderItemsTableProps> = ({
         )
       );
       onItemUpdate(itemId, {
-        quantity: item.quantity,
+        cartons: item.cartons,
         sellPrice: item.sellPrice,
-        returnQuantity: item.returnQuantity,
+        returnCartons: item.returnCartons,
       });
       message.success('Item updated successfully');
     } catch (error) {
@@ -131,26 +131,12 @@ export const OrderItemsTable: React.FC<OrderItemsTableProps> = ({
       render: (productId: string) => getProductName(productId),
     },
     {
-      title: 'Quantity',
-      dataIndex: 'quantity',
-      key: 'quantity',
-      render: (quantity: number, record: EditableOrderItem) => {
-        if (record.isEditing && editable) {
-          return (
-            <InputNumber
-              value={quantity}
-              min={1}
-              onChange={(value) => {
-                setEditingItems(prev => 
-                  prev.map(item => 
-                    item.id === record.id ? { ...item, quantity: value || 1 } : item
-                  )
-                );
-              }}
-            />
-          );
-        }
-        return quantity;
+      title: 'Cartons',
+      dataIndex: 'cartons',
+      key: 'cartons',
+      render: (cartons: number) => {
+        // For view-only mode, just display the cartons value
+        return cartons.toFixed(2);
       },
     },
     {
@@ -205,33 +191,27 @@ export const OrderItemsTable: React.FC<OrderItemsTableProps> = ({
       ),
     },
     {
-      title: 'Cartons',
-      dataIndex: 'cartons',
-      key: 'cartons',
-      render: (cartons: number) => cartons.toFixed(2),
-    },
-    {
-      title: 'Return Qty',
-      dataIndex: 'returnQuantity',
-      key: 'returnQuantity',
-      render: (returnQty: number, record: EditableOrderItem) => {
+      title: 'Return Cartons',
+      dataIndex: 'returnCartons',
+      key: 'returnCartons',
+      render: (returnCartons: number, record: EditableOrderItem) => {
         if (record.isEditing && editable) {
           return (
             <InputNumber
-              value={returnQty}
+              value={returnCartons}
               min={0}
-              max={record.quantity}
+              max={record.cartons}
               onChange={(value) => {
                 setEditingItems(prev => 
                   prev.map(item => 
-                    item.id === record.id ? { ...item, returnQuantity: value || 0 } : item
+                    item.id === record.id ? { ...item, returnCartons: value || 0 } : item
                   )
                 );
               }}
             />
           );
         }
-        return returnQty || 0;
+        return returnCartons || 0;
       },
     },
     ...(editable ? [{
@@ -294,10 +274,10 @@ export const OrderItemsTable: React.FC<OrderItemsTableProps> = ({
             ))}
           </Select>
           <InputNumber
-            placeholder="Quantity"
-            value={newItem.quantity}
+            placeholder="Cartons"
+            value={newItem.cartons}
             min={1}
-            onChange={(value) => setNewItem(prev => ({ ...prev, quantity: value || 1 }))}
+            onChange={(value) => setNewItem(prev => ({ ...prev, cartons: value || 1 }))}
           />
           <InputNumber
             placeholder="Cost Price"

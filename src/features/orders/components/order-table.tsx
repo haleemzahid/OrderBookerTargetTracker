@@ -22,15 +22,6 @@ export const OrderTable: React.FC<OrderTableProps> = ({
     return orderBooker?.name || orderBookerId;
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending': return 'orange';
-      case 'supplied': return 'blue';
-      case 'completed': return 'green';
-      default: return 'default';
-    }
-  };
-
   const columns: ColumnsType<Order> = [
     {
       title: 'Order Date',
@@ -95,35 +86,6 @@ export const OrderTable: React.FC<OrderTableProps> = ({
       sorter: (a, b) => a.totalCartons - b.totalCartons,
     },
     {
-      title: 'Status',
-      dataIndex: 'status',
-      key: 'status',
-      render: (status: string) => (
-        <Tag color={getStatusColor(status)}>
-          {status.charAt(0).toUpperCase() + status.slice(1)}
-        </Tag>
-      ),
-      sorter: (a, b) => a.status.localeCompare(b.status),
-      filters: [
-        { text: 'Pending', value: 'pending' },
-        { text: 'Supplied', value: 'supplied' },
-        { text: 'Completed', value: 'completed' },
-      ],
-      onFilter: (value, record) => record.status === value,
-    },
-    {
-      title: 'Supply Date',
-      dataIndex: 'supplyDate',
-      key: 'supplyDate',
-      render: (date: Date | null) => date ? dayjs(date).format('DD/MM/YYYY') : '-',
-      sorter: (a, b) => {
-        if (!a.supplyDate && !b.supplyDate) return 0;
-        if (!a.supplyDate) return 1;
-        if (!b.supplyDate) return -1;
-        return dayjs(a.supplyDate).unix() - dayjs(b.supplyDate).unix();
-      },
-    },
-    {
       title: 'Returns',
       key: 'returns',
       render: (_, record: Order) => {
@@ -172,6 +134,46 @@ export const OrderTable: React.FC<OrderTableProps> = ({
         showTotal: (total) => `Total ${total} orders`,
       }}
       scroll={{ x: 1200 }}
+      summary={(pageData) => {
+        if (pageData.length === 0) return null;
+        
+        const totalAmount = pageData.reduce((sum, order) => sum + order.totalAmount, 0);
+        const totalCost = pageData.reduce((sum, order) => sum + order.totalCost, 0);
+        const totalProfit = pageData.reduce((sum, order) => sum + order.totalProfit, 0);
+        const totalCartons = pageData.reduce((sum, order) => sum + order.totalCartons, 0);
+        const totalReturnAmount = pageData.reduce((sum, order) => sum + order.returnAmount, 0);
+
+        return (
+          <Table.Summary fixed>
+            <Table.Summary.Row style={{ backgroundColor: '#fafafa', fontWeight: 'bold' }}>
+              <Table.Summary.Cell index={0}>Page Total</Table.Summary.Cell>
+              <Table.Summary.Cell index={1}></Table.Summary.Cell>
+              <Table.Summary.Cell index={2}>
+                <Tag color="blue">
+                  <FormatNumber value={totalAmount} prefix="Rs. " decimalPlaces={2} />
+                </Tag>
+              </Table.Summary.Cell>
+              <Table.Summary.Cell index={3}>
+                <FormatNumber value={totalCost} prefix="Rs. " decimalPlaces={2} />
+              </Table.Summary.Cell>
+              <Table.Summary.Cell index={4}>
+                <Tag color={totalProfit >= 0 ? 'green' : 'red'}>
+                  <FormatNumber value={totalProfit} prefix="Rs. " decimalPlaces={2} />
+                </Tag>
+              </Table.Summary.Cell>
+              <Table.Summary.Cell index={5}>{totalCartons.toFixed(1)}</Table.Summary.Cell>
+              <Table.Summary.Cell index={6}>
+                {totalReturnAmount > 0 && (
+                  <Tag color="red">
+                    <FormatNumber value={totalReturnAmount} prefix="Rs. " decimalPlaces={2} />
+                  </Tag>
+                )}
+              </Table.Summary.Cell>
+              <Table.Summary.Cell index={7}></Table.Summary.Cell>
+            </Table.Summary.Row>
+          </Table.Summary>
+        );
+      }}
     />
   );
 };

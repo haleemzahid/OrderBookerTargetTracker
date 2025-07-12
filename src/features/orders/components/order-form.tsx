@@ -36,7 +36,6 @@ export const OrderForm: React.FC<OrderFormProps> = ({
       form.setFieldsValue({
         orderBookerId: order.orderBookerId,
         orderDate: dayjs(order.orderDate),
-        supplyDate: order.supplyDate ? dayjs(order.supplyDate) : null,
         notes: order.notes,
       });
       // TODO: Load existing order items when editing
@@ -60,13 +59,13 @@ export const OrderForm: React.FC<OrderFormProps> = ({
       const requestData: CreateOrderRequest = {
         orderBookerId: values.orderBookerId,
         orderDate: values.orderDate.toDate(),
-        supplyDate: values.supplyDate?.toDate() || null,
         notes: values.notes,
         items: orderItems.map(item => ({
           productId: item.productId!,
-          quantity: item.quantity!,
+          cartons: item.cartons!,
           costPrice: item.costPrice!,
           sellPrice: item.sellPrice!,
+          returnCartons: item.returnCartons
         })),
       };
 
@@ -76,7 +75,6 @@ export const OrderForm: React.FC<OrderFormProps> = ({
           data: {
             orderBookerId: requestData.orderBookerId,
             orderDate: requestData.orderDate,
-            supplyDate: requestData.supplyDate,
             notes: requestData.notes,
           }
         });
@@ -149,19 +147,7 @@ export const OrderForm: React.FC<OrderFormProps> = ({
         </Row>
         
         <Row gutter={16}>
-          <Col span={12}>
-            <Form.Item
-              name="supplyDate"
-              label="Supply Date (Optional)"
-            >
-              <DatePicker 
-                style={{ width: '100%' }} 
-                format="DD/MM/YYYY"
-                placeholder="Select supply date"
-              />
-            </Form.Item>
-          </Col>
-          <Col span={12}>
+          <Col span={24}>
             <Form.Item
               name="notes"
               label="Notes (Optional)"

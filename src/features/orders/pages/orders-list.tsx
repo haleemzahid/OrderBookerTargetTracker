@@ -16,7 +16,6 @@ const { RangePicker } = DatePicker;
 
 interface FilterState {
   orderBookerId?: string;
-  status?: 'pending' | 'supplied' | 'completed';
   dateRange?: [dayjs.Dayjs, dayjs.Dayjs];
 }
 
@@ -27,7 +26,6 @@ export const OrdersListPage: React.FC = () => {
   const [searchText, setSearchText] = useState('');
   const [filters, setFilters] = useState<FilterState>({
     orderBookerId: undefined,
-    status: undefined,
     dateRange: undefined,
   });
 
@@ -47,7 +45,6 @@ export const OrdersListPage: React.FC = () => {
   const queryFilters: OrderFilters = {
     searchTerm: searchText,
     orderBookerId: filters.orderBookerId,
-    status: filters.status,
     dateFrom: filters.dateRange?.[0]?.toDate(),
     dateTo: filters.dateRange?.[1]?.toDate(),
   };
@@ -98,10 +95,6 @@ export const OrdersListPage: React.FC = () => {
     setFilters((prev) => ({ ...prev, orderBookerId }));
   };
 
-  const handleStatusFilter = (status?: 'pending' | 'supplied' | 'completed') => {
-    setFilters((prev) => ({ ...prev, status }));
-  };
-
   const handleDateRangeFilter = (dates: any) => {
     setFilters((prev) => ({ ...prev, dateRange: dates }));
   };
@@ -133,7 +126,6 @@ export const OrdersListPage: React.FC = () => {
       render: (value) => `Rs. ${value.toLocaleString()}`,
     },
     { title: 'Total Cartons', dataIndex: 'totalCartons' },
-    { title: 'Status', dataIndex: 'status' },
     { title: 'Supply Date', dataIndex: 'supplyDate', render: (value) => value ? dayjs(value).format('DD/MM/YYYY') : '-' },
   ];
 
@@ -162,11 +154,6 @@ export const OrdersListPage: React.FC = () => {
         <div>
           <strong>Total Cartons:</strong> {orderSummary.totalCartons}
         </div>
-        <Space>
-          <Tag color="orange">Pending: {orderSummary.pendingOrders}</Tag>
-          <Tag color="blue">Supplied: {orderSummary.suppliedOrders}</Tag>
-          <Tag color="green">Completed: {orderSummary.completedOrders}</Tag>
-        </Space>
       </Space>
     );
   };
@@ -186,18 +173,6 @@ export const OrdersListPage: React.FC = () => {
           {orderBookers?.map(orderBooker => (
             <Option key={orderBooker.id} value={orderBooker.id}>{orderBooker.name}</Option>
           ))}
-        </Select>
-        <Select
-          placeholder="Filter by Status"
-          value={filters.status}
-          onChange={handleStatusFilter}
-          style={{ width: 150 }}
-          allowClear
-        >
-          <Option value={undefined}>All Status</Option>
-          <Option value="pending">Pending</Option>
-          <Option value="supplied">Supplied</Option>
-          <Option value="completed">Completed</Option>
         </Select>
         <RangePicker
           placeholder={['From Date', 'To Date']}

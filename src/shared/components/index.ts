@@ -6,3 +6,4 @@ export * from './TableActions';
 export * from './ListPageLayout';
 export * from './FormatNumber';
 export * from './GuidedTour';
+export { CartonQuantityInput } from '../../components/common/CartonQuantityInput';

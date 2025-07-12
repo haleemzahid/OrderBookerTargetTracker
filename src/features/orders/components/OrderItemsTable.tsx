@@ -12,16 +12,14 @@ export interface OrderItemData {
   key: string;
   productId?: string;
   productName?: string;
-  quantity?: number;
+  cartons?: number;
   costPrice?: number;
   sellPrice?: number;
   totalCost?: number;
   totalAmount?: number;
   profit?: number;
-  cartons?: number;
-  returnQuantity?: number;
-  returnAmount?: number;
   returnCartons?: number;
+  returnAmount?: number;
   isNew?: boolean;
 }
 
@@ -94,7 +92,7 @@ const EditableCell: React.FC<React.PropsWithChildren<EditableCellProps>> = ({
           style={{ margin: 0 }}
           rules={[
             {
-              required: dataIndex === 'productId' || dataIndex === 'quantity',
+              required: dataIndex === 'productId' || dataIndex === 'cartons',
               message: `Please Input ${title}!`,
             },
           ]}
@@ -159,14 +157,13 @@ export const OrderItemsTable: React.FC<OrderItemsTableProps> = ({
           
           // Auto-edit the new empty row
           setTimeout(() => {
-            setEditingKey(newEmptyRow.key);
-            form.setFieldsValue({
-              productId: '',
-              quantity: 1,
-              costPrice: 0,
-              sellPrice: 0,
-              returnQuantity: 0,
-            });
+            setEditingKey(newEmptyRow.key);        form.setFieldsValue({
+          productId: '',
+          cartons: 1,
+          costPrice: 0,
+          sellPrice: 0,
+          returnCartons: 0,
+        });
           }, 0);
         } else {
           setEditingKey('');
@@ -219,10 +216,10 @@ export const OrderItemsTable: React.FC<OrderItemsTableProps> = ({
         setEditingKey(newEmptyRow.key);
         form.setFieldsValue({
           productId: '',
-          quantity: 1,
+          cartons: 1,
           costPrice: 0,
           sellPrice: 0,
-          returnQuantity: 0,
+          returnCartons: 0,
         });
       }, 0);
     }
@@ -234,10 +231,10 @@ export const OrderItemsTable: React.FC<OrderItemsTableProps> = ({
     const product = products.find(p => p.id === record.productId);
     const defaultValues = {
       productId: record.productId || '',
-      quantity: record.quantity || 1,
+      cartons: record.cartons || 1,
       costPrice: record.costPrice || 0,
       sellPrice: record.sellPrice || 0,
-      returnQuantity: record.returnQuantity || 0,
+      returnCartons: record.returnCartons || 0,
     };
     
     // If product exists, use its cost and sell prices as defaults
@@ -252,18 +249,17 @@ export const OrderItemsTable: React.FC<OrderItemsTableProps> = ({
 
   const calculateValues = (values: any, productId?: string) => {
     const product = products.find(p => p.id === productId);
-    const quantity = values.quantity || 0;
+    const cartons = values.cartons || 0;
     const costPrice = values.costPrice || (product?.costPrice || 0);
     const sellPrice = values.sellPrice || (product?.sellPrice || 0);
-    const returnQuantity = values.returnQuantity || 0;
+    const returnCartons = values.returnCartons || 0;
     const unitPerCarton = product?.unitPerCarton || 1;
 
-    const totalCost = quantity * costPrice;
-    const totalAmount = quantity * sellPrice;
+    const totalUnits = cartons * unitPerCarton;
+    const totalCost = totalUnits * costPrice;
+    const totalAmount = totalUnits * sellPrice;
     const profit = totalAmount - totalCost;
-    const cartons = Math.ceil(quantity / unitPerCarton);
-    const returnAmount = returnQuantity * sellPrice;
-    const returnCartons = Math.ceil(returnQuantity / unitPerCarton);
+    const returnAmount = returnCartons * unitPerCarton * sellPrice;
 
     return {
       ...values,
@@ -272,9 +268,7 @@ export const OrderItemsTable: React.FC<OrderItemsTableProps> = ({
       totalCost,
       totalAmount,
       profit,
-      cartons,
       returnAmount,
-      returnCartons,
     };
   };
 
@@ -282,7 +276,7 @@ export const OrderItemsTable: React.FC<OrderItemsTableProps> = ({
     // Auto-save on blur if the row has valid data
     try {
       const values = form.getFieldsValue();
-      if (values.productId && values.quantity) {
+      if (values.productId && values.cartons) {
         await save(key);
       }
     } catch (error) {
@@ -322,8 +316,8 @@ export const OrderItemsTable: React.FC<OrderItemsTableProps> = ({
       },
     },
     {
-      title: 'Quantity',
-      dataIndex: 'quantity',
+      title: 'Cartons',
+      dataIndex: 'cartons',
       width: '10%',
       editable: true,
       render: (value: number) => value || '',
@@ -367,8 +361,8 @@ export const OrderItemsTable: React.FC<OrderItemsTableProps> = ({
       render: (value: number) => value || '',
     },
     {
-      title: 'Return Qty',
-      dataIndex: 'returnQuantity',
+      title: 'Return Cartons',
+      dataIndex: 'returnCartons',
       width: '10%',
       editable: true,
       render: (value: number) => value || 0,
@@ -408,7 +402,7 @@ export const OrderItemsTable: React.FC<OrderItemsTableProps> = ({
       onCell: (record: OrderItemData) => ({
         record,
         inputType: col.dataIndex === 'productId' ? 'select' : 
-                  ['quantity', 'costPrice', 'sellPrice', 'returnQuantity'].includes(col.dataIndex) ? 'number' : 'text',
+                  ['cartons', 'costPrice', 'sellPrice', 'returnCartons'].includes(col.dataIndex) ? 'number' : 'text',
         dataIndex: col.dataIndex,
         title: col.title,
         editing: isEditing(record),
@@ -456,7 +450,7 @@ export const OrderItemsTable: React.FC<OrderItemsTableProps> = ({
             <Table.Summary fixed>
               <Table.Summary.Row style={{ backgroundColor: '#fafafa', fontWeight: 'bold' }}>
                 <Table.Summary.Cell index={0}>Total</Table.Summary.Cell>
-                <Table.Summary.Cell index={1}></Table.Summary.Cell>
+                <Table.Summary.Cell index={1}>{totalCartons}</Table.Summary.Cell>
                 <Table.Summary.Cell index={2}></Table.Summary.Cell>
                 <Table.Summary.Cell index={3}></Table.Summary.Cell>
                 <Table.Summary.Cell index={4}>
@@ -468,9 +462,8 @@ export const OrderItemsTable: React.FC<OrderItemsTableProps> = ({
                 <Table.Summary.Cell index={6}>
                   <FormatNumber value={totalProfit} prefix="Rs. " />
                 </Table.Summary.Cell>
-                <Table.Summary.Cell index={7}>{totalCartons}</Table.Summary.Cell>
+                <Table.Summary.Cell index={7}></Table.Summary.Cell>
                 <Table.Summary.Cell index={8}></Table.Summary.Cell>
-                <Table.Summary.Cell index={9}></Table.Summary.Cell>
               </Table.Summary.Row>
             </Table.Summary>
           );

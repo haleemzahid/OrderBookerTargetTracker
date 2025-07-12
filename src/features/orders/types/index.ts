@@ -2,14 +2,12 @@ export interface Order {
   id: string;
   orderBookerId: string;
   orderDate: Date;
-  supplyDate?: Date | null;
   totalAmount: number;
   totalCost: number;
   totalProfit: number;
   totalCartons: number;
   returnCartons: number;
   returnAmount: number;
-  status: 'pending' | 'supplied' | 'completed';
   notes?: string;
   createdAt: Date;
   updatedAt: Date;
@@ -19,16 +17,14 @@ export interface OrderItem {
   id: string;
   orderId: string;
   productId: string;
-  quantity: number;
+  cartons: number;
   costPrice: number;
   sellPrice: number;
   totalCost: number;
   totalAmount: number;
   profit: number;
-  cartons: number;
-  returnQuantity: number;
-  returnAmount: number;
   returnCartons: number;
+  returnAmount: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -36,7 +32,6 @@ export interface OrderItem {
 export interface CreateOrderRequest {
   orderBookerId: string;
   orderDate: Date;
-  supplyDate?: Date | null;
   notes?: string;
   items: CreateOrderItemRequest[];
 }
@@ -44,34 +39,32 @@ export interface CreateOrderRequest {
 export interface UpdateOrderRequest {
   orderBookerId?: string;
   orderDate?: Date;
-  supplyDate?: Date | null;
-  status?: 'pending' | 'supplied' | 'completed';
   notes?: string;
 }
 
 export interface CreateOrderItemRequest {
   productId: string;
-  quantity: number;
+  cartons: number;
   costPrice: number;
   sellPrice: number;
+  returnCartons?: number;
 }
 
 export interface UpdateOrderItemRequest {
-  quantity?: number;
+  cartons?: number;
   sellPrice?: number;
-  returnQuantity?: number;
+  returnCartons?: number;
 }
 
 export interface OrderItemRequest {
   productId: string;
-  quantity: number;
+  cartons: number;
   costPrice: number;
   sellPrice: number;
 }
 
 export interface OrderFilters {
   orderBookerId?: string;
-  status?: 'pending' | 'supplied' | 'completed';
   dateFrom?: Date;
   dateTo?: Date;
   searchTerm?: string;
@@ -84,9 +77,6 @@ export interface OrderSummary {
   totalAmount: number;
   totalProfit: number;
   totalCartons: number;
-  pendingOrders: number;
-  suppliedOrders: number;
-  completedOrders: number;
 }
 
 // Component Props Interfaces
