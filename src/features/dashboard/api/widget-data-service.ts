@@ -466,4 +466,213 @@ export class WidgetDataService {
       };
     }
   }
+
+  /**
+   * Get target progress for all order bookers
+   */
+  static async getTargetProgress(filters: GlobalDashboardFilters): Promise<DashboardApiResponse<TargetProgressData[]>> {
+    try {
+      const db = getDatabase();
+      const { dateRange } = filters;
+      
+      // Get current month and year for target lookup
+      const currentMonth = dateRange.start.getMonth() + 1;
+      const currentYear = dateRange.start.getFullYear();
+      
+      // Calculate days in month and days remaining
+      const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
+      const currentDay = dateRange.end.getDate();
+      const daysRemaining = Math.max(0, daysInMonth - currentDay);
+      
+      const query = `
+        SELECT 
+          mt.order_booker_id as orderBookerId,
+          ob.name as orderBookerName,
+          mt.target_amount as targetAmount,
+          COALESCE(SUM(o.total_amount), 0) as achievedAmount,
+          COUNT(DISTINCT o.id) as orderCount
+        FROM monthly_targets mt
+        JOIN order_bookers ob ON mt.order_booker_id = ob.id
+        LEFT JOIN orders o ON o.order_booker_id = mt.order_booker_id 
+          AND o.order_date >= ? 
+          AND o.order_date <= ?
+        WHERE mt.year = ? AND mt.month = ?
+        ${filters.orderBookerIds?.length ? `AND mt.order_booker_id IN (${filters.orderBookerIds.map(() => '?').join(',')})` : ''}
+        GROUP BY mt.order_booker_id, ob.name, mt.target_amount
+        ORDER BY (COALESCE(SUM(o.total_amount), 0) / NULLIF(mt.target_amount, 0)) DESC
+      `;
+      
+      const params = [
+        dateRange.start.toISOString().split('T')[0],
+        dateRange.end.toISOString().split('T')[0],
+        currentYear,
+        currentMonth,
+        ...(filters.orderBookerIds || [])
+      ];
+      
+      const result = await db.select<any[]>(query, params);
+      
+      const data: TargetProgressData[] = result.map(row => {
+        const achievementPercentage = row.targetAmount > 0 ? (row.achievedAmount / row.targetAmount) * 100 : 0;
+        const currentDailyAverage = currentDay > 0 ? row.achievedAmount / currentDay : 0;
+        const requiredDailyAverage = daysRemaining > 0 ? (row.targetAmount - row.achievedAmount) / daysRemaining : 0;
+        
+        // Project final achievement based on current pace
+        const projectedAchievement = currentDailyAverage > 0 ? 
+          ((currentDailyAverage * daysInMonth) / row.targetAmount) * 100 : achievementPercentage;
+        
+        // Determine status based on achievement and pace
+        let status: 'ahead' | 'on-track' | 'at-risk' | 'behind';
+        if (achievementPercentage >= 100) {
+          status = 'ahead';
+        } else if (currentDailyAverage >= requiredDailyAverage * 1.1) {
+          status = 'ahead';
+        } else if (currentDailyAverage >= requiredDailyAverage * 0.9) {
+          status = 'on-track';
+        } else if (currentDailyAverage >= requiredDailyAverage * 0.7) {
+          status = 'at-risk';
+        } else {
+          status = 'behind';
+        }
+        
+        return {
+          orderBookerId: row.orderBookerId,
+          orderBookerName: row.orderBookerName,
+          targetAmount: row.targetAmount,
+          achievedAmount: row.achievedAmount,
+          achievementPercentage,
+          daysRemaining,
+          requiredDailyAverage,
+          currentDailyAverage,
+          status,
+          projectedAchievement
+        };
+      });
+      
+      return {
+        data,
+        lastUpdated: new Date(),
+        status: 'success'
+      };
+      
+    } catch (error) {
+      console.error('Error fetching target progress:', error);
+      return {
+        data: [],
+        lastUpdated: new Date(),
+        status: 'error',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  }
+
+  /**
+   * Get sales trend data for time series analysis
+   */
+  static async getSalesTrends(filters: GlobalDashboardFilters): Promise<DashboardApiResponse<SalesTrendData>> {
+    try {
+      const db = getDatabase();
+      const { dateRange } = filters;
+      
+      const query = `
+        SELECT 
+          order_date as date,
+          COALESCE(SUM(total_amount), 0) as sales,
+          COUNT(DISTINCT id) as orders
+        FROM orders 
+        WHERE order_date >= ? AND order_date <= ?
+        ${filters.orderBookerIds?.length ? `AND order_booker_id IN (${filters.orderBookerIds.map(() => '?').join(',')})` : ''}
+        GROUP BY order_date
+        ORDER BY order_date
+      `;
+      
+      const params = [
+        dateRange.start.toISOString().split('T')[0],
+        dateRange.end.toISOString().split('T')[0],
+        ...(filters.orderBookerIds || [])
+      ];
+      
+      const result = await db.select<any[]>(query, params);
+      
+      const dailySales = result.map(row => ({
+        date: row.date,
+        sales: row.sales || 0,
+        orders: row.orders || 0
+      }));
+      
+      // Calculate moving averages
+      const calculateMovingAverage = (data: number[], window: number) => {
+        if (data.length < window) return 0;
+        const recent = data.slice(-window);
+        return recent.reduce((sum, val) => sum + val, 0) / window;
+      };
+      
+      const salesValues = dailySales.map(d => d.sales);
+      const sevenDay = calculateMovingAverage(salesValues, 7);
+      const thirtyDay = calculateMovingAverage(salesValues, 30);
+      
+      // Basic seasonal pattern detection
+      let seasonalPattern: 'weekend-low' | 'midweek-peak' | 'end-month-rush' | undefined;
+      
+      if (dailySales.length >= 7) {
+        // Check for weekend patterns (assuming dates are in YYYY-MM-DD format)
+        const weekendSales = dailySales
+          .filter(d => {
+            const dayOfWeek = new Date(d.date).getDay();
+            return dayOfWeek === 0 || dayOfWeek === 6; // Sunday or Saturday
+          })
+          .reduce((sum, d) => sum + d.sales, 0);
+        
+        const weekdaySales = dailySales
+          .filter(d => {
+            const dayOfWeek = new Date(d.date).getDay();
+            return dayOfWeek >= 1 && dayOfWeek <= 5; // Monday to Friday
+          })
+          .reduce((sum, d) => sum + d.sales, 0);
+        
+        if (weekendSales > 0 && weekdaySales > 0) {
+          const weekendAvg = weekendSales / Math.max(1, dailySales.filter(d => {
+            const dayOfWeek = new Date(d.date).getDay();
+            return dayOfWeek === 0 || dayOfWeek === 6;
+          }).length);
+          
+          const weekdayAvg = weekdaySales / Math.max(1, dailySales.filter(d => {
+            const dayOfWeek = new Date(d.date).getDay();
+            return dayOfWeek >= 1 && dayOfWeek <= 5;
+          }).length);
+          
+          if (weekdayAvg > weekendAvg * 1.2) {
+            seasonalPattern = 'weekend-low';
+          }
+        }
+      }
+      
+      const data: SalesTrendData = {
+        dailySales,
+        movingAverages: {
+          sevenDay,
+          thirtyDay
+        },
+        seasonalPattern
+      };
+      
+      return {
+        data,
+        lastUpdated: new Date(),
+        status: 'success'
+      };
+      
+    } catch (error) {
+      console.error('Error fetching sales trends:', error);
+      return {
+        data: {
+          dailySales: [],
+          movingAverages: { sevenDay: 0, thirtyDay: 0 }
+        },
+        lastUpdated: new Date(),
+        status: 'error',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  }
 }

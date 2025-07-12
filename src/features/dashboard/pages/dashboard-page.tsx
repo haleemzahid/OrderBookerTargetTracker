@@ -5,6 +5,10 @@ import { DashboardGrid } from '../components/dashboard-grid';
 import { useRefreshAll, useResetToDefault } from '../stores/dashboard-store';
 import { RevenuePerformanceWidget } from '../components/widgets/revenue-performance-widget';
 import { ProfitMarginWidget } from '../components/widgets/profit-margin-widget';
+import { TopPerformersWidget } from '../components/widgets/top-performers-widget';
+import { AlertCenterWidget } from '../components/widgets/alert-center-widget';
+import { TargetProgressWidget } from '../components/widgets/target-progress-widget';
+import { SalesTrendWidget } from '../components/widgets/sales-trend-widget';
 import type { DashboardWidget } from '../types';
 
 const { Content, Header } = Layout;
@@ -23,6 +27,14 @@ export const DashboardPage: React.FC = () => {
         return <RevenuePerformanceWidget refreshInterval={widget.refreshInterval} />;
       case 'profit-margin':
         return <ProfitMarginWidget refreshInterval={widget.refreshInterval} />;
+      case 'top-performers':
+        return <TopPerformersWidget refreshInterval={widget.refreshInterval} />;
+      case 'alert-center':
+        return <AlertCenterWidget refreshInterval={widget.refreshInterval} />;
+      case 'target-progress':
+        return <TargetProgressWidget refreshInterval={widget.refreshInterval} />;
+        case 'sales-trend':
+        return <SalesTrendWidget refreshInterval={widget.refreshInterval} />;
       default:
         return (
           <div style={{ 
