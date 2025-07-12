@@ -9,6 +9,8 @@ import { TopPerformersWidget } from '../components/widgets/top-performers-widget
 import { AlertCenterWidget } from '../components/widgets/alert-center-widget';
 import { TargetProgressWidget } from '../components/widgets/target-progress-widget';
 import { SalesTrendWidget } from '../components/widgets/sales-trend-widget';
+import { ProductPerformanceWidget } from '../components/widgets/product-performance-widget';
+import { ReturnRateMonitorWidget } from '../components/widgets/return-rate-widget';
 import type { DashboardWidget } from '../types';
 
 const { Content, Header } = Layout;
@@ -33,8 +35,12 @@ export const DashboardPage: React.FC = () => {
         return <AlertCenterWidget refreshInterval={widget.refreshInterval} />;
       case 'target-progress':
         return <TargetProgressWidget refreshInterval={widget.refreshInterval} />;
-        case 'sales-trend':
+      case 'sales-trend':
         return <SalesTrendWidget refreshInterval={widget.refreshInterval} />;
+      case 'product-performance':
+        return <ProductPerformanceWidget refreshInterval={widget.refreshInterval} />;
+      case 'return-rate':
+        return <ReturnRateMonitorWidget refreshInterval={widget.refreshInterval} />;
       default:
         return (
           <div style={{ 

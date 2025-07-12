@@ -97,8 +97,8 @@ const defaultWidgets: DashboardWidget[] = [
     title: 'Product Performance Matrix',
     type: 'chart',
     size: 'large',
-    position: { x: 4, y: 5, w: 8, h: 3 },
-    isVisible: false,
+    position: { x: 4, y: 5, w: 8, h: 5 },
+    isVisible: true,
     refreshInterval: 3600000, // 60 minutes
     priority: 'low'
   },

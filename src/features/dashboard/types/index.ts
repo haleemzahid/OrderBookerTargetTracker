@@ -98,7 +98,6 @@ export interface ProductPerformanceData {
   profitMargin: number; // percentage
   totalRevenue: number;
   returnRate: number;
-  category: string;
   companyName: string;
   performance: 'star' | 'problem' | 'question-mark' | 'cash-cow';
 }

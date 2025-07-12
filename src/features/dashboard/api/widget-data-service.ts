@@ -8,7 +8,6 @@ import type {
   ReturnRateData,
   TargetProgressData,
   CashFlowData,
-  OrderVelocityData,
   AlertCenterData,
   DashboardAlert,
   GlobalDashboardFilters,
@@ -702,4 +701,281 @@ export class WidgetDataService {
       };
     }
   }
+
+  /**
+   * Get product performance matrix data for scatter plot analysis
+   */
+  static async getProductPerformance(filters: GlobalDashboardFilters): Promise<DashboardApiResponse<ProductPerformanceData[]>> {
+    try {
+      const db = getDatabase();
+      const { dateRange, productIds, companyIds } = filters;
+
+      let query = `
+        SELECT 
+          p.id as productId,
+          p.name as productName,
+          p.company_id,
+          c.name as companyName,
+          COALESCE(SUM(oi.cartons), 0) as salesVolume,
+          COALESCE(AVG(
+            CASE 
+              WHEN oi.total_cost > 0 
+              THEN ((oi.total_amount - oi.total_cost) / oi.total_amount) * 100 
+              ELSE 0 
+            END
+          ), 0) as profitMargin,
+          COALESCE(SUM(oi.total_amount), 0) as totalRevenue,
+          COALESCE(AVG(
+            CASE 
+              WHEN oi.cartons > 0 
+              THEN (oi.return_cartons / oi.cartons) * 100 
+              ELSE 0 
+            END
+          ), 0) as returnRate
+        FROM products p
+        LEFT JOIN companies c ON p.company_id = c.id
+        LEFT JOIN order_items oi ON p.id = oi.product_id
+        LEFT JOIN orders o ON oi.order_id = o.id
+        WHERE o.order_date >= ? AND o.order_date <= ?
+      `;
+
+      const params: any[] = [
+        dateRange.start.toISOString().split('T')[0],
+        dateRange.end.toISOString().split('T')[0]
+      ];
+
+      if (productIds && productIds.length > 0) {
+        query += ` AND p.id IN (${productIds.map(() => '?').join(',')})`;
+        params.push(...productIds);
+      }
+
+      if (companyIds && companyIds.length > 0) {
+        query += ` AND p.company_id IN (${companyIds.map(() => '?').join(',')})`;
+        params.push(...companyIds);
+      }
+
+      query += `
+        GROUP BY p.id, p.name, p.company_id, c.name
+        HAVING salesVolume > 0
+        ORDER BY totalRevenue DESC
+      `;
+      console.log("")
+console.log(query);
+      const result = await db.select<any[]>(query, params);
+      const products = result as Array<{
+        productId: string;
+        productName: string;
+        company_id: string;
+        companyName: string;
+        salesVolume: number;
+        profitMargin: number;
+        totalRevenue: number;
+        returnRate: number;
+      }>;     
+      console.log("Products",products); 
+      if (products.length === 0) {
+        return {
+          data: [],
+          lastUpdated: new Date(),
+          status: 'success'
+        };
+      }
+
+      const avgVolume = products.reduce((sum, p) => sum + p.salesVolume, 0) / products.length;
+      const avgMargin = products.reduce((sum, p) => sum + p.profitMargin, 0) / products.length;
+
+      const data: ProductPerformanceData[] = products.map(product => {
+        let performance: 'star' | 'problem' | 'question-mark' | 'cash-cow';
+        
+        if (product.salesVolume >= avgVolume && product.profitMargin >= avgMargin) {
+          performance = 'star';
+        } else if (product.salesVolume >= avgVolume && product.profitMargin < avgMargin) {
+          performance = 'cash-cow';
+        } else if (product.salesVolume < avgVolume && product.profitMargin >= avgMargin) {
+          performance = 'question-mark';
+        } else {
+          performance = 'problem';
+        }
+
+        return {
+          productId: product.productId,
+          productName: product.productName,
+          salesVolume: product.salesVolume,
+          profitMargin: product.profitMargin,
+          totalRevenue: product.totalRevenue,
+          returnRate: product.returnRate,
+          companyName: product.companyName,
+          performance
+        };
+      });
+
+      return {
+        data,
+        lastUpdated: new Date(),
+        status: 'success'
+      };
+
+    } catch (error) {
+      console.error('Error fetching product performance:', error);
+      return {
+        data: [],
+        lastUpdated: new Date(),
+        status: 'error',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  }
+
+  /**
+   * Get cash flow summary data
+   */
+  static async getCashFlow(filters: GlobalDashboardFilters): Promise<DashboardApiResponse<CashFlowData>> {
+    try {
+      const db = getDatabase();
+      const { dateRange, orderBookerIds } = filters;
+
+      // Calculate net sales vs returns ratio
+      let salesQuery = `
+        SELECT 
+          COALESCE(SUM(oi.total_amount), 0) as totalSales,
+          COALESCE(SUM(oi.return_amount), 0) as totalReturns
+        FROM order_items oi
+        INNER JOIN orders o ON oi.order_id = o.id
+        WHERE o.order_date >= ? AND o.order_date <= ?
+      `;
+
+      const salesParams: any[] = [
+        dateRange.start.toISOString().split('T')[0],
+        dateRange.end.toISOString().split('T')[0]
+      ];
+
+      if (orderBookerIds && orderBookerIds.length > 0) {
+        salesQuery += ` AND o.order_booker_id IN (${orderBookerIds.map(() => '?').join(',')})`;
+        salesParams.push(...orderBookerIds);
+      }
+
+      const salesResult = await db.select<any[]>(salesQuery, salesParams);
+      const { totalSales, totalReturns } = salesResult[0] || { totalSales: 0, totalReturns: 0 };
+
+      // Calculate outstanding orders (orders without supply_date)
+      let outstandingQuery = `
+        SELECT 
+          COALESCE(SUM(total_amount), 0) as outstandingValue
+        FROM orders
+        WHERE order_date >= ? AND order_date <= ?
+        AND supply_date IS NULL
+      `;
+
+      const outstandingParams: any[] = [
+        dateRange.start.toISOString().split('T')[0],
+        dateRange.end.toISOString().split('T')[0]
+      ];
+
+      if (orderBookerIds && orderBookerIds.length > 0) {
+        outstandingQuery += ` AND order_booker_id IN (${orderBookerIds.map(() => '?').join(',')})`;
+        outstandingParams.push(...orderBookerIds);
+      }
+
+      const outstandingResult = await db.select<any[]>(outstandingQuery, outstandingParams);
+      const outstandingValue = outstandingResult[0]?.outstandingValue || 0;
+
+      // Calculate average collection time (order_date to supply_date)
+      let collectionQuery = `
+        SELECT 
+          AVG(julianday(supply_date) - julianday(order_date)) as avgCollectionDays
+        FROM orders
+        WHERE order_date >= ? AND order_date <= ?
+        AND supply_date IS NOT NULL
+      `;
+
+      const collectionParams: any[] = [
+        dateRange.start.toISOString().split('T')[0],
+        dateRange.end.toISOString().split('T')[0]
+      ];
+
+      if (orderBookerIds && orderBookerIds.length > 0) {
+        collectionQuery += ` AND order_booker_id IN (${orderBookerIds.map(() => '?').join(',')})`;
+        collectionParams.push(...orderBookerIds);
+      }
+
+      const collectionResult = await db.select<any[]>(collectionQuery, collectionParams);
+      const avgCollectionTime = collectionResult[0]?.avgCollectionDays || 0;
+
+      // Get cash flow trend over time (weekly basis)
+      let trendQuery = `
+        SELECT 
+          DATE(order_date, 'weekday 0', '-6 days') as week_start,
+          COALESCE(SUM(total_amount), 0) as weeklyRevenue,
+          COALESCE(SUM(return_amount), 0) as weeklyReturns
+        FROM orders o
+        WHERE o.order_date >= ? AND o.order_date <= ?
+      `;
+
+      const trendParams: any[] = [
+        dateRange.start.toISOString().split('T')[0],
+        dateRange.end.toISOString().split('T')[0]
+      ];
+
+      if (orderBookerIds && orderBookerIds.length > 0) {
+        trendQuery += ` AND o.order_booker_id IN (${orderBookerIds.map(() => '?').join(',')})`;
+        trendParams.push(...orderBookerIds);
+      }
+
+      trendQuery += `
+        GROUP BY week_start
+        ORDER BY week_start
+      `;
+
+      const trendResult = await db.select<any[]>(trendQuery, trendParams);
+
+      const cashFlowTrend = trendResult.map(row => ({
+        date: new Date(row.week_start).toISOString().split('T')[0],
+        inflow: row.weeklyRevenue || 0,
+        outflow: row.weeklyReturns || 0,
+        net: (row.weeklyRevenue || 0) - (row.weeklyReturns || 0)
+      }));
+
+      // Calculate key metrics
+      const netSales = totalSales - totalReturns;
+      const returnRatio = totalSales > 0 ? (totalReturns / totalSales) * 100 : 0;
+
+      const data: CashFlowData = {
+        netSalesVsReturns: {
+          netSales: netSales,
+          returns: totalReturns,
+          ratio: returnRatio
+        },
+        outstandingAmount: outstandingValue,
+        averageCollectionDays: Math.round(avgCollectionTime),
+        cashFlowTrend
+      };
+
+      return {
+        data,
+        lastUpdated: new Date(),
+        status: 'success'
+      };
+
+    } catch (error) {
+      console.error('Error fetching cash flow data:', error);
+      return {
+        data: {
+          netSalesVsReturns: {
+            netSales: 0,
+            returns: 0,
+            ratio: 0
+          },
+          outstandingAmount: 0,
+          averageCollectionDays: 0,
+          cashFlowTrend: []
+        },
+        lastUpdated: new Date(),
+        status: 'error',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  }
 }
+
+// Export singleton instance for convenience
+export const widgetDataService = WidgetDataService;
