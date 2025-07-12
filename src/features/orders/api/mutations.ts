@@ -24,10 +24,15 @@ export const useCreateOrder = () => {
   return useMutation({
     mutationFn: (order: CreateOrderRequest) => createOrder(order),
     onSuccess: (newOrder: Order) => {
-      // Invalidate all order-related queries to ensure fresh data
-      queryClient.invalidateQueries({ queryKey: queryKeys.orders.lists() });
-      queryClient.invalidateQueries({ queryKey: queryKeys.orders.byOrderBooker(newOrder.orderBookerId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.orders.summary() });
+      // Use batch invalidation to reduce lock contention
+      queryClient.invalidateQueries({ 
+        predicate: (query) => {
+          const key = query.queryKey[0];
+          return key === 'orders' || key === 'orderSummary';
+        }
+      });
+      
+      // Set the new order data immediately
       queryClient.setQueryData(queryKeys.orders.detail(newOrder.id), newOrder);
     },
     onError: (error) => {
@@ -42,9 +47,14 @@ export const useUpdateOrder = () => {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateOrderRequest }) => updateOrder(id, data),
     onSuccess: (updatedOrder: Order) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.orders.lists() });
-      queryClient.invalidateQueries({ queryKey: queryKeys.orders.byOrderBooker(updatedOrder.orderBookerId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.orders.summary() });
+      // Use batch invalidation to reduce lock contention
+      queryClient.invalidateQueries({ 
+        predicate: (query) => {
+          const key = query.queryKey[0];
+          return key === 'orders' || key === 'orderSummary';
+        }
+      });
+      
       queryClient.setQueryData(queryKeys.orders.detail(updatedOrder.id), updatedOrder);
     },
     onError: (error) => {
@@ -78,13 +88,17 @@ export const useCreateOrderItem = () => {
     mutationFn: ({ orderId, data }: { orderId: string; data: CreateOrderItemRequest }) => 
       createOrderItem(orderId, data),
     onSuccess: (newItem: OrderItem) => {
-      // Invalidate order items for this order
+      // Use more targeted invalidation to reduce lock contention
       queryClient.invalidateQueries({ queryKey: queryKeys.orderItems.byOrder(newItem.orderId) });
-      // Invalidate the order detail to show updated totals
       queryClient.invalidateQueries({ queryKey: queryKeys.orders.detail(newItem.orderId) });
-      // Invalidate order lists to show updated totals
-      queryClient.invalidateQueries({ queryKey: queryKeys.orders.lists() });
-      queryClient.invalidateQueries({ queryKey: queryKeys.orders.summary() });
+      
+      // Batch invalidate lists at once
+      queryClient.invalidateQueries({ 
+        predicate: (query) => {
+          const key = query.queryKey[0];
+          return key === 'orders' && (query.queryKey.includes('lists') || query.queryKey.includes('summary'));
+        }
+      });
     },
     onError: (error) => {
       console.error('Error creating order item:', error);

@@ -1,4 +1,4 @@
-import { getDatabase } from '../../../services/database';
+import { getDatabase, executeWithRetry, executeTransaction } from '../../../services/database';
 import { 
   Order, 
   OrderItem, 
@@ -82,14 +82,11 @@ export const getOrders = async (options?: OrderFilters): Promise<Order[]> => {
 };
 
 export const createOrder = async (orderData: CreateOrderRequest): Promise<Order> => {
-  const db = getDatabase();
-  const now = new Date().toISOString();
   const orderId = uuidv4();
+  const now = new Date().toISOString();
   
-  try {
-    // Use just BEGIN for SQLite
-    await db.execute('BEGIN');
-    console.log("Transaction started");
+  return executeTransaction(async (db) => {
+    console.log("Creating order with transaction");
     
     // Calculate order item totals first
     const orderItemsWithTotals = [];
@@ -191,24 +188,16 @@ export const createOrder = async (orderData: CreateOrderRequest): Promise<Order>
       );
     }
     
-    await db.execute('COMMIT');
-    console.log("Transaction committed");
+    console.log("Order created successfully");
     
+    // Return the created order
     const order = await getOrderById(orderId);
     if (!order) {
       throw new Error(`Failed to retrieve created order with ID ${orderId}`);
     }
     
     return order;
-  } catch (error) {
-    console.log('Error:', error);
-    try {
-      await db.execute('ROLLBACK');
-    } catch (rollbackError) {
-      console.log('Rollback error:', rollbackError);
-    }
-    throw error;
-  }
+  });
 };
 
 export const updateOrder = async (id: string, orderData: UpdateOrderRequest): Promise<Order> => {
@@ -281,61 +270,62 @@ export const getOrderItems = async (orderId: string): Promise<OrderItem[]> => {
 };
 
 export const createOrderItem = async (orderId: string, itemData: CreateOrderItemRequest): Promise<OrderItem> => {
-  const db = getDatabase();
-  const now = new Date().toISOString();
   const itemId = uuidv4();
+  const now = new Date().toISOString();
   
-  // Get product information to fetch units per carton
-  const product = await getProductById(itemData.productId);
-  if (!product) {
-    throw new Error(`Product with ID ${itemData.productId} not found`);
-  }
-  
-  // Use centralized calculation function
-  const calculatedTotals = await calculateOrderItemTotals(
-    itemData.productId,
-    itemData.cartons,
-    itemData.costPrice,
-    itemData.sellPrice,
-    db,
-    itemData.returnCartons || 0
-  );
-  
-  await db.execute(
-    `INSERT INTO order_items (
-      id, order_id, product_id, quantity, cost_price, sell_price,
-      return_quantity, total_cost, total_amount, profit, cartons,
-      return_amount, return_cartons, created_at, updated_at
-     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [
-      itemId,
-      orderId,
+  return executeTransaction(async (db) => {
+    // Get product information to fetch units per carton
+    const product = await getProductById(itemData.productId);
+    if (!product) {
+      throw new Error(`Product with ID ${itemData.productId} not found`);
+    }
+    
+    // Use centralized calculation function
+    const calculatedTotals = await calculateOrderItemTotals(
       itemData.productId,
       itemData.cartons,
       itemData.costPrice,
       itemData.sellPrice,
-      itemData.returnCartons || 0,
-      calculatedTotals.totalCost,
-      calculatedTotals.totalAmount,
-      calculatedTotals.profit,
-      itemData.cartons,
-      calculatedTotals.returnAmount,
-      itemData.returnCartons || 0,
-      now,
-      now
-    ]
-  );
-  
-  // Update order totals
-  await updateOrderTotals(orderId);
-  
-  const items = await getOrderItems(orderId);
-  const newItem = items.find(item => item.id === itemId);
-  if (!newItem) {
-    throw new Error(`Failed to retrieve created order item with ID ${itemId}`);
-  }
-  
-  return newItem;
+      db,
+      itemData.returnCartons || 0
+    );
+    
+    await db.execute(
+      `INSERT INTO order_items (
+        id, order_id, product_id, quantity, cost_price, sell_price,
+        return_quantity, total_cost, total_amount, profit, cartons,
+        return_amount, return_cartons, created_at, updated_at
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        itemId,
+        orderId,
+        itemData.productId,
+        itemData.cartons,
+        itemData.costPrice,
+        itemData.sellPrice,
+        itemData.returnCartons || 0,
+        calculatedTotals.totalCost,
+        calculatedTotals.totalAmount,
+        calculatedTotals.profit,
+        itemData.cartons,
+        calculatedTotals.returnAmount,
+        itemData.returnCartons || 0,
+        now,
+        now
+      ]
+    );
+    
+    // Update order totals
+    await updateOrderTotals(orderId);
+    
+    const items = await getOrderItems(orderId);
+    const newItem = items.find(item => item.id === itemId);
+    if (!newItem) {
+      throw new Error(`Failed to retrieve created order item with ID ${itemId}`);
+    }
+    
+    return newItem;
+  });
 };
 
 export const updateOrderItem = async (itemId: string, itemData: UpdateOrderItemRequest): Promise<OrderItem> => {
