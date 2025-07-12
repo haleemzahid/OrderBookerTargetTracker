@@ -9,6 +9,7 @@ import {
   OrderFilters,
   OrderSummary 
 } from '../types';
+import { getProductById } from '../../products/api/service';
 import { v4 as uuidv4 } from 'uuid';
 import { updateOrderTotals } from '../utils/calculations';
 
@@ -18,10 +19,10 @@ export const getOrderById = async (id: string): Promise<Order | null> => {
   const result = await db.select<any[]>(
     `SELECT 
       id, order_booker_id as orderBookerId, order_date as orderDate,
-      supply_date as supplyDate, total_amount as totalAmount, total_cost as totalCost,
+      total_amount as totalAmount, total_cost as totalCost,
       total_profit as totalProfit, total_cartons as totalCartons, 
       return_cartons as returnCartons, return_amount as returnAmount,
-      status, notes, created_at as createdAt, updated_at as updatedAt
+      notes, created_at as createdAt, updated_at as updatedAt
      FROM orders 
      WHERE id = ?`,
     [id]
@@ -39,10 +40,10 @@ export const getOrders = async (options?: OrderFilters): Promise<Order[]> => {
   let query = `
     SELECT 
       id, order_booker_id as orderBookerId, order_date as orderDate,
-      supply_date as supplyDate, total_amount as totalAmount, total_cost as totalCost,
+      total_amount as totalAmount, total_cost as totalCost,
       total_profit as totalProfit, total_cartons as totalCartons, 
       return_cartons as returnCartons, return_amount as returnAmount,
-      status, notes, created_at as createdAt, updated_at as updatedAt
+      notes, created_at as createdAt, updated_at as updatedAt
     FROM orders
     WHERE 1=1
   `;
@@ -51,11 +52,6 @@ export const getOrders = async (options?: OrderFilters): Promise<Order[]> => {
   if (options?.orderBookerId) {
     query += ` AND order_booker_id = ?`;
     params.push(options.orderBookerId);
-  }
-  
-  if (options?.status) {
-    query += ` AND status = ?`;
-    params.push(options.status);
   }
   
   if (options?.dateFrom) {
@@ -107,19 +103,26 @@ export const createOrder = async (orderData: CreateOrderRequest): Promise<Order>
     for (const item of orderData.items) {
       const itemId = uuidv4();
       
-      // Simple inline calculations without external method calls
-      const totalCost = item.quantity * item.costPrice;
-      const totalAmount = item.quantity * item.sellPrice;
+      // Get product information to fetch units per carton
+      const product = await getProductById(item.productId);
+      if (!product) {
+        throw new Error(`Product with ID ${item.productId} not found`);
+      }
+      
+      // Calculate totals based on cartons
+      // Convert cartons to total units for calculation using actual units per carton
+      const totalUnits = item.cartons * product.unitPerCarton;
+      const totalCost = totalUnits * item.costPrice;
+      const totalAmount = totalUnits * item.sellPrice;
       const profit = totalAmount - totalCost;
-      const cartons = Math.floor(item.quantity / 12); // Assuming 12 units per carton
-      const returnCartons = 0; // No returns for new orders
-      const returnAmount = 0; // No returns for new orders
+      const returnCartons = item.returnCartons || 0;
+      const returnAmount = returnCartons * product.unitPerCarton * item.sellPrice; // Calculate return amount
       
       const totals = {
         totalCost,
         totalAmount,
         profit,
-        cartons,
+        cartons: item.cartons,
         returnCartons,
         returnAmount
       };
@@ -142,16 +145,14 @@ export const createOrder = async (orderData: CreateOrderRequest): Promise<Order>
     // Create the order with calculated totals
     await db.execute(
       `INSERT INTO orders (
-        id, order_booker_id, order_date, supply_date, status, notes,
+        id, order_booker_id, order_date, notes,
         total_amount, total_cost, total_profit, total_cartons,
         return_cartons, return_amount, created_at, updated_at
-       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         orderId,
         orderData.orderBookerId,
         orderData.orderDate.toISOString().split('T')[0],
-        orderData.supplyDate ? orderData.supplyDate.toISOString().split('T')[0] : null,
-        'pending',
         orderData.notes || null,
         orderTotalAmount,
         orderTotalCost,
@@ -176,10 +177,10 @@ export const createOrder = async (orderData: CreateOrderRequest): Promise<Order>
           itemId,
           orderId,
           item.productId,
-          item.quantity,
+          item.cartons,
           item.costPrice,
           item.sellPrice,
-          0, // No return quantity for new items
+          item.returnCartons,
           totals.totalCost,
           totals.totalAmount,
           totals.profit,
@@ -228,16 +229,6 @@ export const updateOrder = async (id: string, orderData: UpdateOrderRequest): Pr
   if (orderData.orderDate !== undefined) {
     updateFields.push(`order_date = ?`);
     params.push(orderData.orderDate.toISOString().split('T')[0]);
-  }
-  
-  if (orderData.supplyDate !== undefined) {
-    updateFields.push(`supply_date = ?`);
-    params.push(orderData.supplyDate ? orderData.supplyDate.toISOString().split('T')[0] : null);
-  }
-  
-  if (orderData.status !== undefined) {
-    updateFields.push(`status = ?`);
-    params.push(orderData.status);
   }
   
   if (orderData.notes !== undefined) {
@@ -296,11 +287,17 @@ export const createOrderItem = async (orderId: string, itemData: CreateOrderItem
   const now = new Date().toISOString();
   const itemId = uuidv4();
   
-  // Simple inline calculations
-  const totalCost = itemData.quantity * itemData.costPrice;
-  const totalAmount = itemData.quantity * itemData.sellPrice;
+  // Get product information to fetch units per carton
+  const product = await getProductById(itemData.productId);
+  if (!product) {
+    throw new Error(`Product with ID ${itemData.productId} not found`);
+  }
+  
+  // Calculate totals using actual units per carton from product
+  const totalUnits = itemData.cartons * product.unitPerCarton;
+  const totalCost = totalUnits * itemData.costPrice;
+  const totalAmount = totalUnits * itemData.sellPrice;
   const profit = totalAmount - totalCost;
-  const cartons = Math.floor(itemData.quantity / 12); // Assuming 12 units per carton
   const returnAmount = 0; // No returns for new items
   const returnCartons = 0; // No returns for new items
   
@@ -314,14 +311,14 @@ export const createOrderItem = async (orderId: string, itemData: CreateOrderItem
       itemId,
       orderId,
       itemData.productId,
-      itemData.quantity,
+      itemData.cartons,
       itemData.costPrice,
       itemData.sellPrice,
-      0,
+      itemData.returnCartons,
       totalCost,
       totalAmount,
       profit,
-      cartons,
+      itemData.cartons,
       returnAmount,
       returnCartons,
       now,
@@ -359,26 +356,32 @@ export const updateOrderItem = async (itemId: string, itemData: UpdateOrderItemR
   const currentItem = currentItemResult[0];
   const orderId = currentItem.order_id;
   
+  // Get product information to fetch units per carton
+  const product = await getProductById(currentItem.product_id);
+  if (!product) {
+    throw new Error(`Product with ID ${currentItem.product_id} not found`);
+  }
+  
   // Build dynamic update query
   const updateFields: string[] = [];
   const params: any[] = [];
   
   // Determine new values
-  const newQuantity = itemData.quantity !== undefined ? itemData.quantity : currentItem.quantity;
+  const newQuantity = itemData.cartons !== undefined ? itemData.cartons : currentItem.quantity;
   const newSellPrice = itemData.sellPrice !== undefined ? itemData.sellPrice : currentItem.sell_price;
-  const newReturnQuantity = itemData.returnQuantity !== undefined ? itemData.returnQuantity : currentItem.return_quantity;
+  const newReturnQuantity = itemData.returnCartons !== undefined ? itemData.returnCartons: currentItem.return_quantity;
   
-  // Simple inline calculations
-  const totalCost = newQuantity * currentItem.cost_price;
-  const totalAmount = newQuantity * newSellPrice;
+  // Calculate totals using actual units per carton from product
+  const totalUnits = newQuantity * product.unitPerCarton;
+  const totalCost = totalUnits * currentItem.cost_price;
+  const totalAmount = totalUnits * newSellPrice;
   const profit = totalAmount - totalCost;
-  const cartons = Math.floor(newQuantity / 12); // Assuming 12 units per carton
-  const returnAmount = newReturnQuantity * newSellPrice;
-  const returnCartons = Math.floor(newReturnQuantity / 12);
+  const returnAmount = newReturnQuantity * product.unitPerCarton * newSellPrice;
+  const returnCartons = newReturnQuantity;
   
-  if (itemData.quantity !== undefined) {
+  if (itemData.cartons !== undefined) {
     updateFields.push(`quantity = ?`);
-    params.push(itemData.quantity);
+    params.push(itemData.cartons);
   }
   
   if (itemData.sellPrice !== undefined) {
@@ -386,9 +389,9 @@ export const updateOrderItem = async (itemId: string, itemData: UpdateOrderItemR
     params.push(itemData.sellPrice);
   }
   
-  if (itemData.returnQuantity !== undefined) {
+  if (itemData.returnCartons !== undefined) {
     updateFields.push(`return_quantity = ?`);
-    params.push(itemData.returnQuantity);
+    params.push(itemData.returnCartons);
   }
   
   // Add calculated fields
@@ -406,7 +409,7 @@ export const updateOrderItem = async (itemId: string, itemData: UpdateOrderItemR
     totalCost,
     totalAmount,
     profit,
-    cartons,
+    newQuantity,
     returnAmount,
     returnCartons,
     now
@@ -473,9 +476,6 @@ export const getOrderSummary = async (filters?: OrderFilters): Promise<OrderSumm
     totalAmount: orders.reduce((sum, order) => sum + order.totalAmount, 0),
     totalProfit: orders.reduce((sum, order) => sum + order.totalProfit, 0),
     totalCartons: orders.reduce((sum, order) => sum + order.totalCartons, 0),
-    pendingOrders: orders.filter(order => order.status === 'pending').length,
-    suppliedOrders: orders.filter(order => order.status === 'supplied').length,
-    completedOrders: orders.filter(order => order.status === 'completed').length,
   };
 };
 
@@ -485,14 +485,12 @@ function parseOrder(row: any): Order {
     id: row.id,
     orderBookerId: row.orderBookerId,
     orderDate: new Date(row.orderDate),
-    supplyDate: row.supplyDate ? new Date(row.supplyDate) : null,
     totalAmount: row.totalAmount,
     totalCost: row.totalCost,
     totalProfit: row.totalProfit,
     totalCartons: row.totalCartons,
     returnCartons: row.returnCartons,
     returnAmount: row.returnAmount,
-    status: row.status,
     notes: row.notes,
     createdAt: new Date(row.createdAt),
     updatedAt: new Date(row.updatedAt)
@@ -504,16 +502,14 @@ function parseOrderItem(row: any): OrderItem {
     id: row.id,
     orderId: row.orderId,
     productId: row.productId,
-    quantity: row.quantity,
+    cartons: row.quantity,
     costPrice: row.costPrice,
     sellPrice: row.sellPrice,
     totalCost: row.totalCost,
     totalAmount: row.totalAmount,
     profit: row.profit,
-    cartons: row.cartons,
-    returnQuantity: row.returnQuantity,
-    returnAmount: row.returnAmount,
     returnCartons: row.returnCartons,
+    returnAmount: row.returnAmount,
     createdAt: new Date(row.createdAt),
     updatedAt: new Date(row.updatedAt)
   };

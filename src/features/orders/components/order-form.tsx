@@ -168,7 +168,6 @@ export const OrderForm: React.FC<OrderFormProps> = ({
           items={orderItems}
           onItemsChange={handleItemsChange}
           loading={isLoading}
-          allowReturns={isEditing} // Only allow returns when editing existing orders
         />
       </Card>
 

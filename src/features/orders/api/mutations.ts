@@ -44,7 +44,6 @@ export const useUpdateOrder = () => {
     onSuccess: (updatedOrder: Order) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.orders.lists() });
       queryClient.invalidateQueries({ queryKey: queryKeys.orders.byOrderBooker(updatedOrder.orderBookerId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.orders.byStatus(updatedOrder.status) });
       queryClient.invalidateQueries({ queryKey: queryKeys.orders.summary() });
       queryClient.setQueryData(queryKeys.orders.detail(updatedOrder.id), updatedOrder);
     },
