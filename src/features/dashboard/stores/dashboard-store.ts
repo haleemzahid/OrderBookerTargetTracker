@@ -26,7 +26,7 @@ const defaultWidgets: DashboardWidget[] = [
     title: 'Revenue Performance',
     type: 'metric',
     size: 'large',
-    position: { x: 0, y: 0, w: 3, h: 2 },
+    position: { x: 0, y: 0, w: 3, h: 6 },
     isVisible: true,
     refreshInterval: 1800000, // 30 minutes
     priority: 'critical'
@@ -36,7 +36,7 @@ const defaultWidgets: DashboardWidget[] = [
     title: 'Profit Margin',
     type: 'gauge',
     size: 'medium',
-    position: { x: 3, y: 0, w: 3, h: 2 },
+    position: { x: 3, y: 0, w: 3, h: 8 },
     isVisible: true,
     refreshInterval: 1800000, // 30 minutes
     priority: 'critical'
@@ -46,7 +46,7 @@ const defaultWidgets: DashboardWidget[] = [
     title: 'Alert Center',
     type: 'alert',
     size: 'medium',
-    position: { x: 6, y: 0, w: 3, h: 2 },
+    position: { x: 6, y: 0, w: 3, h: 8 },
     isVisible: true,
     refreshInterval: 300000, // 5 minutes
     priority: 'critical'
@@ -56,7 +56,7 @@ const defaultWidgets: DashboardWidget[] = [
     title: 'Target Achievement Progress',
     type: 'progress',
     size: 'large',
-    position: { x: 9, y: 0, w: 3, h: 2 },
+    position: { x: 9, y: 0, w: 3, h: 8 },
     isVisible: true,
     refreshInterval: 900000, // 15 minutes
     priority: 'high'
@@ -66,7 +66,7 @@ const defaultWidgets: DashboardWidget[] = [
     title: 'Top Performers',
     type: 'table',
     size: 'medium',
-    position: { x: 0, y: 2, w: 6, h: 3 },
+    position: { x: 0, y: 2, w: 3, h: 10 },
     isVisible: true,
     refreshInterval: 900000, // 15 minutes
     priority: 'high'
@@ -76,7 +76,7 @@ const defaultWidgets: DashboardWidget[] = [
     title: 'Sales Trend',
     type: 'chart',
     size: 'large',
-    position: { x: 6, y: 2, w: 6, h: 3 },
+    position: { x: 3, y: 2, w: 6, h: 7 },
     isVisible: true,
     refreshInterval: 1800000, // 30 minutes
     priority: 'high'
