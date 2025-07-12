@@ -5,6 +5,7 @@ import { MonthlyTargetsListPage } from '../../features/monthly-targets';
 import { CompaniesListPage } from '../../features/companies/pages/CompaniesListPage';
 import { ProductsListPage } from '../../features/products/pages/products-list';
 import { OrdersListPage, OrderFormPage } from '../../features/orders';
+import { DailySalesReportListPage } from '../../features/daily-sales-report';
 
 const rootRoute = createRootRoute({
   component: MainLayout,
@@ -57,6 +58,18 @@ const orderEditRoute = createRoute({
   component: OrderFormPage,
 });
 
+const dailySalesReportRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/daily-sales-report',
+  component: DailySalesReportListPage,
+});
+
+const dsrRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/dsr',
+  component: DailySalesReportListPage,
+});
+
 const routeTree = rootRoute.addChildren([
   orderBookersRoute,
   dailyEntriesRoute,
@@ -65,7 +78,9 @@ const routeTree = rootRoute.addChildren([
   productsRoute,
   ordersRoute,
   orderCreateRoute,
-  orderEditRoute
+  orderEditRoute,
+  dailySalesReportRoute,
+  dsrRoute
 ]);
 
 export const router = createRouter({ routeTree });

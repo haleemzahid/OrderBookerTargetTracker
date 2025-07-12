@@ -33,6 +33,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
     if (path.startsWith('/daily-entries')) return 'daily-entries';
     if (path.startsWith('/monthly-targets')) return 'monthly-targets';
     if (path.startsWith('/orders')) return 'orders';
+    if (path.startsWith('/daily-sales-report') || path.startsWith('/dsr')) return 'daily-sales-report';
     if (path.startsWith('/reports')) return 'reports';
     if (path.startsWith('/companies')) return 'companies';
     if (path.startsWith('/products')) return 'products';
@@ -55,6 +56,9 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
         break;
       case 'orders':
         navigate({ to: '/orders' });
+        break;
+      case 'daily-sales-report':
+        navigate({ to: '/daily-sales-report' });
         break;
       case 'products':
         navigate({ to: '/products' });
@@ -105,6 +109,11 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
       key: 'orders',
       icon: <FileTextOutlined />,
       label: 'Orders',
+    },
+    {
+      key: 'daily-sales-report',
+      icon: <BarChartOutlined />,
+      label: 'DSR',
     },
     {
       key: 'reports',
