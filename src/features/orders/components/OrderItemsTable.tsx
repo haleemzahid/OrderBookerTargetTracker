@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Form, Input, InputNumber, Table, Select, Popconfirm, Button } from 'antd';
-import { DeleteOutlined, UndoOutlined } from '@ant-design/icons';
+import { DeleteOutlined } from '@ant-design/icons';
 import type { TableProps } from 'antd';
 import { useProducts } from '../../products/api/queries';
 import { FormatNumber } from '../../../shared/components';
-import { ReturnDialog } from './ReturnDialog';
 import type { Product } from '../../products/types';
 
 const { Option } = Select;
@@ -120,13 +119,10 @@ export const OrderItemsTable: React.FC<OrderItemsTableProps> = ({
   items,
   onItemsChange,
   loading = false,
-  allowReturns = false
 }) => {
   const [form] = Form.useForm();
   const [data, setData] = useState<OrderItemData[]>(items);
   const [editingKey, setEditingKey] = useState('');
-  const [returnDialogVisible, setReturnDialogVisible] = useState(false);
-  const [selectedItemForReturn, setSelectedItemForReturn] = useState<OrderItemData | null>(null);
   
   const { data: products = [], isLoading: isLoadingProducts } = useProducts();
 
@@ -295,43 +291,6 @@ export const OrderItemsTable: React.FC<OrderItemsTableProps> = ({
     }
   };
 
-  const handleReturn = (item: OrderItemData) => {
-    setSelectedItemForReturn(item);
-    setReturnDialogVisible(true);
-  };
-
-  const handleReturnConfirm = (returnQuantity: number) => {
-    if (!selectedItemForReturn) return;
-    
-    const updatedData = data.map(item => {
-      if (item.key === selectedItemForReturn.key) {
-        const newReturnQuantity = (item.returnQuantity || 0) + returnQuantity;
-        const product = products.find(p => p.id === item.productId);
-        const unitPerCarton = product?.unitPerCarton || 1;
-        const returnAmount = newReturnQuantity * (item.sellPrice || 0);
-        const returnCartons = Math.ceil(newReturnQuantity / unitPerCarton);
-        
-        return {
-          ...item,
-          returnQuantity: newReturnQuantity,
-          returnAmount,
-          returnCartons,
-        };
-      }
-      return item;
-    });
-    
-    setData(updatedData);
-    onItemsChange(updatedData.filter(item => !item.isNew && item.productId));
-    setReturnDialogVisible(false);
-    setSelectedItemForReturn(null);
-  };
-
-  const handleReturnCancel = () => {
-    setReturnDialogVisible(false);
-    setSelectedItemForReturn(null);
-  };
-
   const deleteItem = (key: React.Key) => {
     const newData = data.filter(item => item.key !== key);
     setData(newData);
@@ -419,22 +378,8 @@ export const OrderItemsTable: React.FC<OrderItemsTableProps> = ({
       dataIndex: 'operation',
       width: '10%',
       render: (_: any, record: OrderItemData) => {
-        const canReturn = allowReturns && !record.isNew && record.productId && 
-                         (record.quantity || 0) > (record.returnQuantity || 0);
-        
-        return (
+       return (
           <span>
-            {canReturn && (
-              <Button
-                type="link"
-                size="small"
-                icon={<UndoOutlined />}
-                onClick={() => handleReturn(record)}
-                style={{ marginInlineEnd: 8 }}
-              >
-                Return
-              </Button>
-            )}
             {!record.isNew && (
               <Popconfirm
                 title="Sure to delete?"
@@ -532,12 +477,7 @@ export const OrderItemsTable: React.FC<OrderItemsTableProps> = ({
         }}
       />
       
-      <ReturnDialog
-        visible={returnDialogVisible}
-        orderItem={selectedItemForReturn}
-        onConfirm={handleReturnConfirm}
-        onCancel={handleReturnCancel}
-      />
+     
     </Form>
   );
 };
