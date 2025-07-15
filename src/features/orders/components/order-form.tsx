@@ -16,21 +16,21 @@ interface OrderFormProps {
   onCancel?: () => void;
 }
 
-export const OrderForm: React.FC<OrderFormProps> = ({ 
-  order, 
-  onSuccess, 
+export const OrderForm: React.FC<OrderFormProps> = ({
+  order,
+  onSuccess,
   onCancel
 }) => {
   const [form] = Form.useForm();
   const [orderItems, setOrderItems] = useState<OrderItemData[]>([]);
   const { data: orderBookers, isLoading: isLoadingOrderBookers } = useOrderBookers();
-  
+
   const createMutation = useCreateOrder();
   const updateMutation = useUpdateOrder();
-  
+
   const isEditing = !!order;
   const isLoading = createMutation.isPending || updateMutation.isPending;
-  
+
   useEffect(() => {
     if (order) {
       form.setFieldsValue({
@@ -47,7 +47,7 @@ export const OrderForm: React.FC<OrderFormProps> = ({
       setOrderItems([]);
     }
   }, [order, form]);
-  
+
   const handleSubmit = async (values: any) => {
     try {
       // Validate that we have at least one item when creating a new order
@@ -70,8 +70,8 @@ export const OrderForm: React.FC<OrderFormProps> = ({
       };
 
       if (isEditing) {
-        await updateMutation.mutateAsync({ 
-          id: order.id, 
+        await updateMutation.mutateAsync({
+          id: order.id,
           data: {
             orderBookerId: requestData.orderBookerId,
             orderDate: requestData.orderDate,
@@ -83,7 +83,7 @@ export const OrderForm: React.FC<OrderFormProps> = ({
         await createMutation.mutateAsync(requestData);
         message.success('Order created successfully');
       }
-      
+
       form.resetFields();
       setOrderItems([]);
       onSuccess?.();
@@ -138,21 +138,21 @@ export const OrderForm: React.FC<OrderFormProps> = ({
                 { required: true, message: 'Please select order date' },
               ]}
             >
-              <DatePicker 
-                style={{ width: '100%' }} 
+              <DatePicker
+                style={{ width: '100%' }}
                 format="DD/MM/YYYY"
               />
             </Form.Item>
           </Col>
         </Row>
-        
+
         <Row gutter={16}>
           <Col span={24}>
             <Form.Item
               name="notes"
               label="Notes (Optional)"
             >
-              <TextArea 
+              <TextArea
                 rows={2}
                 placeholder="Enter any additional notes..."
               />
@@ -162,7 +162,7 @@ export const OrderForm: React.FC<OrderFormProps> = ({
       </Card>
 
       <Divider />
-      
+
       <Card title="Order Items" size="small">
         <OrderItemsTable
           items={orderItems}
@@ -170,12 +170,13 @@ export const OrderForm: React.FC<OrderFormProps> = ({
           loading={isLoading}
         />
       </Card>
-
-      <FormActions
-        isLoading={isLoading}
-        onCancel={onCancel}
-        submitLabel={isEditing ? 'Update Order' : 'Create Order'}
-      />
-    </Form>
+      <div style={{ marginTop: 10 }}>
+        <FormActions
+          isLoading={isLoading}
+          onCancel={onCancel}
+          submitLabel={isEditing ? 'Update Order' : 'Create Order'}
+        />
+      </div>
+    </Form >
   );
 };
