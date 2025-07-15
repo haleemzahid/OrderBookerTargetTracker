@@ -30,7 +30,8 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
   // Get current path to determine selected key and open submenus
   const getCurrentKey = () => {
     const path = location.pathname;
-    if (path === '/' || path === '/') return '/';
+    if (path === '/' || path === '/') return 'dashboard';
+    if (path === '/bi-dashboard') return 'bi-dashboard';
     if (path.startsWith('/order-bookers')) return 'order-bookers';
     if (path.startsWith('/daily-entries')) return 'daily-entries';
     if (path.startsWith('/monthly-targets')) return 'monthly-targets';
@@ -40,13 +41,18 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
     if (path.startsWith('/companies')) return 'companies';
     if (path.startsWith('/products')) return 'products';
     if (path.startsWith('/settings')) return 'settings';
-    return '/';
+    return 'dashboard';
   };
 
   // Determine which submenus should be open based on current route
   const getOpenKeys = () => {
     const path = location.pathname;
     const openKeys: string[] = ['operations-submenu']; // Operations always expanded by default
+    
+    // Dashboards submenu
+    if (path === '/' || path === '/bi-dashboard') {
+      openKeys.push('dashboards-submenu');
+    }
     
     // Master Data submenu
     if (path.startsWith('/companies') || path.startsWith('/products') || path.startsWith('/order-bookers')) {
@@ -66,6 +72,9 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
       case '/':
       case 'dashboard':
         navigate({ to: '/' });
+        break;
+      case 'bi-dashboard':
+        navigate({ to: '/bi-dashboard' });
         break;
       case 'order-bookers':
         navigate({ to: '/order-bookers' });
@@ -102,11 +111,23 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
   };
 
   const menuItems = [
-    // Dashboard - standalone
+    // Dashboards - collapsible group
     {
-      key: '/',
-      icon: <DashboardOutlined />,
-      label: 'Dashboard',
+      key: 'dashboards-submenu',
+      icon: <FundOutlined />,
+      label: 'Dashboards',
+      children: [
+        {
+          key: 'dashboard',
+          icon: <DashboardOutlined />,
+          label: 'Dashboard',
+        },
+        {
+          key: 'bi-dashboard',
+          icon: <BarChartOutlined />,
+          label: 'BI Dashboard',
+        },
+      ],
     },
     // Daily Operations - collapsible group
     {
@@ -130,7 +151,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
     // Reports & Analytics - collapsible group
     {
       key: 'reports-submenu',
-      icon: <FundOutlined />,
+      icon: <FileTextOutlined />,
       label: 'Reports & Analytics',
       children: [
         {

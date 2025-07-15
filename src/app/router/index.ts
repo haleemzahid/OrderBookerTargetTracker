@@ -7,6 +7,7 @@ import { ProductsListPage } from '../../features/products/pages/products-list';
 import { OrdersListPage, OrderFormPage } from '../../features/orders';
 import { DailySalesReportListPage } from '../../features/daily-sales-report';
 import { DashboardPage } from '../../features/dashboard';
+import { SimpleDashboardPage } from '../../features/simple-dashboard';
 
 const rootRoute = createRootRoute({
   component: MainLayout,
@@ -15,6 +16,12 @@ const rootRoute = createRootRoute({
 const dashboardRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
+  component: SimpleDashboardPage,
+});
+
+const biDashboardRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/bi-dashboard',
   component: DashboardPage,
 });
 
@@ -79,6 +86,7 @@ const dsrRoute = createRoute({
 
 const routeTree = rootRoute.addChildren([
   dashboardRoute,
+  biDashboardRoute,
   orderBookersRoute,
   dailyEntriesRoute,
   monthlyTargetsRoute,
