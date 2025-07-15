@@ -175,6 +175,13 @@ export const OrderItemDialog: React.FC<OrderItemDialogProps> = ({
     const handleValuesChange = (_changedValues: any, allValues: OrderItemFormData) => {
         if (selectedProduct) {
             calculateAndSetValues(allValues);
+            
+            // Re-validate return cartons when cartons field changes
+            if (_changedValues.cartons !== undefined) {
+                form.validateFields(['returnCartons']).catch(() => {
+                    // Ignore validation errors - they will be shown in the form
+                });
+            }
         }
     };
 
@@ -350,8 +357,8 @@ export const OrderItemDialog: React.FC<OrderItemDialogProps> = ({
                                     <CartonQuantityInput
                                         unitPerCarton={selectedProduct.unitPerCarton}
                                         value={{
-                                            cartons: form.getFieldValue('cartons') || 0,
-                                            totalUnits: (form.getFieldValue('cartons') || 0) * selectedProduct.unitPerCarton
+                                            cartons: Number(form.getFieldValue('cartons')) || 0,
+                                            totalUnits: (Number(form.getFieldValue('cartons')) || 0) * selectedProduct.unitPerCarton
                                         }}
                                         onChange={(value: CartonQuantityValue) => {
                                             form.setFieldValue('cartons', value.cartons);
@@ -366,12 +373,25 @@ export const OrderItemDialog: React.FC<OrderItemDialogProps> = ({
                                     label="Return Cartons"
                                     name="returnCartons"
                                     rules={[
-                                        { type: 'number', min: 0, message: 'Return cartons must be positive' }
+                                        { type: 'number', min: 0, message: 'Return cartons must be positive' },
+                                        {
+                                            validator: (_, value) => {
+                                                if (value === undefined || value === null || value === '') {
+                                                    return Promise.resolve();
+                                                }
+                                                const totalCartons = form.getFieldValue('cartons') || 0;
+                                                if (value > totalCartons) {
+                                                    return Promise.reject(new Error('Return cartons cannot exceed total cartons'));
+                                                }
+                                                return Promise.resolve();
+                                            }
+                                        }
                                     ]}
                                 >
                                     <InputNumber
                                         style={{ width: '100%' }}
                                         min={0}
+                                        max={form.getFieldValue('cartons') || 0}
                                         precision={0}
                                         placeholder="Enter return cartons"
                                     />
@@ -424,14 +444,6 @@ export const OrderItemDialog: React.FC<OrderItemDialogProps> = ({
 
                         <Card size="small" style={{ backgroundColor: '#f8f9fa', marginBottom: 16 }}>
                             <Row gutter={16}>
-                                <Col span={6}>
-                                    <div style={{ textAlign: 'center' }}>
-                                        <Text type="secondary" style={{ fontSize: '12px' }}>Total Cost</Text>
-                                        <div style={{ fontSize: '16px', fontWeight: 600, color: '#cf1322' }}>
-                                            <FormatNumber value={calculatedValues.totalCost} prefix="Rs. " />
-                                        </div>
-                                    </div>
-                                </Col>
                                 <Col span={6}>
                                     <div style={{ textAlign: 'center' }}>
                                         <Text type="secondary" style={{ fontSize: '12px' }}>Total Amount</Text>

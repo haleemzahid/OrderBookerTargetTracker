@@ -52,16 +52,25 @@ export const CartonQuantityInput: React.FC<CartonQuantityInputProps> = ({
 
   // Open detailed calculator modal
   const openCalculator = () => {
-    // Initialize temp values based on current value
-    if (allowDecimals && value.cartons % 1 !== 0) {
+    const currentCartons = value.cartons || 0;
+    const currentTotalUnits = value.cartons * unitPerCarton|| 0;
+    if (true) {
+
+      console.log(value);
+      console.log(currentCartons)
+      console.log(currentTotalUnits);
       // If we have decimal cartons, convert to whole cartons + units
-      const wholeCartons = Math.floor(value.cartons);
-      const remainingUnits = Math.round((value.cartons - wholeCartons) * unitPerCarton);
+      const wholeCartons = Math.floor(currentCartons);
+      const remainingUnits = Math.round((currentCartons - wholeCartons) * unitPerCarton);
       setTempCartons(wholeCartons);
       setTempUnits(remainingUnits);
     } else {
-      setTempCartons(Math.floor(value.cartons));
-      setTempUnits(value.totalUnits % unitPerCarton);
+      setTempCartons(Math.floor(currentCartons));
+      // Calculate remaining units from total units if available, otherwise from cartons
+      const remainingUnits = currentTotalUnits > 0 
+        ? currentTotalUnits % unitPerCarton 
+        : 0;
+      setTempUnits(remainingUnits);
     }
     setIsModalOpen(true);
   };
