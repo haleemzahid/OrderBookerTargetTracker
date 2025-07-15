@@ -472,9 +472,6 @@ export const getOrderSummary = async (filters?: OrderFilters): Promise<OrderSumm
 export const confirmAndShipOrder = async (orderId: string): Promise<Order> => {
   const db = getDatabase();
   
-  // Start transaction
-  await db.execute('BEGIN TRANSACTION');
-  
   try {
     // Get order details first
     const order = await getOrderById(orderId);
@@ -534,8 +531,6 @@ export const confirmAndShipOrder = async (orderId: string): Promise<Order> => {
       [new Date().toISOString(), orderId]
     );
     
-    // Commit transaction
-    await db.execute('COMMIT');
     
     // Return updated order
     const updatedOrder = await getOrderById(orderId);
@@ -546,8 +541,6 @@ export const confirmAndShipOrder = async (orderId: string): Promise<Order> => {
     return updatedOrder;
     
   } catch (error) {
-    // Rollback transaction on error
-    await db.execute('ROLLBACK');
     throw error;
   }
 };

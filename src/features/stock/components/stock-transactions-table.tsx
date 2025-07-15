@@ -192,23 +192,6 @@ export const StockTransactionsTable: React.FC<StockTransactionsTableProps> = ({
       onFilter: (value, record) => record.reason === value,
     },
     {
-      title: 'Reference',
-      dataIndex: 'referenceId',
-      key: 'referenceId',
-      width: 120,
-      render: (referenceId: string | undefined) => (
-        referenceId ? (
-          <Tooltip title="Order Reference">
-            <Tag color="blue" style={{ fontSize: '11px' }}>
-              {referenceId.substring(0, 8)}...
-            </Tag>
-          </Tooltip>
-        ) : (
-          <span style={{ color: '#ccc' }}>-</span>
-        )
-      ),
-    },
-    {
       title: 'Purchase Cost',
       dataIndex: 'purchaseCost',
       key: 'purchaseCost',
@@ -328,7 +311,6 @@ export const StockTransactionsTable: React.FC<StockTransactionsTableProps> = ({
           showTotal: (total, range) => 
             `${range[0]}-${range[1]} of ${total} transactions`,
         }}
-        scroll={{ x: 1000 }}
         size="small"
       />
     </div>
