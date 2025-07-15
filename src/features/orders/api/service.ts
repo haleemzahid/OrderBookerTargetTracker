@@ -10,6 +10,7 @@ import {
   OrderSummary
 } from '../types';
 import { getProductById } from '../../products/api/service';
+import { orderBookerService } from '../../order-bookers/api/service';
 import { v4 as uuidv4 } from 'uuid';
 import { updateOrderTotals, calculateOrderItemTotals } from '../utils/calculations';
 
@@ -485,6 +486,10 @@ export const confirmAndShipOrder = async (orderId: string): Promise<Order> => {
       throw new Error('Order has already been shipped');
     }
     
+    // Get order booker details for the comment
+    const orderBooker = await orderBookerService.getById(order.orderBookerId);
+    const orderBookerName = orderBooker?.name || 'Unknown Order Booker';
+    
     // Get order items
     const orderItems = await getOrderItems(orderId);
     
@@ -512,20 +517,12 @@ export const confirmAndShipOrder = async (orderId: string): Promise<Order> => {
           totalQuantityToDeduct,
           'SALE',
           orderId,
-          `Order shipment - ${item.cartons} cartons`,
+          `Order shipment by ${orderBookerName} - ${item.cartons} cartons`,
           new Date().toISOString(),
           new Date().toISOString()
         ]
       );
       
-      // Update product stock level
-      await db.execute(
-        `UPDATE products 
-         SET current_stock = current_stock - ?,
-             updated_at = ?
-         WHERE id = ?`,
-        [totalQuantityToDeduct, new Date().toISOString(), item.productId]
-      );
     }
     
     // Update order status to shipped
