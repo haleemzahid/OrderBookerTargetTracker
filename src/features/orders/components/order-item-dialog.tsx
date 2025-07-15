@@ -56,8 +56,6 @@ export const OrderItemDialog: React.FC<OrderItemDialogProps> = ({
   });
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const productSelectRef = useRef<any>(null);
-  const cartonsInputRef = useRef<any>(null);
-  
   const { data: products = [], isLoading: isLoadingProducts } = useProducts();
 
   // Auto-focus product select when dialog opens
@@ -92,6 +90,17 @@ export const OrderItemDialog: React.FC<OrderItemDialogProps> = ({
           returnCartons: editingItem.returnCartons || 0,
         }, product);
       }
+    } else if (open && !editingItem) {
+      // Reset form to default values for new items
+      form.setFieldsValue({
+        productId: undefined,
+        cartons: 0,
+        costPrice: 0,
+        sellPrice: 0,
+        returnCartons: 0,
+      });
+      setCalculatedValues({ totalCost: 0, totalAmount: 0, profit: 0, returnAmount: 0 });
+      setSelectedProduct(null);
     }
   }, [editingItem, open, products, form]);
 
@@ -223,6 +232,7 @@ export const OrderItemDialog: React.FC<OrderItemDialogProps> = ({
       open={open}
       onCancel={onClose}
       width={800}
+      className="order-item-dialog"
       footer={[
         <Button key="cancel" onClick={onClose}>
           Cancel
@@ -257,6 +267,8 @@ export const OrderItemDialog: React.FC<OrderItemDialogProps> = ({
         initialValues={{
           cartons: 0,
           returnCartons: 0,
+          costPrice: 0,
+          sellPrice: 0,
         }}
       >
         <Row gutter={16}>
@@ -277,13 +289,28 @@ export const OrderItemDialog: React.FC<OrderItemDialogProps> = ({
                 onChange={handleProductChange}
                 loading={isLoadingProducts}
                 size="large"
-                dropdownMatchSelectWidth={false}
+                getPopupContainer={(triggerNode) => triggerNode.parentElement || document.body}
+                style={{ zIndex: 1000 }}
+                dropdownStyle={{ paddingTop: 4, paddingBottom: 4 }}
               >
                 {products.map(product => (
-                  <Option key={product.id} value={product.id}>
-                    <div>
-                      <div style={{ fontWeight: 500 }}>{product.name}</div>
-                      <div style={{ fontSize: '12px', color: '#666' }}>
+                  <Option key={product.id} value={product.id} title={product.name}>
+                    <div style={{ padding: '4px 0', lineHeight: 1.2 }}>
+                      <div style={{ 
+                        fontWeight: 500, 
+                        fontSize: '14px',
+                        marginBottom: '2px',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                      }}>
+                        {product.name}
+                      </div>
+                      <div style={{ 
+                        fontSize: '11px', 
+                        color: '#666',
+                        lineHeight: 1.1
+                      }}>
                         Cost: Rs. {product.costPrice} | Sell: Rs. {product.sellPrice} | 
                         Units/Carton: {product.unitPerCarton}
                       </div>
@@ -304,7 +331,18 @@ export const OrderItemDialog: React.FC<OrderItemDialogProps> = ({
                   name="cartons"
                   rules={[
                     { required: true, message: 'Please enter number of cartons' },
-                    { type: 'number', min: 0, message: 'Cartons must be positive' }
+                    { 
+                      validator: (_, value) => {
+                        if (value === undefined || value === null || value === '') {
+                          return Promise.reject(new Error('Please enter number of cartons'));
+                        }
+                        const numValue = typeof value === 'object' ? value.cartons : value;
+                        if (numValue < 0) {
+                          return Promise.reject(new Error('Cartons must be positive'));
+                        }
+                        return Promise.resolve();
+                      }
+                    }
                   ]}
                 >
                   <CartonQuantityInput
@@ -317,7 +355,7 @@ export const OrderItemDialog: React.FC<OrderItemDialogProps> = ({
                       form.setFieldValue('cartons', value.cartons);
                       handleValuesChange({ cartons: value.cartons }, form.getFieldsValue());
                     }}
-                    allowDecimals={true}
+                    allowDecimals={false}
                   />
                 </Form.Item>
               </Col>
@@ -332,7 +370,7 @@ export const OrderItemDialog: React.FC<OrderItemDialogProps> = ({
                   <InputNumber
                     style={{ width: '100%' }}
                     min={0}
-                    precision={2}
+                    precision={0}
                     placeholder="Enter return cartons"
                   />
                 </Form.Item>

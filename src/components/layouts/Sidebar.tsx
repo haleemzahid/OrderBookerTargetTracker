@@ -116,11 +116,6 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
       label: 'Operations',
       children: [
         {
-          key: 'daily-entries',
-          icon: <CalendarOutlined />,
-          label: 'Daily Entries',
-        },
-        {
           key: 'orders',
           icon: <FileTextOutlined />,
           label: 'Orders',
