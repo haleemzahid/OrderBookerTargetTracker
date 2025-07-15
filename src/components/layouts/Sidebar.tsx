@@ -10,7 +10,10 @@ import {
   SettingOutlined,
   ShopOutlined,
   ShoppingOutlined,
-  FileTextOutlined
+  FileTextOutlined,
+  DatabaseOutlined,
+  ThunderboltOutlined,
+  FundOutlined
 } from '@ant-design/icons';
 
 const { Sider } = Layout;
@@ -25,7 +28,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Get current path to determine selected key
+  // Get current path to determine selected key and open submenus
   const getCurrentKey = () => {
     const path = location.pathname;
     if (path === '/' || path === '/') return '/';
@@ -37,11 +40,31 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
     if (path.startsWith('/reports')) return 'reports';
     if (path.startsWith('/companies')) return 'companies';
     if (path.startsWith('/products')) return 'products';
+    if (path.startsWith('/settings')) return 'settings';
     return '/';
+  };
+
+  // Determine which submenus should be open based on current route
+  const getOpenKeys = () => {
+    const path = location.pathname;
+    const openKeys: string[] = ['operations-submenu']; // Operations always expanded by default
+    
+    // Master Data submenu
+    if (path.startsWith('/companies') || path.startsWith('/products') || path.startsWith('/order-bookers')) {
+      openKeys.push('master-data-submenu');
+    }
+    
+    // Reports submenu
+    if (path.startsWith('/daily-sales-report') || path.startsWith('/dsr') || path.startsWith('/reports')) {
+      openKeys.push('reports-submenu');
+    }
+    
+    return openKeys;
   };
 
   const handleMenuClick = (key: string) => {
     switch (key) {
+      case '/':
       case 'dashboard':
         navigate({ to: '/' });
         break;
@@ -63,11 +86,16 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
       case 'products':
         navigate({ to: '/products' });
         break;
-      // case 'reports':
-      //   navigate({ to: '/reports' });
-      //   break;
-        case 'companies':
+      case 'reports':
+        // Navigate to daily sales report for now since reports route doesn't exist
+        navigate({ to: '/daily-sales-report' });
+        break;
+      case 'companies':
         navigate({ to: '/companies' });
+        break;
+      case 'settings':
+        // Navigate to dashboard for now since settings route doesn't exist
+        navigate({ to: '/' });
         break;
       default:
         navigate({ to: '/' });
@@ -75,51 +103,73 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
   };
 
   const menuItems = [
+    // Dashboard - standalone
     {
       key: '/',
       icon: <DashboardOutlined />,
       label: 'Dashboard',
     },
+    // Daily Operations - collapsible group
     {
-      key: 'companies',
-      icon: <ShopOutlined />,
-      label: 'Companies',
+      key: 'operations-submenu',
+      icon: <ThunderboltOutlined />,
+      label: 'Operations',
+      children: [
+        {
+          key: 'daily-entries',
+          icon: <CalendarOutlined />,
+          label: 'Daily Entries',
+        },
+        {
+          key: 'orders',
+          icon: <FileTextOutlined />,
+          label: 'Orders',
+        },
+        {
+          key: 'monthly-targets',
+          icon: <AimOutlined />,
+          label: 'Monthly Targets',
+        },
+      ],
     },
+    
+    // Reports & Analytics - collapsible group
     {
-      key: 'products',
-      icon: <ShoppingOutlined />,
-      label: 'Products',
+      key: 'reports-submenu',
+      icon: <FundOutlined />,
+      label: 'Reports & Analytics',
+      children: [
+        {
+          key: 'daily-sales-report',
+          icon: <BarChartOutlined />,
+          label: 'DSR',
+        },
+      ],
     },
+       // Master Data Management - collapsible group
     {
-      key: 'order-bookers',
-      icon: <TeamOutlined />,
-      label: 'Order Bookers',
+      key: 'master-data-submenu',
+      icon: <DatabaseOutlined />,
+      label: 'Master Data',
+      children: [
+        {
+          key: 'companies',
+          icon: <ShopOutlined />,
+          label: 'Companies',
+        },
+        {
+          key: 'products',
+          icon: <ShoppingOutlined />,
+          label: 'Products',
+        },
+        {
+          key: 'order-bookers',
+          icon: <TeamOutlined />,
+          label: 'Order Bookers',
+        },
+      ],
     },
-    {
-      key: 'daily-entries',
-      icon: <CalendarOutlined />,
-      label: 'Daily Entries',
-    },
-    {
-      key: 'monthly-targets',
-      icon: <AimOutlined />,
-      label: 'Monthly Targets',
-    },
-    {
-      key: 'orders',
-      icon: <FileTextOutlined />,
-      label: 'Orders',
-    },
-    {
-      key: 'daily-sales-report',
-      icon: <BarChartOutlined />,
-      label: 'DSR',
-    },
-    {
-      key: 'reports',
-      icon: <BarChartOutlined />,
-      label: 'Reports',
-    },
+    // Settings - standalone
     {
       key: 'settings',
       icon: <SettingOutlined />,
@@ -132,7 +182,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
       trigger={null}
       collapsible
       collapsed={collapsed}
-      width={180}
+      width={220}
       collapsedWidth={60}
       style={{
         overflow: 'auto',
@@ -164,6 +214,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
         theme="dark"
         mode="inline"
         selectedKeys={[getCurrentKey()]}
+        defaultOpenKeys={getOpenKeys()}
         items={menuItems}
         onClick={({ key }) => handleMenuClick(key)}
       />
