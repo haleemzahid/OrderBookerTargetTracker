@@ -195,6 +195,12 @@ export const OrderItemDialog: React.FC<OrderItemDialogProps> = ({
                 return;
             }
 
+            // Check if cartons is 0 or empty
+            if (!values.cartons || values.cartons <= 0) {
+                message.error('Please enter a valid number of cartons (greater than 0)');
+                return;
+            }
+
             const orderItem: OrderItemData = {
                 key: editingItem?.key || `item-${Date.now()}`,
                 productId: values.productId,
@@ -224,6 +230,8 @@ export const OrderItemDialog: React.FC<OrderItemDialogProps> = ({
                 }, 100);
 
                 message.success('Item added! Add another item.');
+                // Don't close the modal when adding another
+                return;
             } else {
                 onClose();
                 message.success(editingItem ? 'Item updated successfully' : 'Item added successfully');
@@ -249,7 +257,7 @@ export const OrderItemDialog: React.FC<OrderItemDialogProps> = ({
                         key="save-and-add"
                         icon={<PlusOutlined />}
                         onClick={() => handleSave(true)}
-                        disabled={!selectedProduct}
+                        disabled={!selectedProduct || !form.getFieldValue('cartons') || form.getFieldValue('cartons') <= 0}
                     >
                         Save & Add Another
                     </Button>
@@ -259,7 +267,7 @@ export const OrderItemDialog: React.FC<OrderItemDialogProps> = ({
                     type="primary"
                     icon={<SaveOutlined />}
                     onClick={() => handleSave()}
-                    disabled={!selectedProduct}
+                    disabled={!selectedProduct || !form.getFieldValue('cartons') || form.getFieldValue('cartons') <= 0}
                 >
                     {editingItem ? 'Update Item' : 'Save Item'}
                 </Button>,
