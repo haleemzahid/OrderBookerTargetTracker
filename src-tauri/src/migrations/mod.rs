@@ -18,6 +18,9 @@ pub mod migration_015_create_order_triggers;
 pub mod migration_016_alter_order_items_columns;
 pub mod migration_017_fix_order_calculations;
 pub mod migration_018_drop_order_triggers;
+pub mod migration_019_create_stock_transactions_table;
+pub mod migration_020_add_stock_to_products;
+pub mod migration_021_create_stock_triggers;
 
 /// Returns all database migrations in order
 pub fn get_migrations() -> Vec<Migration> {
@@ -40,5 +43,8 @@ pub fn get_migrations() -> Vec<Migration> {
         migration_016_alter_order_items_columns::migration(),
         migration_017_fix_order_calculations::migration(),
         migration_018_drop_order_triggers::migration(),
+        migration_019_create_stock_transactions_table::migration(),
+        migration_020_add_stock_to_products::migration(),
+        migration_021_create_stock_triggers::migration(),
     ]
 }

@@ -5,6 +5,9 @@ export interface Product {
   costPrice: number;
   sellPrice: number;
   unitPerCarton: number;
+  currentStock: number;
+  lowStockThreshold: number;
+  stockStatus?: 'IN_STOCK' | 'LOW_STOCK' | 'OUT_OF_STOCK';
   createdAt: Date;
   updatedAt: Date;
 }

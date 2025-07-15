@@ -7,7 +7,8 @@ export const getProductById = async (id: string): Promise<Product | null> => {
   const result = await db.select<any[]>(
     `SELECT 
       id, company_id as companyId, name, cost_price as costPrice, 
-      sell_price as sellPrice, unit_per_carton as unitPerCarton, 
+      sell_price as sellPrice, unit_per_carton as unitPerCarton,
+      current_stock as currentStock, low_stock_threshold as lowStockThreshold,
       created_at as createdAt, updated_at as updatedAt 
      FROM products 
      WHERE id = ?`,
@@ -26,7 +27,8 @@ export const getProducts = async (options?: ProductFilterOptions): Promise<Produ
   let query = `
     SELECT 
       id, company_id as companyId, name, cost_price as costPrice, 
-      sell_price as sellPrice, unit_per_carton as unitPerCarton, 
+      sell_price as sellPrice, unit_per_carton as unitPerCarton,
+      current_stock as currentStock, low_stock_threshold as lowStockThreshold,
       created_at as createdAt, updated_at as updatedAt 
     FROM products
     WHERE 1=1
@@ -62,8 +64,9 @@ export const createProduct = async (productData: CreateProductRequest): Promise<
   
   await db.execute(
     `INSERT INTO products (
-      id, company_id, name, cost_price, sell_price, unit_per_carton, created_at, updated_at
-     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      id, company_id, name, cost_price, sell_price, unit_per_carton, 
+      current_stock, low_stock_threshold, created_at, updated_at
+     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       id,
       productData.companyId, 
@@ -71,21 +74,20 @@ export const createProduct = async (productData: CreateProductRequest): Promise<
       productData.costPrice, 
       productData.sellPrice,
       productData.unitPerCarton,
+      0, // default current_stock
+      20, // default low_stock_threshold
       now,
       now
     ]
   );
   
-  return {
-    id,
-    companyId: productData.companyId,
-    name: productData.name,
-    costPrice: productData.costPrice,
-    sellPrice: productData.sellPrice,
-    unitPerCarton: productData.unitPerCarton,
-    createdAt: new Date(now),
-    updatedAt: new Date(now)
-  };
+  // Get the created product to return complete data
+  const createdProduct = await getProductById(id);
+  if (!createdProduct) {
+    throw new Error(`Failed to retrieve created product with ID ${id}`);
+  }
+  
+  return createdProduct;
 };
 
 export const updateProduct = async (id: string, productData: UpdateProductRequest): Promise<Product> => {
@@ -143,6 +145,9 @@ export const getProductsByCompany = async (companyId: string): Promise<Product[]
 
 // Helper function to parse product from database row
 function parseProduct(row: any): Product {
+  const currentStock = row.currentStock || 0;
+  const lowStockThreshold = row.lowStockThreshold || 20;
+  
   return {
     id: row.id,
     companyId: row.companyId,
@@ -150,9 +155,22 @@ function parseProduct(row: any): Product {
     costPrice: row.costPrice,
     sellPrice: row.sellPrice,
     unitPerCarton: row.unitPerCarton,
+    currentStock,
+    lowStockThreshold,
+    stockStatus: getStockStatus(currentStock, lowStockThreshold),
     createdAt: new Date(row.createdAt),
     updatedAt: new Date(row.updatedAt)
   };
+}
+
+function getStockStatus(currentStock: number, lowStockThreshold: number): 'IN_STOCK' | 'LOW_STOCK' | 'OUT_OF_STOCK' {
+  if (currentStock <= 0) {
+    return 'OUT_OF_STOCK';
+  } else if (currentStock <= lowStockThreshold) {
+    return 'LOW_STOCK';
+  } else {
+    return 'IN_STOCK';
+  }
 }
 
 // Helper function to map sort field to database column
@@ -162,6 +180,8 @@ function getSortColumn(sortField: string): string {
     'costPrice': 'cost_price',
     'sellPrice': 'sell_price',
     'unitPerCarton': 'unit_per_carton',
+    'currentStock': 'current_stock',
+    'lowStockThreshold': 'low_stock_threshold',
     'createdAt': 'created_at',
     'updatedAt': 'updated_at'
   };

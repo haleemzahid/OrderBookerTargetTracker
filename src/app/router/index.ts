@@ -8,6 +8,7 @@ import { OrdersListPage, OrderFormPage } from '../../features/orders';
 import { DailySalesReportListPage } from '../../features/daily-sales-report';
 import { DashboardPage } from '../../features/dashboard';
 import { SimpleDashboardPage } from '../../features/simple-dashboard';
+import { StockOverview, StockTransactions } from '../../features/stock';
 
 const rootRoute = createRootRoute({
   component: MainLayout,
@@ -84,6 +85,18 @@ const dsrRoute = createRoute({
   component: DailySalesReportListPage,
 });
 
+const stockOverviewRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/stock',
+  component: StockOverview,
+});
+
+const stockTransactionsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/stock/transactions',
+  component: StockTransactions,
+});
+
 const routeTree = rootRoute.addChildren([
   dashboardRoute,
   biDashboardRoute,
@@ -96,7 +109,9 @@ const routeTree = rootRoute.addChildren([
   orderCreateRoute,
   orderEditRoute,
   dailySalesReportRoute,
-  dsrRoute
+  dsrRoute,
+  stockOverviewRoute,
+  stockTransactionsRoute
 ]);
 
 export const router = createRouter({ routeTree });

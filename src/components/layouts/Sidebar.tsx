@@ -12,7 +12,9 @@ import {
   FileTextOutlined,
   DatabaseOutlined,
   ThunderboltOutlined,
-  FundOutlined
+  FundOutlined,
+  AppstoreOutlined,
+  HistoryOutlined
 } from '@ant-design/icons';
 
 const { Sider } = Layout;
@@ -40,6 +42,8 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
     if (path.startsWith('/reports')) return 'reports';
     if (path.startsWith('/companies')) return 'companies';
     if (path.startsWith('/products')) return 'products';
+    if (path.startsWith('/stock/transactions')) return 'stock-transactions';
+    if (path.startsWith('/stock')) return 'stock-overview';
     if (path.startsWith('/settings')) return 'settings';
     return 'dashboard';
   };
@@ -57,6 +61,11 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
     // Master Data submenu
     if (path.startsWith('/companies') || path.startsWith('/products') || path.startsWith('/order-bookers')) {
       openKeys.push('master-data-submenu');
+    }
+    
+    // Stock Management submenu
+    if (path.startsWith('/stock')) {
+      openKeys.push('stock-submenu');
     }
     
     // Reports submenu
@@ -100,6 +109,12 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
         break;
       case 'companies':
         navigate({ to: '/companies' });
+        break;
+      case 'stock-overview':
+        navigate({ to: '/stock' });
+        break;
+      case 'stock-transactions':
+        navigate({ to: '/stock/transactions' });
         break;
       case 'settings':
         // Navigate to dashboard for now since settings route doesn't exist
@@ -181,6 +196,24 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
           key: 'order-bookers',
           icon: <TeamOutlined />,
           label: 'Order Bookers',
+        },
+      ],
+    },
+    // Stock Management - collapsible group
+    {
+      key: 'stock-submenu',
+      icon: <AppstoreOutlined />,
+      label: 'Stock Management',
+      children: [
+        {
+          key: 'stock-overview',
+          icon: <AppstoreOutlined />,
+          label: 'Stock Overview',
+        },
+        {
+          key: 'stock-transactions',
+          icon: <HistoryOutlined />,
+          label: 'Transactions',
         },
       ],
     },
