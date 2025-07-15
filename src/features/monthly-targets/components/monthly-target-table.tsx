@@ -97,7 +97,6 @@ export const MonthlyTargetTable: React.FC<MonthlyTargetTableProps> = ({
         loading={loading}
         rowKey="id"
         size="small"
-        scroll={{ x: 1000 }}
       />
   );
 };

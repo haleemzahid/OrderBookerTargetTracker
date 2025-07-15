@@ -31,6 +31,19 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     <AppContext.Provider value={value}>
       <ConfigProvider
         theme={{
+          components: {
+            Table:{
+              cellFontSizeSM: 12,
+              cellFontSizeMD: 12,
+              cellFontSize: 12,
+              cellPaddingBlockSM: 0,
+              cellPaddingBlockMD: 0,
+              cellPaddingBlock: 0,
+              cellPaddingInlineSM: 0,
+              cellPaddingInlineMD: 0,
+              cellPaddingInline: 0,
+            }
+          },
           algorithm: appTheme === 'dark' ? theme.darkAlgorithm : theme.defaultAlgorithm,
           ...(appTheme === 'dark' ? darkTheme : lightTheme),
         }}

@@ -34,7 +34,7 @@ export const DailySalesReportTable: React.FC<DailySalesReportTableProps> = ({
         </Tag>
       ),
       sorter: (a, b) => a.sellPrice - b.sellPrice,
-      align: 'right',
+      
     },
     {
       title: 'Cost Price',
@@ -46,7 +46,7 @@ export const DailySalesReportTable: React.FC<DailySalesReportTableProps> = ({
         </span>
       ),
       sorter: (a, b) => a.costPrice - b.costPrice,
-      align: 'right',
+      
     },
     {
       title: 'Total Cartons',
@@ -56,7 +56,7 @@ export const DailySalesReportTable: React.FC<DailySalesReportTableProps> = ({
         <FormatNumber value={cartons} decimalPlaces={2} />
       ),
       sorter: (a, b) => a.totalCartons - b.totalCartons,
-      align: 'right',
+      
     },
     {
       title: 'Return Cartons',
@@ -68,7 +68,7 @@ export const DailySalesReportTable: React.FC<DailySalesReportTableProps> = ({
         </span>
       ),
       sorter: (a, b) => a.returnCartons - b.returnCartons,
-      align: 'right',
+      
     },
     {
       title: 'Net Cartons',
@@ -80,7 +80,7 @@ export const DailySalesReportTable: React.FC<DailySalesReportTableProps> = ({
         </Text>
       ),
       sorter: (a, b) => a.netCartons - b.netCartons,
-      align: 'right',
+      
     },
     {
       title: 'Total Amount',
@@ -90,7 +90,7 @@ export const DailySalesReportTable: React.FC<DailySalesReportTableProps> = ({
         <FormatNumber value={amount} prefix="Rs. " />
       ),
       sorter: (a, b) => a.totalAmount - b.totalAmount,
-      align: 'right',
+      
     },
     {
       title: 'Return Amount',
@@ -102,7 +102,7 @@ export const DailySalesReportTable: React.FC<DailySalesReportTableProps> = ({
         </span>
       ),
       sorter: (a, b) => a.returnAmount - b.returnAmount,
-      align: 'right',
+      
     },
     {
       title: 'Net Amount',
@@ -114,7 +114,7 @@ export const DailySalesReportTable: React.FC<DailySalesReportTableProps> = ({
         </Text>
       ),
       sorter: (a, b) => a.netAmount - b.netAmount,
-      align: 'right',
+      
     },
     {
       title: 'Profit',
@@ -131,7 +131,7 @@ export const DailySalesReportTable: React.FC<DailySalesReportTableProps> = ({
         </Tooltip>
       ),
       sorter: (a, b) => a.profit - b.profit,
-      align: 'right',
+      
     },
   ];
 

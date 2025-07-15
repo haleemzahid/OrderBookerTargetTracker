@@ -85,7 +85,6 @@ export const CompanyTable: React.FC<CompanyTableProps> = ({
       loading={loading}
       rowKey="id"
       size="small"
-      scroll={{ x: 1000 }}
     />
   );
 };

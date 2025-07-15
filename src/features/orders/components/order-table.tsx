@@ -133,7 +133,6 @@ export const OrderTable: React.FC<OrderTableProps> = ({
         showSizeChanger: true,
         showTotal: (total) => `Total ${total} orders`,
       }}
-      scroll={{ x: 1200 }}
       summary={(pageData) => {
         if (pageData.length === 0) return null;
         

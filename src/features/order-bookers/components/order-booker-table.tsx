@@ -80,7 +80,6 @@ export const OrderBookerTable: React.FC<OrderBookerTableProps> = ({
         loading={loading}
         rowKey="id"
         size="small"
-        scroll={{ x: 1000 }}
     />
   );
 };
