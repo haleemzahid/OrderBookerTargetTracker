@@ -87,6 +87,7 @@ export interface OrderTableProps {
   onEdit: (order: Order) => void;
   onDelete: (order: Order) => void;
   onView: (order: Order) => void;
+  onShip?: (order: Order) => void;
 }
 
 export interface ViewOrderItemsTableProps {

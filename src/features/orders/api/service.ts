@@ -498,7 +498,7 @@ export const confirmAndShipOrder = async (orderId: string): Promise<Order> => {
         throw new Error(`Product not found: ${item.productId}`);
       }
       
-      const totalQuantityToDeduct = item.cartons * product.unitPerCarton;
+      const totalQuantityToDeduct = item.cartons;
       
       // Create stock transaction
       const transactionId = uuidv4();

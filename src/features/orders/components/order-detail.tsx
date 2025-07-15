@@ -1,9 +1,7 @@
-import React, { useState } from 'react';
-import { Card, Row, Col, Descriptions, Tag, Divider, Button, Modal, message, Space, Alert } from 'antd';
-import { SendOutlined } from '@ant-design/icons';
+import React from 'react';
+import { Card, Row, Col, Descriptions, Tag, Divider } from 'antd';
 import { ViewOrderItemsTable } from './view-order-items-table';
 import { useOrderBookers } from '../../order-bookers/api/queries';
-import { useConfirmAndShipOrder } from '../api/mutations';
 import { FormatNumber } from '../../../shared/components';
 import type { Order } from '../types';
 import dayjs from 'dayjs';
@@ -13,24 +11,11 @@ interface OrderDetailProps {
 }
 
 export const OrderDetail: React.FC<OrderDetailProps> = ({ order }) => {
-  const [confirmModalVisible, setConfirmModalVisible] = useState(false);
   const { data: orderBookers } = useOrderBookers();
-  const confirmAndShipMutation = useConfirmAndShipOrder();
 
   const getOrderBookerName = (orderBookerId: string) => {
     const orderBooker = orderBookers?.find(ob => ob.id === orderBookerId);
     return orderBooker?.name || orderBookerId;
-  };
-
-  const handleConfirmAndShip = async () => {
-    try {
-      await confirmAndShipMutation.mutateAsync(order.id);
-      setConfirmModalVisible(false);
-      message.success('Order confirmed and shipped successfully!');
-    } catch (error) {
-      message.error('Failed to confirm and ship order. Please try again.');
-      console.error('Error confirming and shipping order:', error);
-    }
   };
 
   const getStatusTag = (status: Order['status']) => {
@@ -52,18 +37,6 @@ export const OrderDetail: React.FC<OrderDetailProps> = ({ order }) => {
         title="Order Information" 
         size="small" 
         style={{ marginBottom: 16 }}
-        extra={
-          order.status === 'pending' && (
-            <Button
-              type="primary"
-              icon={<SendOutlined />}
-              onClick={() => setConfirmModalVisible(true)}
-              loading={confirmAndShipMutation.isPending}
-            >
-              CONFIRM & SHIP
-            </Button>
-          )
-        }
       >
         <Row gutter={16}>
           <Col span={12}>
@@ -143,40 +116,6 @@ export const OrderDetail: React.FC<OrderDetailProps> = ({ order }) => {
           orderId={order.id}
         />
       </Card>
-
-      <Modal
-        title="Confirm Order Shipment"
-        open={confirmModalVisible}
-        onOk={handleConfirmAndShip}
-        onCancel={() => setConfirmModalVisible(false)}
-        okText="Confirm & Ship"
-        okButtonProps={{ 
-          loading: confirmAndShipMutation.isPending,
-          icon: <SendOutlined />
-        }}
-        cancelText="Cancel"
-        width={500}
-      >
-        <Space direction="vertical" style={{ width: '100%' }}>
-          <Alert
-            message="Important"
-            description="This action will:"
-            type="warning"
-            showIcon
-          />
-          <ul style={{ marginLeft: 20, marginBottom: 16 }}>
-            <li>Mark the order as <strong>shipped</strong></li>
-            <li>Automatically deduct stock for all order items</li>
-            <li>Create stock transaction records for audit trail</li>
-            <li>This action <strong>cannot be undone</strong></li>
-          </ul>
-          <Alert
-            message="Are you sure you want to proceed?"
-            type="info"
-            showIcon
-          />
-        </Space>
-      </Modal>
     </div>
   );
 };

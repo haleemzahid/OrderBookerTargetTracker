@@ -183,6 +183,10 @@ export const OrdersListPage: React.FC = () => {
           onEdit={handleEdit}
           onDelete={handleDelete}
           onView={handleView}
+          onShip={() => {
+            // Refresh the orders list when an order is shipped
+            // The mutation will automatically invalidate the query cache
+          }}
         />
       </Space>
 

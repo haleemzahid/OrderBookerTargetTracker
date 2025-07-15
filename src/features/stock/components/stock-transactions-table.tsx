@@ -7,7 +7,6 @@ import { useProducts } from '../../products/api/queries';
 import dayjs from 'dayjs';
 
 const { Option } = Select;
-const { RangePicker } = DatePicker;
 
 export const StockTransactionsTable: React.FC<StockTransactionsTableProps> = ({
   data,
