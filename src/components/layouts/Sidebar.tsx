@@ -132,6 +132,8 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
       trigger={null}
       collapsible
       collapsed={collapsed}
+      width={180}
+      collapsedWidth={60}
       style={{
         overflow: 'auto',
         height: '100vh',

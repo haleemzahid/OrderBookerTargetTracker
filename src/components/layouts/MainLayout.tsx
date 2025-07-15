@@ -23,7 +23,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       <Sidebar collapsed={collapsed} />
       <Layout
         style={{ 
-          'marginLeft': collapsed ? 80 : 200 
+          'marginLeft': collapsed ? 60 : 180 
         }}
       >
         <Header collapsed={collapsed} onToggle={handleToggle} />
