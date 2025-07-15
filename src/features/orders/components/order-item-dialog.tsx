@@ -15,8 +15,6 @@ import {
 import { PlusOutlined, SaveOutlined } from '@ant-design/icons';
 import { useProducts } from '../../products/api/queries';
 import { FormatNumber } from '../../../shared/components';
-import { CartonQuantityInput } from '../../../components/common/CartonQuantityInput';
-import type { CartonQuantityValue } from '../../../components/common/CartonQuantityInput';
 import { calculateOrderItemTotalsFromCartons } from '../utils/calculations';
 import type { Product } from '../../products/types';
 import type { OrderItemData } from './order-items-table';
@@ -175,7 +173,7 @@ export const OrderItemDialog: React.FC<OrderItemDialogProps> = ({
     const handleValuesChange = (_changedValues: any, allValues: OrderItemFormData) => {
         if (selectedProduct) {
             calculateAndSetValues(allValues);
-            
+
             // Re-validate return cartons when cartons field changes
             if (_changedValues.cartons !== undefined) {
                 form.validateFields(['returnCartons']).catch(() => {
@@ -362,17 +360,11 @@ export const OrderItemDialog: React.FC<OrderItemDialogProps> = ({
                                         }
                                     ]}
                                 >
-                                    <CartonQuantityInput
-                                        unitPerCarton={selectedProduct.unitPerCarton}
-                                        value={{
-                                            cartons: Number(form.getFieldValue('cartons')) || 0,
-                                            totalUnits: (Number(form.getFieldValue('cartons')) || 0) * selectedProduct.unitPerCarton
-                                        }}
-                                        onChange={(value: CartonQuantityValue) => {
-                                            form.setFieldValue('cartons', value.cartons);
-                                            handleValuesChange({ cartons: value.cartons }, form.getFieldsValue());
-                                        }}
-                                        allowDecimals={false}
+                                    <InputNumber
+                                        style={{ width: '100%' }}
+                                        min={0}
+                                        precision={0}
+                                        placeholder="Enter return cartons"
                                     />
                                 </Form.Item>
                             </Col>

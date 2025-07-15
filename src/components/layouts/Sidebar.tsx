@@ -4,7 +4,6 @@ import { useNavigate, useLocation } from '@tanstack/react-router';
 import { 
   DashboardOutlined, 
   TeamOutlined, 
-  CalendarOutlined, 
   AimOutlined,
   BarChartOutlined,
   SettingOutlined,

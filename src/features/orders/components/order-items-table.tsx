@@ -3,6 +3,7 @@ import { Table, Popconfirm, Button, Space, Typography } from 'antd';
 import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
 import { FormatNumber } from '../../../shared/components';
 import { OrderItemDialog } from './order-item-dialog';
+import { mergeOrderItems, findMergeableItem } from '../utils/merge-items';
 
 const { Text } = Typography;
 
@@ -55,10 +56,40 @@ export const OrderItemsTable: React.FC<OrderItemsTableProps> = ({
       const newItems = items.map(existingItem => 
         existingItem.key === editingItem.key ? item : existingItem
       );
-      onItemsChange(newItems);
+      // Apply merging after update
+      const mergedItems = mergeOrderItems(newItems);
+      onItemsChange(mergedItems);
     } else {
-      // Add new item
-      onItemsChange([...items, item]);
+      // Check if there's an existing item that can be merged
+      const mergeableItem = findMergeableItem(item, items);
+      
+      if (mergeableItem) {
+        // Merge with existing item
+        const mergedCartons = (mergeableItem.cartons || 0) + (item.cartons || 0);
+        const mergedReturnCartons = (mergeableItem.returnCartons || 0) + (item.returnCartons || 0);
+        
+        // Recalculate totals based on merged quantities
+        const totalCost = mergedCartons * (item.costPrice || 0);
+        const totalAmount = mergedCartons * (item.sellPrice || 0);
+        const profit = totalAmount - totalCost;
+        
+        const updatedItem = {
+          ...mergeableItem,
+          cartons: mergedCartons,
+          returnCartons: mergedReturnCartons,
+          totalCost,
+          totalAmount,
+          profit,
+        };
+        
+        const newItems = items.map(existingItem => 
+          existingItem.key === mergeableItem.key ? updatedItem : existingItem
+        );
+        onItemsChange(newItems);
+      } else {
+        // Add new item
+        onItemsChange([...items, item]);
+      }
     }
     setDialogOpen(false);
     setEditingItem(null);

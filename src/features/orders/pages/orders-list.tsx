@@ -26,7 +26,7 @@ export const OrdersListPage: React.FC = () => {
   const [searchText, setSearchText] = useState('');
   const [filters, setFilters] = useState<FilterState>({
     orderBookerId: undefined,
-    dateRange: undefined,
+    dateRange: [dayjs().startOf('day'), dayjs().endOf('day')],
   });
 
   // Load order bookers data
@@ -54,7 +54,6 @@ export const OrdersListPage: React.FC = () => {
     isLoading,
     error,
   } = useOrders(queryFilters);
-
   const deleteMutation = useDeleteOrder();
 
   const handleAdd = () => {
@@ -101,8 +100,8 @@ export const OrdersListPage: React.FC = () => {
   // Export functionality
   const getExportColumns = (): ExportColumn[] => [
     { title: 'Order Date', dataIndex: 'orderDate', render: (value) => dayjs(value).format('DD/MM/YYYY') },
-    { 
-      title: 'Order Booker', 
+    {
+      title: 'Order Booker',
       dataIndex: 'orderBookerId',
       render: (value) => {
         const orderBooker = orderBookers?.find(ob => ob.id === value);
