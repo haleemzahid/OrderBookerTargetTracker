@@ -38,6 +38,26 @@ interface FormatNumberProps {
 }
 
 /**
+ * Formats numeric values with proper validation and type conversion
+ */
+const formatNumericValue = (value: any): string | number => {
+  if (value === null || value === undefined || value === '') {
+    return '';
+  }
+  
+  const numValue = Number(value);
+  if (!isNaN(numValue) && isFinite(numValue)) {
+    // Check if it's a decimal number
+    if (numValue % 1 !== 0) {
+      return Number(numValue.toFixed(2));
+    }
+    return numValue;
+  }
+  
+  return value;
+};
+
+/**
  * FormatNumber component for consistently formatting numeric values
  * with specified decimal places throughout the application
  */
@@ -50,13 +70,15 @@ export const FormatNumber: React.FC<FormatNumberProps> = ({
   className,
   style,
 }) => {
-  // Handle undefined or null values
-  if (value === undefined || value === null) {
+  // Handle undefined or null values using the formatNumericValue method
+  const processedValue = formatNumericValue(value);
+  
+  if (processedValue === '') {
     return <span className={className} style={style}>-</span>;
   }
 
-  // Convert string to number if needed
-  const numValue = typeof value === 'string' ? parseFloat(value) : value;
+  // Convert to number for formatting
+  const numValue = typeof processedValue === 'string' ? parseFloat(processedValue) : processedValue;
 
   // Check if the parsed value is a valid number
   if (isNaN(numValue)) {

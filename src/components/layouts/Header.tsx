@@ -65,23 +65,24 @@ const Header: React.FC<HeaderProps> = ({ collapsed, onToggle }) => {
     }
   };
 
-  const seedDataMenuItems = [
-    {
-      key: 'minimal',
-      label: 'Minimal Data (2 months)',
-      onClick: () => handleSeedData('minimal'),
-    },
-    {
-      key: 'demo',
-      label: 'Demo Data (6 months)',
-      onClick: () => handleSeedData('demo'),
-    },
-    {
-      key: 'comprehensive',
-      label: 'Comprehensive Data (12 months)',
-      onClick: () => handleSeedData('comprehensive'),
-    },
-  ];
+   const seedDataMenuItems = [];
+  // const seedDataMenuItems = [
+  //   {
+  //     key: 'minimal',
+  //     label: 'Minimal Data (2 months)',
+  //     onClick: () => handleSeedData('minimal'),
+  //   },
+  //   {
+  //     key: 'demo',
+  //     label: 'Demo Data (6 months)',
+  //     onClick: () => handleSeedData('demo'),
+  //   },
+  //   {
+  //     key: 'comprehensive',
+  //     label: 'Comprehensive Data (12 months)',
+  //     onClick: () => handleSeedData('comprehensive'),
+  //   },
+//  ];
 
   const userMenuItems = [
     {

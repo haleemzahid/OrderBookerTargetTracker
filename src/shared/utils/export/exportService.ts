@@ -42,6 +42,25 @@ export interface ExportOptions {
  */
 export class ExportService {
   /**
+   * Format numeric values to ensure consistent decimal places
+   */
+  private static formatNumericValue(value: any): string | number {
+    if (value === null || value === undefined || value === '') {
+      return '';
+    }
+    
+    const numValue = Number(value);
+    if (!isNaN(numValue) && isFinite(numValue)) {
+      // Check if it's a decimal number
+      if (numValue % 1 !== 0) {
+        return Number(numValue.toFixed(2));
+      }
+      return numValue;
+    }
+    
+    return value;
+  }
+  /**
    * Export data to Excel format
    */
   public static async exportToExcel<T extends Record<string, any>>(
@@ -98,10 +117,15 @@ export class ExportService {
       // Add data rows
       data.forEach((item) => {
         const rowData = filteredColumns.map((col) => {
+          let cellValue: any;
+          
           if (col.render) {
-            return col.render(item[col.dataIndex], item);
+            cellValue = col.render(item[col.dataIndex], item);
+          } else {
+            cellValue = item[col.dataIndex];
           }
-          return item[col.dataIndex];
+          
+          return this.formatNumericValue(cellValue);
         });
 
         worksheet.addRow(rowData);
@@ -173,10 +197,16 @@ export class ExportService {
       // Add data rows
       data.forEach((item) => {
         const rowData = filteredColumns.map((col) => {
+          let cellValue: any;
+          
           if (col.render) {
-            return col.render(item[col.dataIndex], item);
+            cellValue = col.render(item[col.dataIndex], item);
+          } else {
+            cellValue = item[col.dataIndex];
           }
-          return item[col.dataIndex] !== undefined ? String(item[col.dataIndex]) : '';
+          
+          const formattedValue = this.formatNumericValue(cellValue);
+          return formattedValue !== undefined ? String(formattedValue) : '';
         });
         tableData.push(rowData);
       });
@@ -282,16 +312,19 @@ export class ExportService {
       // Add data rows
       data.forEach((item) => {
         const cells = filteredColumns.map((col) => {
-          let cellValue: string = '';
+          let cellValue: any;
 
           if (col.render) {
-            cellValue = String(col.render(item[col.dataIndex], item));
+            cellValue = col.render(item[col.dataIndex], item);
           } else {
-            cellValue = item[col.dataIndex] !== undefined ? String(item[col.dataIndex]) : '';
+            cellValue = item[col.dataIndex];
           }
 
+          const formattedValue = this.formatNumericValue(cellValue);
+          const finalValue = formattedValue !== undefined ? String(formattedValue) : '';
+
           return new TableCell({
-            children: [new Paragraph({ text: cellValue })],
+            children: [new Paragraph({ text: finalValue })],
           });
         });
 
