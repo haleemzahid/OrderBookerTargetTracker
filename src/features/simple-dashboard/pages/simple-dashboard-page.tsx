@@ -5,6 +5,9 @@ import dayjs from 'dayjs';
 import MetricsGrid from '../components/metrics-grid';
 import TopPerformersSection from '../components/top-performers-section';
 import NeedsAttentionSection from '../components/needs-attention-section';
+import StockAlertSection from '../components/stock-alert-section';
+import StockSummarySection from '../components/stock-summary-section';
+import RecentStockTransactionsSection from '../components/recent-stock-transactions-section';
 import { useDashboardMetrics } from '../hooks/use-dashboard-metrics';
 import type { DateRangeFilter } from '../types';
 
@@ -142,6 +145,23 @@ const SimpleDashboardPage: React.FC = () => {
             metrics={dashboardData?.metrics || defaultMetrics}
             loading={isLoading}
           />
+        </div>
+
+        {/* Stock Management Section */}
+        <div style={{ marginBottom: '24px' }}>
+          <Row gutter={[24, 24]}>
+            <Col xs={24} xl={16}>
+              <StockSummarySection />
+            </Col>
+            <Col xs={24} xl={8}>
+              <StockAlertSection maxItems={5} />
+            </Col>
+          </Row>
+        </div>
+
+        {/* Recent Stock Transactions */}
+        <div style={{ marginBottom: '24px' }}>
+          <RecentStockTransactionsSection maxItems={6} />
         </div>
 
         {/* Performers Sections */}

@@ -1,6 +1,7 @@
 export interface StockTransaction {
   id: string;
   productId: string;
+  productName?: string; // Added for display purposes
   transactionType: 'IN' | 'OUT' | 'ADJUSTMENT';
   quantity: number;
   reason: 'PURCHASE' | 'SALE' | 'EXPIRED' | 'DAMAGED' | 'LOST' | 'OTHER';

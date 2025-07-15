@@ -39,6 +39,35 @@ export const OrderTable: React.FC<OrderTableProps> = ({
       sorter: (a, b) => getOrderBookerName(a.orderBookerId).localeCompare(getOrderBookerName(b.orderBookerId)),
     },
     {
+      title: 'Status',
+      dataIndex: 'status',
+      key: 'status',
+      render: (status: string) => {
+        const getStatusConfig = (status: string) => {
+          switch (status) {
+            case 'pending':
+              return { color: 'orange', text: 'Pending' };
+            case 'shipped':
+              return { color: 'blue', text: 'Shipped' };
+            case 'completed':
+              return { color: 'green', text: 'Completed' };
+            default:
+              return { color: 'default', text: status };
+          }
+        };
+        
+        const config = getStatusConfig(status);
+        return <Tag color={config.color}>{config.text}</Tag>;
+      },
+      sorter: (a, b) => a.status.localeCompare(b.status),
+      filters: [
+        { text: 'Pending', value: 'pending' },
+        { text: 'Shipped', value: 'shipped' },
+        { text: 'Completed', value: 'completed' },
+      ],
+      onFilter: (value, record) => record.status === value,
+    },
+    {
       title: 'Total Amount',
       dataIndex: 'totalAmount',
       key: 'totalAmount',
@@ -147,28 +176,29 @@ export const OrderTable: React.FC<OrderTableProps> = ({
             <Table.Summary.Row style={{ backgroundColor: '#fafafa', fontWeight: 'bold' }}>
               <Table.Summary.Cell index={0}>Totals</Table.Summary.Cell>
               <Table.Summary.Cell index={1}></Table.Summary.Cell>
-              <Table.Summary.Cell index={2}>
+              <Table.Summary.Cell index={2}></Table.Summary.Cell>
+              <Table.Summary.Cell index={3}>
                 <Tag color="blue">
                   <FormatNumber value={totalAmount} prefix="Rs. " decimalPlaces={2} />
                 </Tag>
               </Table.Summary.Cell>
-              <Table.Summary.Cell index={3}>
+              <Table.Summary.Cell index={4}>
                 <FormatNumber value={totalCost} prefix="Rs. " decimalPlaces={2} />
               </Table.Summary.Cell>
-              <Table.Summary.Cell index={4}>
+              <Table.Summary.Cell index={5}>
                 <Tag color={totalProfit >= 0 ? 'green' : 'red'}>
                   <FormatNumber value={totalProfit} prefix="Rs. " decimalPlaces={2} />
                 </Tag>
               </Table.Summary.Cell>
-              <Table.Summary.Cell index={5}>{totalCartons.toFixed(1)}</Table.Summary.Cell>
-              <Table.Summary.Cell index={6}>
+              <Table.Summary.Cell index={6}>{totalCartons.toFixed(1)}</Table.Summary.Cell>
+              <Table.Summary.Cell index={7}>
                 {totalReturnAmount > 0 && (
                   <Tag color="red">
                     <FormatNumber value={totalReturnAmount} prefix="Rs. " decimalPlaces={2} />
                   </Tag>
                 )}
               </Table.Summary.Cell>
-              <Table.Summary.Cell index={7}></Table.Summary.Cell>
+              <Table.Summary.Cell index={8}></Table.Summary.Cell>
             </Table.Summary.Row>
           </Table.Summary>
         );

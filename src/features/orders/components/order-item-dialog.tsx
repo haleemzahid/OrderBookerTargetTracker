@@ -319,9 +319,17 @@ export const OrderItemDialog: React.FC<OrderItemDialogProps> = ({
                                                 marginBottom: '2px',
                                                 whiteSpace: 'nowrap',
                                                 overflow: 'hidden',
-                                                textOverflow: 'ellipsis'
+                                                textOverflow: 'ellipsis',
+                                                display: 'flex',
+                                                justifyContent: 'space-between',
+                                                alignItems: 'center'
                                             }}>
-                                                {product.name}
+                                                <span>{product.name}</span>
+                                                <StockLevelIndicator
+                                                    currentStock={product.currentStock || 0}
+                                                    lowStockThreshold={product.lowStockThreshold || 20}
+                                                    size="small"
+                                                />
                                             </div>
                                             <div style={{
                                                 fontSize: '11px',
@@ -329,7 +337,7 @@ export const OrderItemDialog: React.FC<OrderItemDialogProps> = ({
                                                 lineHeight: 1.1
                                             }}>
                                                 Cost: Rs. {product.costPrice} | Sell: Rs. {product.sellPrice} |
-                                                Units/Carton: {product.unitPerCarton}
+                                                Units/Carton: {product.unitPerCarton} | Stock: {product.currentStock || 0} units
                                             </div>
                                         </div>
                                     </Option>
@@ -341,6 +349,31 @@ export const OrderItemDialog: React.FC<OrderItemDialogProps> = ({
 
                 {selectedProduct && (
                     <>
+                        <Card size="small" style={{ backgroundColor: '#fafafa', marginBottom: 16 }}>
+                            <Row gutter={16}>
+                                <Col span={12}>
+                                    <Space direction="vertical" size={4} style={{ width: '100%' }}>
+                                        <Text strong>Current Stock</Text>
+                                        <Space>
+                                            <StockLevelIndicator
+                                                currentStock={selectedProduct.currentStock || 0}
+                                                lowStockThreshold={selectedProduct.lowStockThreshold || 20}
+                                            />
+                                            <Text>{selectedProduct.currentStock || 0} units available</Text>
+                                        </Space>
+                                    </Space>
+                                </Col>
+                                <Col span={12}>
+                                    <Space direction="vertical" size={4} style={{ width: '100%' }}>
+                                        <Text strong>Stock Status</Text>
+                                        <Text type="secondary">
+                                            {Math.floor((selectedProduct.currentStock || 0) / selectedProduct.unitPerCarton)} cartons available
+                                        </Text>
+                                    </Space>
+                                </Col>
+                            </Row>
+                        </Card>
+
                         <Row gutter={16}>
                             <Col span={12}>
                                 <Form.Item

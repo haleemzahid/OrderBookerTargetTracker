@@ -4,6 +4,7 @@ import type { ProductTableProps } from '../types';
 import type { ColumnsType } from 'antd/es/table';
 import type { Product } from '../types';
 import { TableActions, FormatNumber } from '../../../shared/components';
+import { StockLevelIndicator } from '../../stock/components/stock-level-indicator';
 
 
 export const ProductTable: React.FC<ProductTableProps> = ({
@@ -73,6 +74,34 @@ export const ProductTable: React.FC<ProductTableProps> = ({
       key: 'unitPerCarton',
       render: (units: number) => <span>{units}</span>,
       sorter: (a, b) => a.unitPerCarton - b.unitPerCarton,
+    },
+    {
+      title: 'Current Stock',
+      dataIndex: 'currentStock',
+      key: 'currentStock',
+      render: (stock: number, record: Product) => (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <StockLevelIndicator
+            currentStock={stock || 0}
+            lowStockThreshold={record.lowStockThreshold || 20}
+          />
+          <span>{stock || 0} units</span>
+        </div>
+      ),
+      sorter: (a, b) => (a.currentStock || 0) - (b.currentStock || 0),
+    },
+    {
+      title: 'Cartons Available',
+      key: 'cartonsAvailable',
+      render: (_: any, record: Product) => {
+        const cartonsAvailable = Math.floor((record.currentStock || 0) / record.unitPerCarton);
+        return <span>{cartonsAvailable}</span>;
+      },
+      sorter: (a, b) => {
+        const cartonsA = Math.floor((a.currentStock || 0) / a.unitPerCarton);
+        const cartonsB = Math.floor((b.currentStock || 0) / b.unitPerCarton);
+        return cartonsA - cartonsB;
+      },
     },
     ...(companyFilter
       ? [
