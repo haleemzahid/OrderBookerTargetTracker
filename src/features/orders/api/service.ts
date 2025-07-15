@@ -22,7 +22,7 @@ export const getOrderById = async (id: string): Promise<Order | null> => {
       total_amount as totalAmount, total_cost as totalCost,
       total_profit as totalProfit, total_cartons as totalCartons, 
       return_cartons as returnCartons, return_amount as returnAmount,
-      notes, created_at as createdAt, updated_at as updatedAt
+      status, notes, created_at as createdAt, updated_at as updatedAt
      FROM orders 
      WHERE id = ?`,
     [id]
@@ -43,7 +43,7 @@ export const getOrders = async (options?: OrderFilters): Promise<Order[]> => {
       total_amount as totalAmount, total_cost as totalCost,
       total_profit as totalProfit, total_cartons as totalCartons, 
       return_cartons as returnCartons, return_amount as returnAmount,
-      notes, created_at as createdAt, updated_at as updatedAt
+      status, notes, created_at as createdAt, updated_at as updatedAt
     FROM orders
     WHERE 1=1
   `;
@@ -467,6 +467,94 @@ export const getOrderSummary = async (filters?: OrderFilters): Promise<OrderSumm
 };
 
 // Helper functions
+// Order Status Management
+export const confirmAndShipOrder = async (orderId: string): Promise<Order> => {
+  const db = getDatabase();
+  
+  // Start transaction
+  await db.execute('BEGIN TRANSACTION');
+  
+  try {
+    // Get order details first
+    const order = await getOrderById(orderId);
+    if (!order) {
+      throw new Error('Order not found');
+    }
+    
+    if (order.status === 'shipped' || order.status === 'completed') {
+      throw new Error('Order has already been shipped');
+    }
+    
+    // Get order items
+    const orderItems = await getOrderItems(orderId);
+    
+    // Create stock OUT transactions for each order item
+    for (const item of orderItems) {
+      // Calculate total quantity to deduct (cartons * unit_per_carton)
+      const product = await getProductById(item.productId);
+      if (!product) {
+        throw new Error(`Product not found: ${item.productId}`);
+      }
+      
+      const totalQuantityToDeduct = item.cartons * product.unitPerCarton;
+      
+      // Create stock transaction
+      const transactionId = uuidv4();
+      await db.execute(
+        `INSERT INTO stock_transactions (
+          id, product_id, transaction_type, quantity, reason, reference_id,
+          comments, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          transactionId,
+          item.productId,
+          'OUT',
+          totalQuantityToDeduct,
+          'SALE',
+          orderId,
+          `Order shipment - ${item.cartons} cartons`,
+          new Date().toISOString(),
+          new Date().toISOString()
+        ]
+      );
+      
+      // Update product stock level
+      await db.execute(
+        `UPDATE products 
+         SET current_stock = current_stock - ?,
+             updated_at = ?
+         WHERE id = ?`,
+        [totalQuantityToDeduct, new Date().toISOString(), item.productId]
+      );
+    }
+    
+    // Update order status to shipped
+    await db.execute(
+      `UPDATE orders 
+       SET status = 'shipped',
+           updated_at = ?
+       WHERE id = ?`,
+      [new Date().toISOString(), orderId]
+    );
+    
+    // Commit transaction
+    await db.execute('COMMIT');
+    
+    // Return updated order
+    const updatedOrder = await getOrderById(orderId);
+    if (!updatedOrder) {
+      throw new Error('Failed to retrieve updated order');
+    }
+    
+    return updatedOrder;
+    
+  } catch (error) {
+    // Rollback transaction on error
+    await db.execute('ROLLBACK');
+    throw error;
+  }
+};
+
 function parseOrder(row: any): Order {
   return {
     id: row.id,
@@ -478,6 +566,7 @@ function parseOrder(row: any): Order {
     totalCartons: row.totalCartons,
     returnCartons: row.returnCartons,
     returnAmount: row.returnAmount,
+    status: row.status || 'pending',
     notes: row.notes,
     createdAt: new Date(row.createdAt),
     updatedAt: new Date(row.updatedAt)

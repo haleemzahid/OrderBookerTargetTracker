@@ -324,19 +324,19 @@ export const stockQueryKeys = {
   - [ ] Real-time stock level updates
 
 ### Task 5.2: Implement CONFIRM & SHIP Button
-- [ ] **Priority**: Critical | **Time**: 3 hours
-- [ ] **Files to Modify**:
-  - [ ] `src/features/orders/components/order-detail.tsx`
-  - [ ] `src/features/orders/api/service.ts`
-  - [ ] `src/features/orders/types/index.ts`
-- [ ] **Changes**:
-  - [ ] Add "CONFIRM & SHIP" button to order detail view (only for pending orders)
-  - [ ] Update order status to 'shipped' when confirmed
-  - [ ] Create stock OUT transactions for all order items
-  - [ ] Update product stock levels atomically
-  - [ ] Add confirmation dialog with stock impact preview
-  - [ ] Handle insufficient stock scenarios gracefully
-- [ ] **Implementation**: Atomic transaction handling for order confirmation and stock deduction
+- [x] **Priority**: Critical | **Time**: 3 hours
+- [x] **Files to Modify**:
+  - [x] `src/features/orders/components/order-detail.tsx`
+  - [x] `src/features/orders/api/service.ts`
+  - [x] `src/features/orders/types/index.ts`
+- [x] **Changes**:
+  - [x] Add "CONFIRM & SHIP" button to order detail view (only for pending orders)
+  - [x] Update order status to 'shipped' when confirmed
+  - [x] Create stock OUT transactions for all order items
+  - [x] Update product stock levels atomically
+  - [x] Add confirmation dialog with stock impact preview
+  - [x] Handle insufficient stock scenarios gracefully
+- [x] **Implementation**: Atomic transaction handling for order confirmation and stock deduction
 
 ### Task 5.3: Stock Validation for Orders
 - [ ] **Priority**: High | **Time**: 1 hour

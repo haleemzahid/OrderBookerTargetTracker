@@ -312,15 +312,6 @@ export const StockOverview: React.FC = () => {
         onSuccess={handleAdjustmentSuccess}
         initialProductId={selectedProductId}
       />
-
-      <style jsx>{`
-        .stock-out-row {
-          background-color: #fff2f0 !important;
-        }
-        .stock-low-row {
-          background-color: #fffbe6 !important;
-        }
-      `}</style>
     </div>
   );
 };

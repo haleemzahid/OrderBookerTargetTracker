@@ -8,6 +8,7 @@ export interface Order {
   totalCartons: number;
   returnCartons: number;
   returnAmount: number;
+  status: 'pending' | 'shipped' | 'completed';
   notes?: string;
   createdAt: Date;
   updatedAt: Date;

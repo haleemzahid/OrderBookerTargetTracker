@@ -10,10 +10,12 @@ import {
     Typography,
     InputNumber,
     message,
-    Divider
+    Divider,
+    Space
 } from 'antd';
 import { PlusOutlined, SaveOutlined } from '@ant-design/icons';
 import { useProducts } from '../../products/api/queries';
+import { StockLevelIndicator } from '../../stock/components/stock-level-indicator';
 import { FormatNumber } from '../../../shared/components';
 import { calculateOrderItemTotalsFromCartons } from '../utils/calculations';
 import type { Product } from '../../products/types';

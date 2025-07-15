@@ -5,7 +5,8 @@ import {
   deleteOrder,
   createOrderItem,
   updateOrderItem,
-  deleteOrderItem
+  deleteOrderItem,
+  confirmAndShipOrder
 } from './service';
 import { queryKeys } from './keys';
 import type { 
@@ -143,6 +144,29 @@ export const useDeleteOrderItem = () => {
     },
     onError: (error) => {
       console.error('Error deleting order item:', error);
+    }
+  });
+};
+
+export const useConfirmAndShipOrder = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (orderId: string) => confirmAndShipOrder(orderId),
+    onSuccess: (updatedOrder: Order) => {
+      // Update the order detail data
+      queryClient.setQueryData(queryKeys.orders.detail(updatedOrder.id), updatedOrder);
+      
+      // Invalidate related queries
+      queryClient.invalidateQueries({ queryKey: queryKeys.orders.lists() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.orders.summary() });
+      
+      // Invalidate stock queries to show updated stock levels
+      queryClient.invalidateQueries({ queryKey: ['stock'] });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+    },
+    onError: (error) => {
+      console.error('Error confirming and shipping order:', error);
     }
   });
 };
