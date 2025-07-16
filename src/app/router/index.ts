@@ -9,6 +9,8 @@ import { DailySalesReportListPage } from '../../features/daily-sales-report';
 import { DashboardPage } from '../../features/dashboard';
 import { SimpleDashboardPage } from '../../features/simple-dashboard';
 import { StockOverview, StockTransactions } from '../../features/stock';
+import { CustomerListPage } from '../../features/customers/pages/customer-list-page';
+import { CustomerDetailPage } from '../../features/customers/pages/customer-detail-page';
 
 const rootRoute = createRootRoute({
   component: MainLayout,
@@ -85,6 +87,18 @@ const stockTransactionsRoute = createRoute({
   component: StockTransactions,
 });
 
+const customersRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/customers',
+  component: CustomerListPage,
+});
+
+const customerDetailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/customers/$customerId',
+  component: CustomerDetailPage,
+});
+
 const routeTree = rootRoute.addChildren([
   dashboardRoute,
   biDashboardRoute,
@@ -97,7 +111,9 @@ const routeTree = rootRoute.addChildren([
   orderEditRoute,
   dsrRoute,
   stockOverviewRoute,
-  stockTransactionsRoute
+  stockTransactionsRoute,
+  customersRoute,
+  customerDetailRoute
 ]);
 
 export const router = createRouter({ routeTree });
@@ -105,5 +121,23 @@ export const router = createRouter({ routeTree });
 declare module '@tanstack/react-router' {
   interface Register {
     router: typeof router;
+    // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+    routeInfo: {
+      routePaths: 
+        | '/' 
+        | '/bi-dashboard' 
+        | '/order-bookers' 
+        | '/monthly-targets' 
+        | '/companies' 
+        | '/products' 
+        | '/orders' 
+        | '/orders/create' 
+        | '/orders/$orderId/edit' 
+        | '/dsr' 
+        | '/stock' 
+        | '/stock/transactions'
+        | '/customers'
+        | '/customers/$customerId';
+    };
   }
 }

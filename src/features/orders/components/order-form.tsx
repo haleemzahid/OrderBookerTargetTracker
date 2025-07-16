@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Form, Select, DatePicker, Input, Card, Row, Col, Divider, message } from 'antd';
+import React, { useEffect, useState, useMemo } from 'react';
+import { Form, Select, DatePicker, Input, Card, Row, Col, Divider, message, Radio, Space, Modal, Alert } from 'antd';
 import { useOrderBookers } from '../../order-bookers/api/queries';
 import { useProducts } from '../../products/api/queries';
 import { useCreateOrder, useUpdateOrderWithItems } from '../api/mutations';
@@ -9,6 +9,9 @@ import type { Order, CreateOrderRequest } from '../types';
 import dayjs from 'dayjs';
 import { OrderItemsTable, type OrderItemData } from './order-items-table';
 import { mergeOrderItems } from '../utils/merge-items';
+import { CustomerSelect } from '../../customers/components/customer-select';
+import { CustomerWithCredit } from '../../customers/types';
+import { OrderCreditValidation } from './order-credit-validation';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -26,6 +29,11 @@ export const OrderForm: React.FC<OrderFormProps> = ({
 }) => {
   const [form] = Form.useForm();
   const [orderItems, setOrderItems] = useState<OrderItemData[]>([]);
+  const [selectedCustomer, setSelectedCustomer] = useState<CustomerWithCredit | null>(null);
+  const [showApprovalModal, setShowApprovalModal] = useState(false);
+  const [showAlternativesModal, setShowAlternativesModal] = useState(false);
+  const [approvalReason, setApprovalReason] = useState('');
+
   const { data: orderBookers, isLoading: isLoadingOrderBookers } = useOrderBookers();
   const { data: products, isLoading: isLoadingProducts } = useProducts();
 
@@ -44,14 +52,22 @@ export const OrderForm: React.FC<OrderFormProps> = ({
         orderBookerId: order.orderBookerId,
         orderDate: dayjs(order.orderDate),
         notes: order.notes,
+        customerId: order.customerId,
+        paymentTerms: order.paymentTerms || 'cash',
       });
     } else {
       form.setFieldsValue({
         orderDate: dayjs(),
+        paymentTerms: 'cash',
       });
       setOrderItems([]);
     }
   }, [order, form]);
+
+  // Calculate total order amount
+  const totalOrderAmount = useMemo(() => {
+    return orderItems.reduce((total, item) => total + (item.totalAmount || 0), 0);
+  }, [orderItems]);
 
   // Load existing order items when editing
   useEffect(() => {
@@ -87,10 +103,19 @@ export const OrderForm: React.FC<OrderFormProps> = ({
         return;
       }
 
+      // Validate customer selection for credit orders
+      if (values.paymentTerms === 'credit' && !values.customerId) {
+        message.error('Please select a customer for credit orders');
+        return;
+      }
+
       const requestData: CreateOrderRequest = {
         orderBookerId: values.orderBookerId,
         orderDate: values.orderDate.toDate(),
         notes: values.notes,
+        customerId: values.customerId,
+        paymentTerms: values.paymentTerms,
+        creditApprovalReason: approvalReason,
         items: orderItems.map(item => ({
           productId: item.productId!,
           cartons: item.cartons!,
@@ -132,6 +157,21 @@ export const OrderForm: React.FC<OrderFormProps> = ({
     setOrderItems(mergedItems);
   };
 
+  // Handle customer selection
+  const handleCustomerSelect = (_customerId: string, customer: CustomerWithCredit) => {
+    setSelectedCustomer(customer);
+  };
+
+  // Handle credit approval request
+  const handleRequestApproval = () => {
+    setShowApprovalModal(true);
+  };
+
+  // Handle alternatives suggestion
+  const handleSuggestAlternative = () => {
+    setShowAlternativesModal(true);
+  };
+
   return (
     <Form
       form={form}
@@ -139,6 +179,7 @@ export const OrderForm: React.FC<OrderFormProps> = ({
       onFinish={handleSubmit}
       initialValues={{
         orderDate: dayjs(),
+        paymentTerms: 'cash',
       }}
     >
       <Card title="Order Information" size="small">
@@ -182,6 +223,37 @@ export const OrderForm: React.FC<OrderFormProps> = ({
         </Row>
 
         <Row gutter={16}>
+          <Col span={12}>
+            <Form.Item
+              name="customerId"
+              label="Customer"
+            >
+              <CustomerSelect 
+                showCreateNew
+                orderAmount={totalOrderAmount}
+                showCreditStatus
+                onChange={handleCustomerSelect}
+              />
+            </Form.Item>
+          </Col>
+          <Col span={12}>
+            <Form.Item
+              name="paymentTerms"
+              label="Payment Terms"
+              rules={[
+                { required: true, message: 'Please select payment terms' },
+              ]}
+            >
+              <Radio.Group buttonStyle="solid">
+                <Radio.Button value="cash">Cash</Radio.Button>
+                <Radio.Button value="credit">Credit</Radio.Button>
+                <Radio.Button value="advance">Advance</Radio.Button>
+              </Radio.Group>
+            </Form.Item>
+          </Col>
+        </Row>
+
+        <Row gutter={16}>
           <Col span={24}>
             <Form.Item
               name="notes"
@@ -195,6 +267,18 @@ export const OrderForm: React.FC<OrderFormProps> = ({
           </Col>
         </Row>
       </Card>
+
+      {/* Credit Validation Section - shown when customer is selected and payment terms are credit */}
+      {selectedCustomer && form.getFieldValue('paymentTerms') === 'credit' && (
+        <div style={{ marginTop: '16px' }}>
+          <OrderCreditValidation 
+            customerId={selectedCustomer.id}
+            orderAmount={totalOrderAmount}
+            onRequestApproval={handleRequestApproval}
+            onSuggestAlternative={handleSuggestAlternative}
+          />
+        </div>
+      )}
 
       <Divider />
 
@@ -212,6 +296,69 @@ export const OrderForm: React.FC<OrderFormProps> = ({
           submitLabel={isEditing ? 'Update Order' : 'Create Order'}
         />
       </div>
+
+      {/* Credit Approval Modal */}
+      <Modal
+        title="Request Credit Approval"
+        open={showApprovalModal}
+        onOk={() => {
+          if (approvalReason.trim() === '') {
+            message.error('Please provide a reason for approval');
+            return;
+          }
+          setShowApprovalModal(false);
+          form.submit(); // Submit the form after setting the approval reason
+        }}
+        onCancel={() => setShowApprovalModal(false)}
+      >
+        <Alert
+          message="Credit Approval Required"
+          description="This order exceeds the customer's available credit and requires management approval."
+          type="warning"
+          showIcon
+          style={{ marginBottom: '16px' }}
+        />
+        <Form layout="vertical">
+          <Form.Item
+            label="Approval Reason"
+            rules={[{ required: true, message: 'Please provide a reason for approval' }]}
+          >
+            <TextArea 
+              rows={4}
+              value={approvalReason}
+              onChange={(e) => setApprovalReason(e.target.value)}
+              placeholder="Explain why this order should be approved despite credit limits..."
+            />
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* Alternative Payment Options Modal */}
+      <Modal
+        title="Alternative Payment Options"
+        open={showAlternativesModal}
+        onOk={() => {
+          setShowAlternativesModal(false);
+          form.setFieldsValue({ paymentTerms: 'cash' });
+        }}
+        onCancel={() => setShowAlternativesModal(false)}
+      >
+        <Alert
+          message="Credit Not Available"
+          description="This customer does not have sufficient credit available for this order."
+          type="error"
+          showIcon
+          style={{ marginBottom: '16px' }}
+        />
+        <Space direction="vertical" style={{ width: '100%' }}>
+          <Card size="small" title="Suggested Alternatives">
+            <p><strong>Cash Payment:</strong> Process order with cash payment instead of credit.</p>
+            <p><strong>Advance Payment:</strong> Collect payment before processing the order.</p>
+            <p><strong>Split Order:</strong> Break this into smaller orders that stay within credit limits.</p>
+            <p><strong>Collect Outstanding:</strong> Collect pending payments to free up credit limit.</p>
+          </Card>
+        </Space>
+      </Modal>
     </Form >
   );
 };

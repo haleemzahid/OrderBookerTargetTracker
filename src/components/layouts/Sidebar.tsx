@@ -14,7 +14,8 @@ import {
   ThunderboltOutlined,
   FundOutlined,
   AppstoreOutlined,
-  HistoryOutlined
+  HistoryOutlined,
+  UserOutlined
 } from '@ant-design/icons';
 
 const { Sider } = Layout;
@@ -41,6 +42,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
     if (path.startsWith('/reports')) return 'reports';
     if (path.startsWith('/companies')) return 'companies';
     if (path.startsWith('/products')) return 'products';
+    if (path.startsWith('/customers')) return 'customers';
     if (path.startsWith('/stock/transactions')) return 'stock-transactions';
     if (path.startsWith('/stock')) return 'stock-overview';
     if (path.startsWith('/settings')) return 'settings';
@@ -58,7 +60,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
     }
     
     // Master Data submenu
-    if (path.startsWith('/companies') || path.startsWith('/products') || path.startsWith('/order-bookers')) {
+    if (path.startsWith('/companies') || path.startsWith('/products') || path.startsWith('/order-bookers') || path.startsWith('/customers')) {
       openKeys.push('master-data-submenu');
     }
     
@@ -86,6 +88,9 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
         break;
       case 'order-bookers':
         navigate({ to: '/order-bookers' });
+        break;
+      case 'customers':
+        navigate({ to: '/customers' });
         break;
       case 'monthly-targets':
         navigate({ to: '/monthly-targets' });
@@ -192,6 +197,11 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
           key: 'order-bookers',
           icon: <TeamOutlined />,
           label: 'Order Bookers',
+        },
+        {
+          key: 'customers',
+          icon: <UserOutlined />,
+          label: 'Customers',
         },
       ],
     },

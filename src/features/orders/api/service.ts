@@ -12,6 +12,7 @@ import {
 } from '../types';
 import { getProductById } from '../../products/api/service';
 import { orderBookerService } from '../../order-bookers/api/service';
+import customerService from '../../customers/api/service';
 import { v4 as uuidv4 } from 'uuid';
 import { updateOrderTotals, calculateOrderItemTotals } from '../utils/calculations';
 
@@ -20,13 +21,18 @@ export const getOrderById = async (id: string): Promise<Order | null> => {
   const db = getDatabase();
   const result = await db.select<any[]>(
     `SELECT 
-      id, order_booker_id as orderBookerId, order_date as orderDate,
-      total_amount as totalAmount, total_cost as totalCost,
-      total_profit as totalProfit, total_cartons as totalCartons, 
-      return_cartons as returnCartons, return_amount as returnAmount,
-      status, notes, created_at as createdAt, updated_at as updatedAt
-     FROM orders 
-     WHERE id = ?`,
+      o.id, o.order_booker_id as orderBookerId, o.order_date as orderDate,
+      o.total_amount as totalAmount, o.total_cost as totalCost,
+      o.total_profit as totalProfit, o.total_cartons as totalCartons, 
+      o.return_cartons as returnCartons, o.return_amount as returnAmount,
+      o.status, o.notes, o.created_at as createdAt, o.updated_at as updatedAt,
+      o.customer_id as customerId, o.payment_terms as paymentTerms, 
+      o.credit_used as creditUsed, o.payment_due_date as paymentDueDate,
+      o.credit_approved_by as creditApprovedBy, o.credit_approval_reason as creditApprovalReason,
+      c.name as customerName
+     FROM orders o
+     LEFT JOIN customers c ON o.customer_id = c.id
+     WHERE o.id = ?`,
     [id]
   );
 
@@ -41,34 +47,49 @@ export const getOrders = async (options?: OrderFilters): Promise<Order[]> => {
   const db = getDatabase();
   let query = `
     SELECT 
-      id, order_booker_id as orderBookerId, order_date as orderDate,
-      total_amount as totalAmount, total_cost as totalCost,
-      total_profit as totalProfit, total_cartons as totalCartons, 
-      return_cartons as returnCartons, return_amount as returnAmount,
-      status, notes, created_at as createdAt, updated_at as updatedAt
-    FROM orders
+      o.id, o.order_booker_id as orderBookerId, o.order_date as orderDate,
+      o.total_amount as totalAmount, o.total_cost as totalCost,
+      o.total_profit as totalProfit, o.total_cartons as totalCartons, 
+      o.return_cartons as returnCartons, o.return_amount as returnAmount,
+      o.status, o.notes, o.created_at as createdAt, o.updated_at as updatedAt,
+      o.customer_id as customerId, o.payment_terms as paymentTerms, 
+      o.credit_used as creditUsed, o.payment_due_date as paymentDueDate,
+      o.credit_approved_by as creditApprovedBy, o.credit_approval_reason as creditApprovalReason,
+      c.name as customerName
+    FROM orders o
+    LEFT JOIN customers c ON o.customer_id = c.id
     WHERE 1=1
   `;
   const params: any[] = [];
 
   if (options?.orderBookerId) {
-    query += ` AND order_booker_id = ?`;
+    query += ` AND o.order_booker_id = ?`;
     params.push(options.orderBookerId);
   }
 
+  if (options?.customerId) {
+    query += ` AND o.customer_id = ?`;
+    params.push(options.customerId);
+  }
+
+  if (options?.paymentTerms) {
+    query += ` AND o.payment_terms = ?`;
+    params.push(options.paymentTerms);
+  }
+
   if (options?.dateFrom) {
-    query += ` AND order_date >= ?`;
+    query += ` AND o.order_date >= ?`;
     params.push(options.dateFrom.toISOString().split('T')[0]);
   }
 
   if (options?.dateTo) {
-    query += ` AND order_date <= ?`;
+    query += ` AND o.order_date <= ?`;
     params.push(options.dateTo.toISOString().split('T')[0]);
   }
 
   if (options?.searchTerm) {
-    query += ` AND notes LIKE ?`;
-    params.push(`%${options.searchTerm}%`);
+    query += ` AND (o.notes LIKE ? OR c.name LIKE ?)`;
+    params.push(`%${options.searchTerm}%`, `%${options.searchTerm}%`);
   }
 
   if (options?.sortBy) {
@@ -76,7 +97,7 @@ export const getOrders = async (options?: OrderFilters): Promise<Order[]> => {
     const sortDirection = options.sortOrder === 'descend' ? 'DESC' : 'ASC';
     query += ` ORDER BY ${sortColumn} ${sortDirection}`;
   } else {
-    query += ` ORDER BY order_date DESC, created_at DESC`;
+    query += ` ORDER BY o.order_date DESC, o.created_at DESC`;
   }
   console.log(query);
   const result = await db.select<any[]>(query, params);
@@ -143,8 +164,10 @@ export const createOrder = async (orderData: CreateOrderRequest): Promise<Order>
     `INSERT INTO orders (
         id, order_booker_id, order_date, notes,
         total_amount, total_cost, total_profit, total_cartons,
-        return_cartons, return_amount, created_at, updated_at
-       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        return_cartons, return_amount, 
+        customer_id, payment_terms, credit_used, credit_approved_by, credit_approval_reason,
+        created_at, updated_at
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       orderId,
       orderData.orderBookerId,
@@ -156,6 +179,11 @@ export const createOrder = async (orderData: CreateOrderRequest): Promise<Order>
       orderTotalCartons,
       orderReturnCartons,
       orderReturnAmount,
+      orderData.customerId || null,
+      orderData.paymentTerms,
+      orderData.paymentTerms === 'credit' ? orderTotalAmount : 0,
+      null, // credit_approved_by - to be implemented with user authentication
+      orderData.creditApprovalReason || null,
       now,
       now
     ]
@@ -190,6 +218,36 @@ export const createOrder = async (orderData: CreateOrderRequest): Promise<Order>
   }
 
   console.log("Order created successfully");
+
+  // For credit orders, we'll mark the credit amount but only create
+  // the actual credit transaction when the order is shipped
+  if (orderData.paymentTerms === 'credit' && orderData.customerId) {
+    try {
+      // Get customer to calculate due date based on their credit terms
+      const customer = await customerService.getById(orderData.customerId);
+      
+      if (customer) {
+        // Calculate due date based on customer's credit days
+        const orderDate = new Date(orderData.orderDate);
+        const dueDate = new Date(orderDate);
+        dueDate.setDate(dueDate.getDate() + (customer.creditDays || 30)); // Default to 30 days if not specified
+        
+        // Update order with due date
+        await db.execute(
+          `UPDATE orders 
+           SET payment_due_date = ?
+           WHERE id = ?`,
+          [dueDate.toISOString().split('T')[0], orderId]
+        );
+        
+        console.log("Credit information prepared for order - transaction will be created on shipment");
+      }
+    } catch (error) {
+      console.error("Failed to prepare credit information:", error);
+      // Don't fail the order creation if credit transaction fails
+      // But log the error for troubleshooting
+    }
+  }
 
   // Return the created order
   const order = await getOrderById(orderId);
@@ -550,6 +608,46 @@ export const confirmAndShipOrder = async (orderId: string): Promise<Order> => {
       
     }
     
+    // Create credit transaction for credit orders upon shipment
+    if (order.paymentTerms === 'credit' && order.customerId) {
+      try {
+        // Get customer for credit days
+        const customer = await customerService.getById(order.customerId);
+        
+        if (customer) {
+          // Calculate due date based on customer's credit days
+          const orderDate = new Date(order.orderDate);
+          const dueDate = new Date(orderDate);
+          dueDate.setDate(dueDate.getDate() + (customer.creditDays || 30));
+          
+          // Create or update credit transaction for the shipped order
+          await customerService.createCreditTransaction({
+            customerId: order.customerId,
+            transactionType: 'SALE',
+            amount: order.totalAmount,
+            orderId: order.id,
+            dueDate: dueDate,
+            notes: `Order #${order.id.substring(0, 8)} shipped by ${orderBookerName}`,
+          });
+          
+          console.log(`Credit transaction updated for shipped order ${order.id}`);
+          
+          // Update order with payment due date
+          await db.execute(
+            `UPDATE orders 
+             SET payment_due_date = ?,
+                 updated_at = ?
+             WHERE id = ?`,
+            [dueDate.toISOString().split('T')[0], new Date().toISOString(), orderId]
+          );
+        }
+      } catch (error) {
+        console.error("Failed to create/update credit transaction for shipped order:", error);
+        // Don't fail the order shipment if credit transaction fails
+        // But log the error for troubleshooting
+      }
+    }
+    
     // Update order status to shipped
     await db.execute(
       `UPDATE orders 
@@ -586,6 +684,13 @@ function parseOrder(row: any): Order {
     returnAmount: row.returnAmount,
     status: row.status || 'pending',
     notes: row.notes,
+    customerId: row.customerId,
+    customerName: row.customerName,
+    paymentTerms: row.paymentTerms || 'cash',
+    creditUsed: row.creditUsed || 0,
+    paymentDueDate: row.paymentDueDate ? new Date(row.paymentDueDate) : undefined,
+    creditApprovedBy: row.creditApprovedBy,
+    creditApprovalReason: row.creditApprovalReason,
     createdAt: new Date(row.createdAt),
     updatedAt: new Date(row.updatedAt)
   };
@@ -611,16 +716,19 @@ function parseOrderItem(row: any): OrderItem {
 
 function getSortColumn(sortField: string): string {
   const columnMap: Record<string, string> = {
-    'orderDate': 'order_date',
-    'supplyDate': 'supply_date',
-    'totalAmount': 'total_amount',
-    'totalCost': 'total_cost',
-    'totalProfit': 'total_profit',
-    'totalCartons': 'total_cartons',
-    'status': 'status',
-    'createdAt': 'created_at',
-    'updatedAt': 'updated_at'
+    'orderDate': 'o.order_date',
+    'supplyDate': 'o.supply_date',
+    'totalAmount': 'o.total_amount',
+    'totalCost': 'o.total_cost',
+    'totalProfit': 'o.total_profit',
+    'totalCartons': 'o.total_cartons',
+    'status': 'o.status',
+    'createdAt': 'o.created_at',
+    'updatedAt': 'o.updated_at',
+    'customerName': 'c.name',
+    'paymentTerms': 'o.payment_terms',
+    'creditUsed': 'o.credit_used'
   };
 
-  return columnMap[sortField] || 'order_date';
+  return columnMap[sortField] || 'o.order_date';
 }
