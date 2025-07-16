@@ -380,7 +380,7 @@ export const CustomerDetailPage: React.FC = () => {
                     {formatCurrency(customer.creditLimit)}
                   </Descriptions.Item>
                   <Descriptions.Item label="Available Credit">
-                    {formatCurrency(customer.availableCredit)}
+                    {formatCurrency(Math.max(0, customer.availableCredit))}
                   </Descriptions.Item>
                   <Descriptions.Item label="Current Outstanding">
                     {formatCurrency(customer.currentOutstanding)}

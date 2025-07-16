@@ -247,7 +247,7 @@ export const CustomerList: React.FC<CustomerListProps> = ({
       render: (_, customer) => (
         <Space direction="vertical" size={0}>
           <Space>
-            <Text strong>{formatCurrency(customer.availableCredit)}</Text>
+            <Text strong>{formatCurrency(Math.max(0, customer.availableCredit))}</Text>
             <Text type="secondary">/ {formatCurrency(customer.creditLimit)}</Text>
           </Space>
           <div style={{ width: '100%', height: '4px', backgroundColor: '#f0f0f0', borderRadius: '2px' }}>

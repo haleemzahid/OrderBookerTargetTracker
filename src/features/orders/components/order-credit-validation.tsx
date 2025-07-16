@@ -184,7 +184,7 @@ export const OrderCreditValidation: React.FC<OrderCreditValidationProps> = ({
           </Descriptions.Item>
           <Descriptions.Item label="Available Credit">
             <Text strong style={{ color: customer.availableCredit > 0 ? '#52c41a' : '#ff4d4f' }}>
-              {formatCurrency(customer.availableCredit)}
+              {formatCurrency(Math.max(0, customer.availableCredit))}
             </Text>
           </Descriptions.Item>
           <Descriptions.Item label="Current Outstanding">
@@ -237,7 +237,7 @@ export const OrderCreditValidation: React.FC<OrderCreditValidationProps> = ({
                   color: validation.availableCredit >= 0 ? '#52c41a' : '#ff4d4f'
                 }}
               >
-                {formatCurrency(validation.availableCredit)}
+                {formatCurrency(Math.max(0, validation.availableCredit))}
               </Text>
             </div>
           )}

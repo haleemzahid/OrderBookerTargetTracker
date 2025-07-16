@@ -168,7 +168,7 @@ export const CustomerSelect: React.FC<CustomerSelectProps> = ({
                     Outstanding: {formatCurrency(customer.currentOutstanding)}
                   </Text>
                   <Text style={{ fontSize: '11px', color: '#666' }}>
-                    Available: {formatCurrency(customer.availableCredit)}
+                    Available: {formatCurrency(Math.max(0, customer.availableCredit))}
                   </Text>
                 </Space>
               )}

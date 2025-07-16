@@ -210,7 +210,7 @@ export const CustomerCreditWidget: React.FC<CustomerCreditWidgetProps> = ({
                 color: customer.availableCredit > 0 ? '#52c41a' : '#f5222d',
                 fontSize: compact ? 14 : 16 
               }}>
-                {formatCurrency(customer.availableCredit)}
+                {formatCurrency(Math.max(0, customer.availableCredit))}
               </Text>
             </Space>
           </Card>

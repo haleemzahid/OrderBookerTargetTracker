@@ -242,7 +242,7 @@ export const CreditDashboardWidget: React.FC<CreditDashboardWidgetProps> = ({
                           </Tooltip>
                           <Text type="secondary">•</Text>
                           <Text type="secondary">
-                            Available: {formatCurrency(customer.availableCredit)}
+                            Available: {formatCurrency(Math.max(0, customer.availableCredit))}
                           </Text>
                         </Space>
                       }
