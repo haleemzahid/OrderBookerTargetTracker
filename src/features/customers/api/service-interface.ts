@@ -79,6 +79,18 @@ export interface ICustomerService {
   // Export and Import
   exportCustomerData(filters?: CustomerFilters): Promise<string>; // CSV format
   bulkUpdateCreditLimits(updates: Array<{ customerId: string; newLimit: number; reason: string }>): Promise<void>;
+  
+  // Order Integration
+  getCustomerOrders(customerId: string): Promise<any[]>;
+  
+  // Alert Integration  
+  getCustomerAlerts(customerId: string): Promise<any[]>;
+  getCollectionAlerts(filters?: { 
+    priority?: string; 
+    status?: string; 
+    assignedTo?: string;
+    customerId?: string;
+  }): Promise<any[]>;
 }
 
 /**

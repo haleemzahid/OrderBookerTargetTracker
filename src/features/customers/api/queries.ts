@@ -177,11 +177,7 @@ export const useCustomersByAgent = (agentId: string, enabled = true) => {
 export const useCustomerOrders = (customerId: string, enabled = true) => {
   return useQuery({
     queryKey: [...customerQueryKeys.detail(customerId), 'orders'],
-    queryFn: async () => {
-      // TODO: Implement actual order service integration
-      // For now, return empty array until order integration is complete
-      return [];
-    },
+    queryFn: () => customerService.getCustomerOrders(customerId),
     enabled: enabled && !!customerId,
     staleTime: 2 * 60 * 1000
   });
@@ -190,13 +186,24 @@ export const useCustomerOrders = (customerId: string, enabled = true) => {
 export const useCustomerAlerts = (customerId: string, enabled = true) => {
   return useQuery({
     queryKey: [...customerQueryKeys.detail(customerId), 'alerts'],
-    queryFn: async () => {
-      // TODO: Implement actual collection alerts service
-      // For now, return empty array until collection service is complete
-      return [];
-    },
+    queryFn: () => customerService.getCustomerAlerts(customerId),
     enabled: enabled && !!customerId,
     staleTime: 1 * 60 * 1000
+  });
+};
+
+// Collection alerts for dashboard and management
+export const useCollectionAlerts = (filters?: { 
+  priority?: string; 
+  status?: string; 
+  assignedTo?: string;
+  customerId?: string;
+}) => {
+  return useQuery({
+    queryKey: [...customerQueryKeys.all, 'collectionAlerts', filters],
+    queryFn: () => customerService.getCollectionAlerts(filters),
+    staleTime: 1 * 60 * 1000,
+    refetchInterval: 2 * 60 * 1000 // Auto-refresh every 2 minutes for alerts
   });
 };
 

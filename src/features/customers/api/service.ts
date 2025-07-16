@@ -910,6 +910,257 @@ export const customerService: ICustomerService = {
     // TODO: Implement bulk updates with transaction support
     console.log('Bulk update credit limits:', updates.length, 'customers');
     throw new Error('Method not implemented');
+  },
+
+  // Customer Orders Integration
+  async getCustomerOrders(customerId: string): Promise<any[]> {
+    try {
+      const db = await getDatabase();
+      
+      const orders = await db.select<any[]>(
+        `SELECT 
+           o.id,
+           o.order_booker_id,
+           o.order_date,
+           o.total_amount,
+           o.total_cost,
+           o.total_profit,
+           o.total_cartons,
+           o.return_cartons,
+           o.return_amount,
+           o.status,
+           o.notes,
+           o.created_at,
+           o.updated_at,
+           -- Add payment information from credit transactions
+           CASE 
+             WHEN EXISTS (
+               SELECT 1 FROM customer_credit_transactions 
+               WHERE order_id = o.id AND transaction_type = 'PAYMENT'
+             ) THEN 'paid'
+             WHEN EXISTS (
+               SELECT 1 FROM customer_credit_transactions 
+               WHERE order_id = o.id AND transaction_type = 'SALE'
+             ) THEN 'credit'
+             ELSE 'cash'
+           END as payment_status,
+           -- Get associated customer transaction for due date
+           (SELECT due_date FROM customer_credit_transactions 
+            WHERE order_id = o.id AND transaction_type = 'SALE' LIMIT 1) as payment_due_date
+         FROM orders o
+         LEFT JOIN customer_credit_transactions cct ON o.id = cct.order_id
+         WHERE cct.customer_id = ? OR o.order_booker_id IN (
+           -- In case we need to match by order booker, include this fallback
+           SELECT id FROM order_bookers WHERE customer_id = ?
+         )
+         GROUP BY o.id
+         ORDER BY o.order_date DESC`,
+        [customerId, customerId]
+      );
+
+      return orders.map((row: any) => ({
+        id: row.id,
+        orderBookerId: row.order_booker_id,
+        orderNumber: `ORD-${row.id.slice(0, 8).toUpperCase()}`,
+        orderDate: new Date(row.order_date),
+        totalAmount: Number(row.total_amount),
+        totalCost: Number(row.total_cost),
+        totalProfit: Number(row.total_profit),
+        totalCartons: Number(row.total_cartons),
+        returnCartons: Number(row.return_cartons),
+        returnAmount: Number(row.return_amount),
+        status: row.status,
+        notes: row.notes,
+        paymentStatus: row.payment_status,
+        paymentDueDate: row.payment_due_date ? new Date(row.payment_due_date) : undefined,
+        createdAt: new Date(row.created_at),
+        updatedAt: new Date(row.updated_at)
+      }));
+    } catch (error) {
+      throw new CustomerServiceError(
+        'Failed to get customer orders',
+        'GET_CUSTOMER_ORDERS_FAILED',
+        { customerId, error: error instanceof Error ? error.message : 'Unknown error' }
+      );
+    }
+  },
+
+  // Customer Collection Alerts
+  async getCustomerAlerts(customerId: string): Promise<any[]> {
+    try {
+      const db = await getDatabase();
+      
+      const alerts = await db.select<any[]>(
+        `SELECT 
+           ca.*,
+           c.name as customer_name,
+           c.phone as customer_phone,
+           c.area as customer_area
+         FROM collection_alerts ca
+         LEFT JOIN customers c ON ca.customer_id = c.id
+         WHERE ca.customer_id = ? 
+         AND ca.status IN ('open', 'in_progress')
+         ORDER BY 
+           CASE ca.priority 
+             WHEN 'urgent' THEN 1
+             WHEN 'high' THEN 2
+             WHEN 'medium' THEN 3
+             WHEN 'low' THEN 4
+           END,
+           ca.created_at DESC`,
+        [customerId]
+      );
+
+      return alerts.map((row: any) => ({
+        id: row.id,
+        customerId: row.customer_id,
+        alertType: row.alert_type,
+        priority: row.priority,
+        amountInvolved: Number(row.amount_involved),
+        daysOverdue: Number(row.days_overdue),
+        overdueAmount: Number(row.overdue_amount),
+        lastContactDate: row.last_contact_date ? new Date(row.last_contact_date) : undefined,
+        contactAttempts: Number(row.contact_attempts),
+        excuseCount: Number(row.excuse_count),
+        lastExcuse: row.last_excuse,
+        contactResponse: row.contact_response,
+        relationshipConsideration: row.relationship_consideration,
+        culturalNotes: row.cultural_notes,
+        languagePreference: row.language_preference || 'english',
+        assignedTo: row.assigned_to,
+        escalationLevel: Number(row.escalation_level),
+        suggestedAction: row.suggested_action,
+        bestContactTime: row.best_contact_time,
+        preferredContactMethod: row.preferred_contact_method,
+        lastVisitDate: row.last_visit_date ? new Date(row.last_visit_date) : undefined,
+        nextPlannedVisit: row.next_planned_visit ? new Date(row.next_planned_visit) : undefined,
+        visitResult: row.visit_result,
+        distanceFromOffice: row.distance_from_office ? Number(row.distance_from_office) : undefined,
+        status: row.status,
+        resolutionNotes: row.resolution_notes,
+        resolvedDate: row.resolved_date ? new Date(row.resolved_date) : undefined,
+        resolvedBy: row.resolved_by,
+        resolutionAmount: row.resolution_amount ? Number(row.resolution_amount) : undefined,
+        nextActionDate: row.next_action_date ? new Date(row.next_action_date) : undefined,
+        alertFrequency: row.alert_frequency || 'daily',
+        autoEscalateAfterDays: Number(row.auto_escalate_after_days || 7),
+        collectionDifficultyScore: Number(row.collection_difficulty_score || 5),
+        customerCooperationLevel: row.customer_cooperation_level || 'unknown',
+        createdAt: new Date(row.created_at),
+        updatedAt: new Date(row.updated_at),
+        // Additional customer info for display
+        customerName: row.customer_name,
+        customerPhone: row.customer_phone,
+        customerArea: row.customer_area
+      }));
+    } catch (error) {
+      throw new CustomerServiceError(
+        'Failed to get customer alerts',
+        'GET_CUSTOMER_ALERTS_FAILED',
+        { customerId, error: error instanceof Error ? error.message : 'Unknown error' }
+      );
+    }
+  },
+
+  // Get all collection alerts with filtering
+  async getCollectionAlerts(filters?: { 
+    priority?: string; 
+    status?: string; 
+    assignedTo?: string;
+    customerId?: string;
+  }): Promise<any[]> {
+    try {
+      const db = await getDatabase();
+      
+      let query = `
+        SELECT 
+          ca.*,
+          c.name as customer_name,
+          c.phone as customer_phone,
+          c.area as customer_area,
+          c.business_name as customer_business_name
+        FROM collection_alerts ca
+        LEFT JOIN customers c ON ca.customer_id = c.id
+        WHERE 1=1
+      `;
+      
+      const params: any[] = [];
+      
+      if (filters?.priority) {
+        query += ` AND ca.priority = ?`;
+        params.push(filters.priority);
+      }
+      
+      if (filters?.status) {
+        query += ` AND ca.status = ?`;
+        params.push(filters.status);
+      }
+      
+      if (filters?.assignedTo) {
+        query += ` AND ca.assigned_to = ?`;
+        params.push(filters.assignedTo);
+      }
+      
+      if (filters?.customerId) {
+        query += ` AND ca.customer_id = ?`;
+        params.push(filters.customerId);
+      }
+      
+      query += ` ORDER BY 
+        CASE ca.priority 
+          WHEN 'urgent' THEN 1
+          WHEN 'high' THEN 2
+          WHEN 'medium' THEN 3
+          WHEN 'low' THEN 4
+        END,
+        ca.next_action_date ASC,
+        ca.created_at DESC
+      `;
+      
+      const alerts = await db.select<any[]>(query, params);
+      
+      return alerts.map((row: any) => ({
+        id: row.id,
+        customerId: row.customer_id,
+        alertType: row.alert_type,
+        priority: row.priority,
+        amountInvolved: Number(row.amount_involved),
+        daysOverdue: Number(row.days_overdue),
+        overdueAmount: Number(row.overdue_amount),
+        lastContactDate: row.last_contact_date ? new Date(row.last_contact_date) : undefined,
+        contactAttempts: Number(row.contact_attempts),
+        excuseCount: Number(row.excuse_count),
+        lastExcuse: row.last_excuse,
+        relationshipConsideration: row.relationship_consideration,
+        culturalNotes: row.cultural_notes,
+        assignedTo: row.assigned_to,
+        escalationLevel: Number(row.escalation_level),
+        suggestedAction: row.suggested_action,
+        bestContactTime: row.best_contact_time,
+        preferredContactMethod: row.preferred_contact_method,
+        status: row.status,
+        resolutionNotes: row.resolution_notes,
+        resolvedDate: row.resolved_date ? new Date(row.resolved_date) : undefined,
+        resolvedBy: row.resolved_by,
+        nextActionDate: row.next_action_date ? new Date(row.next_action_date) : undefined,
+        alertFrequency: row.alert_frequency,
+        collectionDifficultyScore: Number(row.collection_difficulty_score || 5),
+        customerCooperationLevel: row.customer_cooperation_level || 'unknown',
+        createdAt: new Date(row.created_at),
+        updatedAt: new Date(row.updated_at),
+        // Customer details for display
+        customerName: row.customer_name,
+        customerPhone: row.customer_phone,
+        customerArea: row.customer_area,
+        customerBusinessName: row.customer_business_name
+      }));
+    } catch (error) {
+      throw new CustomerServiceError(
+        'Failed to get collection alerts',
+        'GET_COLLECTION_ALERTS_FAILED',
+        { filters, error: error instanceof Error ? error.message : 'Unknown error' }
+      );
+    }
   }
 };
 

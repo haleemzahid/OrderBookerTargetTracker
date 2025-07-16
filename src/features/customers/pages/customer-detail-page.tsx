@@ -40,7 +40,7 @@ import {
   useCustomerAlerts
 } from '../api/queries';
 import { formatCurrency, getPaymentBehaviorIcon } from '../utils/formatters';
-import { Customer } from '../types';
+import { Customer, CollectionAlert } from '../types';
 
 // Helper function for date formatting
 const formatDate = (date: Date | string) => {
@@ -102,9 +102,9 @@ export const CustomerDetailPage: React.FC = () => {
     }
   };
 
-  // Filter critical alerts safely
-  const criticalAlerts = alerts.filter((alert: any) => 
-    alert?.priority === 'urgent' || alert?.priority === 'high'
+  // Filter critical alerts from real data
+  const criticalAlerts = alerts.filter((alert: CollectionAlert) => 
+    alert.priority === 'urgent' || alert.priority === 'high'
   );
 
   return (
@@ -161,12 +161,12 @@ export const CustomerDetailPage: React.FC = () => {
           message={`${criticalAlerts.length} Critical Alert${criticalAlerts.length > 1 ? 's' : ''}`}
           description={
             <div>
-              {criticalAlerts.map((alert: any) => (
-                <div key={alert?.id || Math.random()} style={{ marginBottom: '4px' }}>
-                  <Tag color={alert?.priority === 'urgent' ? 'red' : 'orange'}>
-                    {alert?.alertType?.replace('_', ' ')?.toUpperCase() || 'ALERT'}
+              {criticalAlerts.map((alert: CollectionAlert) => (
+                <div key={alert.id} style={{ marginBottom: '4px' }}>
+                  <Tag color={alert.priority === 'urgent' ? 'red' : 'orange'}>
+                    {alert.alertType.replace('_', ' ').toUpperCase()}
                   </Tag>
-                  {alert?.description || 'No description available'}
+                  {alert.resolutionNotes || 'No description available'}
                 </div>
               ))}
             </div>
