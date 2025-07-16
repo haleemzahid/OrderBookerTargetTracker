@@ -332,7 +332,12 @@ export const CustomerList: React.FC<CustomerListProps> = ({
       align: 'center',
       render: (_, customer) => (
         <Dropdown menu={getActionMenu(customer)} trigger={['click']}>
-          <Button type="text" icon={<MoreOutlined />} size="small" />
+          <Button 
+            type="text" 
+            icon={<MoreOutlined />} 
+            size="small"
+            onClick={(e) => e.stopPropagation()} 
+          />
         </Dropdown>
       )
     });

@@ -25,12 +25,12 @@ export const calculateOrderItemTotalsFromCartons = (
   cartons: number,
   costPrice: number,
   sellPrice: number,
-  unitPerCarton: number,
+  _unitPerCarton: number,
   returnCartons: number = 0
 ): OrderItemCalculation => {
   // Convert cartons to total units
-  const totalUnits = cartons * unitPerCarton;
-  const returnUnits = returnCartons * unitPerCarton;
+  const totalUnits = cartons;
+  const returnUnits = returnCartons;
   
   // Calculate totals based on units
   const totalCost = totalUnits * costPrice;

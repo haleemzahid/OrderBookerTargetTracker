@@ -201,6 +201,7 @@ export const CustomerListPage: React.FC = () => {
       >
         <CustomerForm
           customer={editingCustomer || undefined}
+          mode={editingCustomer ? 'edit' : 'create'}
           onSuccess={handleCustomerFormSuccess}
           onCancel={() => {
             setShowCustomerForm(false);

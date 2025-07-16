@@ -10,24 +10,19 @@ import { ExportColumn } from '../../../shared/utils/export/exportService';
 import type { Order, OrderFilters } from '../types';
 import dayjs from 'dayjs';
 import { OrderDetail, OrderTable } from '..';
+import { useOrderFilterStore } from '../stores/order-filter-store';
 
 const { Option } = Select;
 const { RangePicker } = DatePicker;
-
-interface FilterState {
-  orderBookerId?: string;
-  dateRange?: [dayjs.Dayjs, dayjs.Dayjs];
-}
 
 export const OrdersListPage: React.FC = () => {
   const navigate = useNavigate();
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [viewingOrder, setViewingOrder] = useState<Order | null>(null);
-  const [searchText, setSearchText] = useState('');
-  const [filters, setFilters] = useState<FilterState>({
-    orderBookerId: undefined,
-    dateRange: [dayjs().startOf('day'), dayjs().endOf('day')],
-  });
+  
+  // Use Zustand store for filter state
+  const { filters, setFilters, setOrderBookerId, setDateRange } = useOrderFilterStore();
+  const searchText = filters.searchText || '';
 
   // Load order bookers data
   const { data: orderBookers, isLoading: isLoadingOrderBookers } = useOrderBookers();
@@ -90,11 +85,18 @@ export const OrdersListPage: React.FC = () => {
   }, [orders]);
 
   const handleOrderBookerFilter = (orderBookerId?: string) => {
-    setFilters((prev) => ({ ...prev, orderBookerId }));
+    setOrderBookerId(orderBookerId);
   };
 
   const handleDateRangeFilter = (dates: any) => {
-    setFilters((prev) => ({ ...prev, dateRange: dates }));
+    setDateRange(dates);
+  };
+
+  const handleSearch = (value: string) => {
+    setFilters({
+      ...filters,
+      searchText: value
+    });
   };
 
   // Export functionality
@@ -166,7 +168,7 @@ export const OrdersListPage: React.FC = () => {
       title="Orders"
       extraActions={
         <ActionBar
-          onSearch={setSearchText}
+          onSearch={handleSearch}
           searchValue={searchText}
           searchPlaceholder="Search orders..."
           onAdd={handleAdd}

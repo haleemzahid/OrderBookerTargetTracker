@@ -3,6 +3,7 @@ import { Card, Typography, List, Tag, Button, Space, Skeleton, Empty } from 'ant
 import { HistoryOutlined, EyeOutlined } from '@ant-design/icons';
 import { useNavigate } from '@tanstack/react-router';
 import { useStockTransactions } from '../../stock/api/queries';
+import { useProducts } from '../../products/api/queries';
 import type { StockTransaction } from '../../stock/types';
 import dayjs from 'dayjs';
 
@@ -17,6 +18,12 @@ const RecentStockTransactionsSection: React.FC<RecentStockTransactionsSectionPro
 }) => {
   const navigate = useNavigate();
   const { data: transactions, isLoading } = useStockTransactions();
+  const { data: products } = useProducts();
+
+  const getProductName = (productId: string) => {
+    const product = products?.find(p => p.id === productId);
+    return product?.name || 'Unknown Product';
+  };
 
   const handleViewTransactions = () => {
     navigate({ to: '/stock/transactions' });
@@ -112,7 +119,7 @@ const RecentStockTransactionsSection: React.FC<RecentStockTransactionsSectionPro
               <List.Item.Meta
                 title={
                   <Space>
-                    <Text strong>{transaction.productName || 'Unknown Product'}</Text>
+                    <Text strong>{getProductName(transaction.productId)}</Text>
                     <Tag color={getTransactionTypeColor(transaction.transactionType)}>
                       {getTransactionIcon(transaction.transactionType)}{transaction.quantity}
                     </Tag>

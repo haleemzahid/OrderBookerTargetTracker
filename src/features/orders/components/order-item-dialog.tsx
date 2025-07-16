@@ -185,8 +185,9 @@ export const OrderItemDialog: React.FC<OrderItemDialogProps> = ({
         }
     };
 
-    const handleSave = async (addAnother = false) => {
+    const handleSave = async (e: React.MouseEvent<HTMLElement>, addAnother = false) => {
         try {
+            e.preventDefault();
             const values = await form.validateFields();
             const product = products.find(p => p.id === values.productId);
 
@@ -231,8 +232,9 @@ export const OrderItemDialog: React.FC<OrderItemDialogProps> = ({
 
                 message.success('Item added! Add another item.');
                 // Don't close the modal when adding another
-                return;
+                // No onClose() call here
             } else {
+                // Only close the dialog if it's not "Save & Add Another" or when editing
                 onClose();
                 message.success(editingItem ? 'Item updated successfully' : 'Item added successfully');
             }
@@ -252,21 +254,21 @@ export const OrderItemDialog: React.FC<OrderItemDialogProps> = ({
                 <Button key="cancel" onClick={onClose}>
                     Cancel
                 </Button>,
-                !editingItem && (
-                    <Button
-                        key="save-and-add"
-                        icon={<PlusOutlined />}
-                        onClick={() => handleSave(true)}
-                        disabled={!selectedProduct || !form.getFieldValue('cartons') || form.getFieldValue('cartons') <= 0}
-                    >
-                        Save & Add Another
-                    </Button>
-                ),
+                // !editingItem && (
+                //     <Button
+                //         key="save-and-add"
+                //         icon={<PlusOutlined />}
+                //         onClick={(e) => handleSave(e, true)}
+                //         disabled={!selectedProduct || !form.getFieldValue('cartons') || form.getFieldValue('cartons') <= 0}
+                //     >
+                //         Save & Add Another
+                //     </Button>
+                // ),
                 <Button
                     key="save"
                     type="primary"
                     icon={<SaveOutlined />}
-                    onClick={() => handleSave()}
+                    onClick={(e) => handleSave(e)}
                     disabled={!selectedProduct || !form.getFieldValue('cartons') || form.getFieldValue('cartons') <= 0}
                 >
                     {editingItem ? 'Update Item' : 'Save Item'}

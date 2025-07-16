@@ -470,6 +470,7 @@ export const CustomerDetailPage: React.FC = () => {
       >
         <CustomerForm
           customer={customer as Customer}
+          mode="edit"
           onSuccess={handleEditSuccess}
           onCancel={() => setShowEditForm(false)}
         />

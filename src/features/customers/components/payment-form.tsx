@@ -265,8 +265,8 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
               label="Payment Amount (PKR)"
               name="amount"
               rules={[
-                { required: true, message: 'Payment amount is required' },
-                { min: 1, message: 'Amount must be greater than 0' }
+                { type:'number',required: true, message: 'Payment amount is required' },
+                { type:'number', min: 1, message: 'Amount must be greater than 0' }
               ]}
             >
               <InputNumber
@@ -274,8 +274,8 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                 min={1}
                 max={10000000}
                 step={100}
-                formatter={(value) => `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                parser={(value) => value?.replace(/\₹\s?|(,*)/g, '') as any}
+                formatter={(value) => `Rs. ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                parser={(value) => value?.replace(/Rs\.\s?|(,*)/g, '') as any}
                 placeholder="Enter payment amount"
                 prefix={<DollarOutlined />}
               />
