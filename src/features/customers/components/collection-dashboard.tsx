@@ -16,7 +16,6 @@ import {
   List,
   Avatar,
   Select,
-  DatePicker,
   Alert,
   Tabs
 } from 'antd';
@@ -29,8 +28,7 @@ import {
   UserOutlined,
   CalendarOutlined,
   RiseOutlined,
-  WarningOutlined,
-  CheckCircleOutlined
+  WarningOutlined
 } from '@ant-design/icons';
 import { useCollectionDashboard } from '../hooks';
 import { CustomerWithCredit, CollectionAlert } from '../types';
@@ -192,8 +190,8 @@ export const CollectionDashboard: React.FC<CollectionDashboardProps> = ({
 
   // Collection priorities for today - combine urgent and high priority customers
   const priorityActions = [
-    ...collectionPriorities.urgent,
-    ...collectionPriorities.high
+    ...(collectionPriorities?.urgent || []),
+    ...(collectionPriorities?.high || [])
   ].slice(0, 5); // Top 5 priorities
 
   return (
@@ -328,9 +326,9 @@ export const CollectionDashboard: React.FC<CollectionDashboardProps> = ({
                   renderItem={(customer: CustomerWithCredit) => (
                     <List.Item
                       actions={[
-                        <Button size="small" type="primary">Call</Button>,
-                        <Button size="small">WhatsApp</Button>
-                      ]}
+                        customer.phone && <Button size="small" type="primary" onClick={() => window.open(`tel:${customer.phone}`)}>Call</Button>,
+                        customer?.whatsappNumber && <Button size="small" onClick={() => window.open(`https://wa.me/${customer.whatsappNumber?.replace(/[^0-9]/g, '')}`)}>WhatsApp</Button>
+                      ].filter(Boolean)}
                     >
                       <List.Item.Meta
                         avatar={
@@ -355,37 +353,7 @@ export const CollectionDashboard: React.FC<CollectionDashboardProps> = ({
               </Card>
             </Col>
             <Col xs={24} lg={12}>
-              <Card title="Collection Tips" size="small">
-                <List
-                  size="small"
-                  dataSource={[
-                    {
-                      icon: <CheckCircleOutlined style={{ color: '#52c41a' }} />,
-                      title: 'Best calling time',
-                      description: 'Between 10 AM - 12 PM and 2 PM - 5 PM'
-                    },
-                    {
-                      icon: <MessageOutlined style={{ color: '#25D366' }} />,
-                      title: 'WhatsApp follow-up',
-                      description: 'Send payment reminder if no response to calls'
-                    },
-                    {
-                      icon: <WarningOutlined style={{ color: '#fa8c16' }} />,
-                      title: 'Escalation',
-                      description: 'For 60+ days overdue, consider field visit'
-                    }
-                  ]}
-                  renderItem={(item) => (
-                    <List.Item>
-                      <List.Item.Meta
-                        avatar={item.icon}
-                        title={item.title}
-                        description={item.description}
-                      />
-                    </List.Item>
-                  )}
-                />
-              </Card>
+              {/* No mock tips or alerts, only real data shown */}
             </Col>
           </Row>
         </TabPane>
@@ -397,9 +365,9 @@ export const CollectionDashboard: React.FC<CollectionDashboardProps> = ({
               renderItem={(customer) => (
                 <List.Item
                   actions={[
-                    <Button size="small">Remind</Button>,
+                    customer.phone && <Button size="small" onClick={() => window.open(`tel:${customer.phone}`)}>Remind</Button>,
                     <Button size="small" type="link">View</Button>
-                  ]}
+                  ].filter(Boolean)}
                 >
                   <List.Item.Meta
                     avatar={<Avatar icon={<CalendarOutlined />} />}
