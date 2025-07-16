@@ -242,7 +242,6 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({
                 label="Primary Phone"
                 name="phone"
                 rules={[
-                  { required: true, message: 'Phone number is required' },
                   { validator: validatePhone }
                 ]}
               >
@@ -345,7 +344,6 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({
                 label="Address"
                 name="address"
                 rules={[
-                  { required: true, message: 'Address is required' },
                   { min: 10, message: 'Please provide a complete address' }
                 ]}
               >
@@ -361,7 +359,6 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({
               <Form.Item
                 label="City"
                 name="city"
-                rules={[{ required: true, message: 'City is required' }]}
               >
                 <Select 
                   placeholder="Select city"
@@ -392,7 +389,6 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({
               <Form.Item
                 label="Area/Locality"
                 name="area"
-                rules={[{ required: true, message: 'Area is required' }]}
               >
                 <Input 
                   placeholder="e.g., Saddar, DHA, Gulshan"
@@ -457,8 +453,7 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({
                 label="Credit Limit (PKR)"
                 name="creditLimit"
                 rules={[
-                  { required: true, message: 'Credit limit is required' },
-                  { min: 0, message: 'Credit limit must be positive' }
+                  { type: 'number', min: 0, message: 'Credit limit cannot be negative' }
                 ]}
                 tooltip="Maximum outstanding amount allowed for this customer"
               >
@@ -467,8 +462,8 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({
                   min={0}
                   max={10000000}
                   step={1000}
-                  formatter={(value) => `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                  parser={(value) => value?.replace(/\₹\s?|(,*)/g, '') as any}
+                  formatter={(value) => `Rs. ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                  parser={(value) => value?.replace(/Rs\.\s?|(,*)/g, '') as any}
                   placeholder="0"
                 />
               </Form.Item>
@@ -480,9 +475,8 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({
                 name="creditDays"
                 initialValue={30}
                 rules={[
-                  { required: true, message: 'Credit days is required' },
-                  { min: 1, message: 'Credit days must be at least 1' },
-                  { max: 365, message: 'Credit days cannot exceed 365' }
+                  { type: 'number', min: 0, message: 'Credit days cannot be negative' },
+                  { type: 'number', max: 365, message: 'Credit days cannot exceed 365' }
                 ]}
                 tooltip="Number of days allowed for payment after delivery"
               >

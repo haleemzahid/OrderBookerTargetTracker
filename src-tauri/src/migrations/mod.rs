@@ -27,6 +27,7 @@ pub mod migration_024_create_customer_credit_terms;
 pub mod migration_025_create_collection_alerts;
 pub mod migration_026_create_customer_credit_triggers;
 pub mod migration_027_alter_orders_for_customers;
+pub mod migration_028_update_customers_table;
 
 /// Returns all database migrations in order
 pub fn get_migrations() -> Vec<Migration> {
@@ -58,5 +59,6 @@ pub fn get_migrations() -> Vec<Migration> {
         migration_025_create_collection_alerts::migration(),
         migration_026_create_customer_credit_triggers::migration(),
         migration_027_alter_orders_for_customers::migration(),
+        migration_028_update_customers_table::migration(),
     ]
 }
