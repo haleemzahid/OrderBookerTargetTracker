@@ -10,6 +10,16 @@ export interface Order {
   returnAmount: number;
   status: 'pending' | 'shipped' | 'completed';
   notes?: string;
+  
+  // Customer Credit Integration
+  customerId?: string;
+  paymentTerms: 'cash' | 'credit' | 'advance';
+  creditUsed: number;
+  paymentDueDate?: Date;
+  creditApprovedBy?: string;
+  creditApprovalReason?: string;
+  customerName?: string; // For display purposes
+  
   createdAt: Date;
   updatedAt: Date;
 }
@@ -35,12 +45,22 @@ export interface CreateOrderRequest {
   orderDate: Date;
   notes?: string;
   items: CreateOrderItemRequest[];
+  
+  // Customer Credit Integration
+  customerId: string;
+  paymentTerms: 'cash' | 'credit' | 'advance';
+  creditApprovalReason?: string;
 }
 
 export interface UpdateOrderRequest {
   orderBookerId?: string;
   orderDate?: Date;
   notes?: string;
+  
+  // Customer Credit Integration
+  customerId?: string;
+  paymentTerms?: 'cash' | 'credit' | 'advance';
+  creditApprovalReason?: string;
 }
 
 export interface UpdateOrderWithItemsRequest {
@@ -48,6 +68,11 @@ export interface UpdateOrderWithItemsRequest {
   orderDate?: Date;
   notes?: string;
   items: CreateOrderItemRequest[];
+  
+  // Customer Credit Integration
+  customerId?: string;
+  paymentTerms?: 'cash' | 'credit' | 'advance';
+  creditApprovalReason?: string;
 }
 
 export interface CreateOrderItemRequest {
@@ -73,6 +98,8 @@ export interface OrderItemRequest {
 
 export interface OrderFilters {
   orderBookerId?: string;
+  customerId?: string;
+  paymentTerms?: 'cash' | 'credit' | 'advance';
   dateFrom?: Date;
   dateTo?: Date;
   searchTerm?: string;
