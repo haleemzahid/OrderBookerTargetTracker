@@ -38,7 +38,6 @@ import { formatCurrency, getPaymentBehaviorIcon } from '../utils/formatters';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
-const { RangePicker } = DatePicker;
 const { TabPane } = Tabs;
 
 interface CollectionDashboardProps {
@@ -49,7 +48,7 @@ interface CollectionDashboardProps {
 
 export const CollectionDashboard: React.FC<CollectionDashboardProps> = ({
   onCustomerSelect,
-  onAlertAction,
+  // onAlertAction is currently unused but kept for future implementation
   compact = false
 }) => {
   const [selectedPeriod, setSelectedPeriod] = useState<'today' | 'week' | 'month'>('today');

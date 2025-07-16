@@ -8,4 +8,5 @@ export { CustomerForm } from './customer-form';
 export { PaymentForm } from './payment-form';
 export { CustomerCreditWidget } from './customer-credit-widget';
 export { CustomerSelect } from './customer-select';
+export { CollectionDashboard } from './collection-dashboard';
 
