@@ -18,6 +18,7 @@ import {
   ExclamationCircleOutlined,
   CreditCardOutlined 
 } from '@ant-design/icons';
+import { useNavigate } from '@tanstack/react-router';
 import { CustomerList, CustomerForm, PaymentForm } from '../components';
 import { useCustomers, useDashboardStats } from '../api/queries';
 import { Customer, CustomerWithCredit } from '../types';
@@ -30,6 +31,7 @@ export const CustomerListPage: React.FC = () => {
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerWithCredit | null>(null);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
+  const navigate = useNavigate();
 
   // Queries
   const customersQuery = useCustomers();
@@ -47,6 +49,14 @@ export const CustomerListPage: React.FC = () => {
 
   const handleRecordPayment = (customer: CustomerWithCredit) => {
     setSelectedCustomer(customer);
+    setShowPaymentForm(true);
+  };
+  
+  const handleNavigateToCustomerDetail = (customer: CustomerWithCredit) => {
+    navigate({ to: '/customers/$customerId', params: { customerId: customer.id } });
+  };
+  
+  const handleRecordPaymentClick = () => {
     setShowPaymentForm(true);
   };
 
@@ -87,7 +97,7 @@ export const CustomerListPage: React.FC = () => {
             <Button 
               type="default" 
               icon={<DollarOutlined />}
-              onClick={() => setShowPaymentForm(true)}
+              onClick={handleRecordPaymentClick}
             >
               Record Payment
             </Button>
@@ -170,7 +180,8 @@ export const CustomerListPage: React.FC = () => {
       <Card>
         <CustomerList 
           onEditCustomer={handleEditCustomer}
-          onCustomerSelect={handleRecordPayment}
+          onCustomerSelect={handleNavigateToCustomerDetail}
+          onRecordPayment={handleRecordPayment}
           showActions={true}
           showFilters={true}
         />

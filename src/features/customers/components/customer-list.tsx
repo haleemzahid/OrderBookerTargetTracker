@@ -31,7 +31,8 @@ import {
   EditOutlined,
   DeleteOutlined,
   BlockOutlined,
-  CheckCircleOutlined
+  CheckCircleOutlined,
+  DollarOutlined
 } from '@ant-design/icons';
 import { CustomerWithCredit } from '../types';
 import { useCustomerList, useCustomerOperations } from '../hooks';
@@ -44,6 +45,7 @@ interface CustomerListProps {
   onCustomerSelect?: (customer: CustomerWithCredit) => void;
   onCreateCustomer?: () => void;
   onEditCustomer?: (customer: CustomerWithCredit) => void;
+  onRecordPayment?: (customer: CustomerWithCredit) => void;
   showFilters?: boolean;
   showActions?: boolean;
   selectionMode?: 'single' | 'multiple' | 'none';
@@ -54,6 +56,7 @@ export const CustomerList: React.FC<CustomerListProps> = ({
   onCustomerSelect,
   onCreateCustomer,
   onEditCustomer,
+  onRecordPayment,
   showFilters = true,
   showActions = true,
   selectionMode = 'none',
@@ -144,6 +147,24 @@ export const CustomerList: React.FC<CustomerListProps> = ({
         label: 'View Transactions',
         icon: <CreditCardOutlined />,
         onClick: () => onCustomerSelect?.(customer)
+      },
+      {
+        key: 'record-payment',
+        label: 'Record Payment',
+        icon: <DollarOutlined />,
+        onClick: () => {
+          if (onRecordPayment) {
+            onRecordPayment(customer);
+          } else {
+            Modal.confirm({
+              title: 'Record Payment',
+              content: 'Do you want to record a payment for this customer?',
+              onOk: () => {
+                // Fallback if no handler is provided
+              }
+            });
+          }
+        }
       },
       {
         type: 'divider' as const
@@ -424,6 +445,7 @@ export const CustomerList: React.FC<CustomerListProps> = ({
             scroll={{ x: 1000 }}
             size="small"
             onRow={(record) => ({
+              onClick: () => onCustomerSelect?.(record),
               onDoubleClick: () => onCustomerSelect?.(record),
               style: {
                 cursor: onCustomerSelect ? 'pointer' : 'default'

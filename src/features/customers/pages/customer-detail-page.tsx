@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from '@tanstack/react-router';
 import {
   Card,
   Row,
@@ -56,7 +56,7 @@ const { Title, Text, Paragraph } = Typography;
 const { TabPane } = Tabs;
 
 export const CustomerDetailPage: React.FC = () => {
-  const { customerId } = useParams<{ customerId: string }>();
+  const { customerId } = useParams({ from: '/customers/$customerId' });
   const navigate = useNavigate();
   const [showEditForm, setShowEditForm] = useState(false);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
@@ -76,7 +76,7 @@ export const CustomerDetailPage: React.FC = () => {
     return (
       <div style={{ padding: '24px', textAlign: 'center' }}>
         <Title level={4}>Customer not found</Title>
-        <Button onClick={() => navigate('/customers')}>
+        <Button onClick={() => navigate({ to: '/customers' })}>
           Back to Customers
         </Button>
       </div>
@@ -115,7 +115,7 @@ export const CustomerDetailPage: React.FC = () => {
           <Space>
             <Button
               icon={<ArrowLeftOutlined />}
-              onClick={() => navigate('/customers')}
+              onClick={() => navigate({ to: '/customers' })}
             >
               Back
             </Button>

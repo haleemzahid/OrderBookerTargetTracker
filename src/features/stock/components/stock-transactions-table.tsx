@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Table, Tag, Space, Input, Select, DatePicker, Button, Tooltip } from 'antd';
+import { Table, Tag, Space, Input, Select, Button, Tooltip } from 'antd';
 import { SearchOutlined, DownloadOutlined, ReloadOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import type { StockTransaction, StockTransactionsTableProps, StockFilterOptions } from '../types';

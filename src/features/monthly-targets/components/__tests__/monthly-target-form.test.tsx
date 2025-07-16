@@ -7,8 +7,6 @@ import { useOrderBookers } from '../../../order-bookers';
 import { renderWithProviders } from '../../../../__tests__/utils/test-utils';
 import { createMockMonthlyTarget } from '../../../../__tests__/factories/monthly-targets';
 
-import React from 'react';
-
 // Mock the hooks
 vi.mock('../../api/mutations');
 vi.mock('../../../order-bookers');

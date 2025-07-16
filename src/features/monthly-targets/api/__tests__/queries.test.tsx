@@ -116,7 +116,7 @@ describe('Monthly Target Query Hooks', () => {
 
     it('should not fetch when id is empty', async () => {
       // Act
-      const { result } = renderHook(() => useMonthlyTarget(''), {
+       renderHook(() => useMonthlyTarget(''), {
         wrapper: createWrapper(),
       });
 
@@ -208,7 +208,7 @@ describe('Monthly Target Query Hooks', () => {
 
     it('should not fetch when orderBookerId is empty', async () => {
       // Act
-      const { result } = renderHook(() => useMonthlyTargetsByOrderBooker(''), {
+       renderHook(() => useMonthlyTargetsByOrderBooker(''), {
         wrapper: createWrapper(),
       });
 

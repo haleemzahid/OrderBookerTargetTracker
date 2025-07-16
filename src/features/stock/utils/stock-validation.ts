@@ -175,7 +175,6 @@ export const validateBulkStockOperation = (
  * Validate stock operation permissions
  */
 export const validateStockPermissions = (
-  operation: 'CREATE' | 'UPDATE' | 'DELETE',
   userId?: string
 ): StockValidationResult => {
   const result: StockValidationResult = {

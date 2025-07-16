@@ -1,10 +1,9 @@
 import React from 'react';
-import { Card, Spin, Alert, Typography, Select, Space, Button } from 'antd';
+import { Card, Spin, Alert, Typography, Space, Button } from 'antd';
 import { Scatter } from '@ant-design/charts';
 import { useQuery } from '@tanstack/react-query';
 import { widgetDataService } from '../../api/widget-data-service';
 import { useDashboardFilters } from '../../stores/dashboard-store';
-import type { ProductPerformanceData } from '../../types';
 
 const { Title, Text } = Typography;
 

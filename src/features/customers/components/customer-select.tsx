@@ -10,10 +10,8 @@ import {
   Modal,
   Row,
   Col,
-  Card,
   Tag,
   Empty,
-  Alert
 } from 'antd';
 import {
   PlusOutlined,
@@ -265,52 +263,7 @@ export const CustomerSelect: React.FC<CustomerSelectProps> = ({
           {customers.map(renderCustomerOption)}
         </Select>
 
-        {/* Selected Customer Credit Status */}
-        {selectedCustomer && showCreditStatus && orderAmount > 0 && (
-          <Card size="small" style={{ marginTop: 8 }}>
-            <CustomerCreditWidget
-              customer={selectedCustomer}
-              orderAmount={orderAmount}
-              compact
-              showActions={false}
-            />
-          </Card>
-        )}
-
-        {/* Credit Warning for Selected Customer */}
-        {selectedCustomer && orderAmount > 0 && (() => {
-          const validation = getCustomerValidation(selectedCustomer);
-          if (validation.status === 'error') {
-            return (
-              <Alert
-                message="Credit Issue"
-                description={validation.message}
-                type="error"
-                showIcon
-                action={
-                  <Button
-                    size="small"
-                    type="link"
-                    onClick={() => setIsCreditModalVisible(true)}
-                  >
-                    View Details
-                  </Button>
-                }
-              />
-            );
-          }
-          if (validation.status === 'warning') {
-            return (
-              <Alert
-                message="Credit Warning"
-                description={validation.message}
-                type="warning"
-                showIcon
-              />
-            );
-          }
-          return null;
-        })()}
+       
       </Space>
 
       {/* Create Customer Modal */}
