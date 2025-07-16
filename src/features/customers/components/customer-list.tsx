@@ -18,6 +18,7 @@ import {
   Spin
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
+import type { MenuProps } from 'antd';
 import {
   SearchOutlined,
   FilterOutlined,
@@ -134,25 +135,32 @@ export const CustomerList: React.FC<CustomerListProps> = ({
   };
 
   // Action menu for each customer
-  const getActionMenu = (customer: CustomerWithCredit) => ({
+  const getActionMenu = (customer: CustomerWithCredit): MenuProps => ({
     items: [
       {
         key: 'edit',
         label: 'Edit Customer',
         icon: <EditOutlined />,
-        onClick: () => onEditCustomer?.(customer)
+        onClick: (info) => {
+          info.domEvent.stopPropagation();
+          onEditCustomer?.(customer);
+        }
       },
       {
         key: 'view-transactions',
         label: 'View Transactions',
         icon: <CreditCardOutlined />,
-        onClick: () => onCustomerSelect?.(customer)
+        onClick: (info) => {
+          info.domEvent.stopPropagation();
+          onCustomerSelect?.(customer);
+        }
       },
       {
         key: 'record-payment',
         label: 'Record Payment',
         icon: <DollarOutlined />,
-        onClick: () => {
+        onClick: (info) => {
+          info.domEvent.stopPropagation();
           if (onRecordPayment) {
             onRecordPayment(customer);
           } else {
@@ -173,7 +181,11 @@ export const CustomerList: React.FC<CustomerListProps> = ({
         key: customer.creditStatus === 'blocked' ? 'unblock' : 'block',
         label: customer.creditStatus === 'blocked' ? 'Unblock Customer' : 'Block Customer',
         icon: customer.creditStatus === 'blocked' ? <CheckCircleOutlined /> : <BlockOutlined />,
-        disabled: customer.creditStatus === 'cash_only'
+        disabled: customer.creditStatus === 'cash_only',
+        onClick: (info) => {
+          info.domEvent.stopPropagation();
+          // Add logic for blocking/unblocking customer
+        }
       },
       {
         type: 'divider' as const
@@ -184,7 +196,10 @@ export const CustomerList: React.FC<CustomerListProps> = ({
         icon: <DeleteOutlined />,
         danger: true,
         disabled: customer.currentOutstanding > 0,
-        onClick: () => handleDelete(customer)
+        onClick: (info) => {
+          info.domEvent.stopPropagation();
+          handleDelete(customer);
+        }
       }
     ]
   });
@@ -336,7 +351,9 @@ export const CustomerList: React.FC<CustomerListProps> = ({
             type="text" 
             icon={<MoreOutlined />} 
             size="small"
-            onClick={(e) => e.stopPropagation()} 
+            onClick={(e) => {
+              e.stopPropagation();
+            }} 
           />
         </Dropdown>
       )
