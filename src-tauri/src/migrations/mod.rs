@@ -21,6 +21,12 @@ pub mod migration_018_drop_order_triggers;
 pub mod migration_019_create_stock_transactions_table;
 pub mod migration_020_add_stock_to_products;
 pub mod migration_021_create_stock_triggers;
+pub mod migration_022_create_customers_table;
+pub mod migration_023_create_customer_credit_transactions;
+pub mod migration_024_create_customer_credit_terms;
+pub mod migration_025_create_collection_alerts;
+pub mod migration_026_create_customer_credit_triggers;
+pub mod migration_027_alter_orders_for_customers;
 
 /// Returns all database migrations in order
 pub fn get_migrations() -> Vec<Migration> {
@@ -46,5 +52,11 @@ pub fn get_migrations() -> Vec<Migration> {
         migration_019_create_stock_transactions_table::migration(),
         migration_020_add_stock_to_products::migration(),
         migration_021_create_stock_triggers::migration(),
+        migration_022_create_customers_table::migration(),
+        migration_023_create_customer_credit_transactions::migration(),
+        migration_024_create_customer_credit_terms::migration(),
+        migration_025_create_collection_alerts::migration(),
+        migration_026_create_customer_credit_triggers::migration(),
+        migration_027_alter_orders_for_customers::migration(),
     ]
 }
