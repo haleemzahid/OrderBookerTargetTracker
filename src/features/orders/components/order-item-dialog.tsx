@@ -118,7 +118,7 @@ export const OrderItemDialog: React.FC<OrderItemDialogProps> = ({
         const handleKeyDown = (e: KeyboardEvent) => {
             if (open && e.ctrlKey && e.key === 'Enter' && !editingItem && selectedProduct) {
                 e.preventDefault();
-                handleSave(true);
+                handleSave(undefined,true);
             }
         };
 
@@ -185,9 +185,9 @@ export const OrderItemDialog: React.FC<OrderItemDialogProps> = ({
         }
     };
 
-    const handleSave = async (e: React.MouseEvent<HTMLElement>, addAnother = false) => {
+    const handleSave = async (e?: React.MouseEvent<HTMLElement>, addAnother = false) => {
         try {
-            e.preventDefault();
+            e?.preventDefault();
             const values = await form.validateFields();
             const product = products.find(p => p.id === values.productId);
 

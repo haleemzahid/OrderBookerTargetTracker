@@ -9,9 +9,13 @@ export const useCreateProduct = () => {
   return useMutation({
     mutationFn: (product: CreateProductRequest) => createProduct(product),
     onSuccess: (newProduct: Product) => {
+      // Invalidate product-related queries
       queryClient.invalidateQueries({ queryKey: queryKeys.products.lists() });
       queryClient.invalidateQueries({ queryKey: queryKeys.products.byCompany(newProduct.companyId) });
       queryClient.setQueryData(queryKeys.products.detail(newProduct.id), newProduct);
+      
+      // Invalidate stock-related queries to ensure new product appears in stock overview
+      queryClient.invalidateQueries({ queryKey: ['stock'] });
     },
     onError:(e)=>{
         console.log(e);
