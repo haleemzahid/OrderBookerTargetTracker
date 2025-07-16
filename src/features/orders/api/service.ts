@@ -4,6 +4,7 @@ import {
   OrderItem,
   CreateOrderRequest,
   UpdateOrderRequest,
+  UpdateOrderWithItemsRequest,
   CreateOrderItemRequest,
   UpdateOrderItemRequest,
   OrderFilters,
@@ -233,6 +234,33 @@ export const updateOrder = async (id: string, orderData: UpdateOrderRequest): Pr
   await db.execute(query, params);
 
   // Get the updated order
+  const updatedOrder = await getOrderById(id);
+  if (!updatedOrder) {
+    throw new Error(`Failed to retrieve updated order with ID ${id}`);
+  }
+
+  return updatedOrder;
+};
+
+export const updateOrderWithItems = async (id: string, orderData: UpdateOrderWithItemsRequest): Promise<Order> => {
+  const db = getDatabase();
+  
+  // Update order information first
+  await updateOrder(id, {
+    orderBookerId: orderData.orderBookerId,
+    orderDate: orderData.orderDate,
+    notes: orderData.notes
+  });
+  
+  // Delete all existing order items for this order
+  await db.execute(`DELETE FROM order_items WHERE order_id = ?`, [id]);
+  
+  // Create new order items
+  for (const item of orderData.items) {
+    await createOrderItem(id, item);
+  }
+  
+  // Get the updated order with new totals
   const updatedOrder = await getOrderById(id);
   if (!updatedOrder) {
     throw new Error(`Failed to retrieve updated order with ID ${id}`);

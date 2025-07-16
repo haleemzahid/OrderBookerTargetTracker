@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Form, Select, DatePicker, Input, Card, Row, Col, Divider, message } from 'antd';
 import { useOrderBookers } from '../../order-bookers/api/queries';
 import { useProducts } from '../../products/api/queries';
-import { useCreateOrder, useUpdateOrder } from '../api/mutations';
+import { useCreateOrder, useUpdateOrderWithItems } from '../api/mutations';
 import { useOrderItems } from '../api/queries';
 import { FormActions } from '../../../shared/components';
 import type { Order, CreateOrderRequest } from '../types';
@@ -33,10 +33,10 @@ export const OrderForm: React.FC<OrderFormProps> = ({
   const { data: existingOrderItems, isLoading: isLoadingOrderItems } = useOrderItems(order?.id || '');
 
   const createMutation = useCreateOrder();
-  const updateMutation = useUpdateOrder();
+  const updateWithItemsMutation = useUpdateOrderWithItems();
 
   const isEditing = !!order;
-  const isLoading = createMutation.isPending || updateMutation.isPending || (isEditing && (isLoadingOrderItems || isLoadingProducts));
+  const isLoading = createMutation.isPending  || updateWithItemsMutation.isPending || (isEditing && (isLoadingOrderItems || isLoadingProducts));
 
   useEffect(() => {
     if (order) {
@@ -81,8 +81,8 @@ export const OrderForm: React.FC<OrderFormProps> = ({
 
   const handleSubmit = async (values: any) => {
     try {
-      // Validate that we have at least one item when creating a new order
-      if (!isEditing && orderItems.length === 0) {
+      // Validate that we have at least one item
+      if (orderItems.length === 0) {
         message.error('Please add at least one product to the order');
         return;
       }
@@ -101,12 +101,14 @@ export const OrderForm: React.FC<OrderFormProps> = ({
       };
 
       if (isEditing) {
-        await updateMutation.mutateAsync({
+        // Use the new mutation that updates both order and items
+        await updateWithItemsMutation.mutateAsync({
           id: order.id,
           data: {
             orderBookerId: requestData.orderBookerId,
             orderDate: requestData.orderDate,
             notes: requestData.notes,
+            items: requestData.items,
           }
         });
         message.success('Order updated successfully');

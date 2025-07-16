@@ -1,7 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
   createOrder, 
-  updateOrder, 
+  updateOrder,
+  updateOrderWithItems,
   deleteOrder,
   createOrderItem,
   updateOrderItem,
@@ -11,7 +12,8 @@ import {
 import { queryKeys } from './keys';
 import type { 
   CreateOrderRequest, 
-  UpdateOrderRequest, 
+  UpdateOrderRequest,
+  UpdateOrderWithItemsRequest,
   Order,
   CreateOrderItemRequest,
   UpdateOrderItemRequest,
@@ -60,6 +62,32 @@ export const useUpdateOrder = () => {
     },
     onError: (error) => {
       console.error('Error updating order:', error);
+    }
+  });
+};
+
+export const useUpdateOrderWithItems = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdateOrderWithItemsRequest }) => updateOrderWithItems(id, data),
+    onSuccess: (updatedOrder: Order) => {
+      // Invalidate all order-related queries for this order
+      queryClient.invalidateQueries({ queryKey: queryKeys.orders.detail(updatedOrder.id) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.orderItems.byOrder(updatedOrder.id) });
+      
+      // Use batch invalidation to reduce lock contention
+      queryClient.invalidateQueries({ 
+        predicate: (query) => {
+          const key = query.queryKey[0];
+          return key === 'orders' || key === 'orderSummary';
+        }
+      });
+      
+      queryClient.setQueryData(queryKeys.orders.detail(updatedOrder.id), updatedOrder);
+    },
+    onError: (error) => {
+      console.error('Error updating order with items:', error);
     }
   });
 };

@@ -43,6 +43,13 @@ export interface UpdateOrderRequest {
   notes?: string;
 }
 
+export interface UpdateOrderWithItemsRequest {
+  orderBookerId?: string;
+  orderDate?: Date;
+  notes?: string;
+  items: CreateOrderItemRequest[];
+}
+
 export interface CreateOrderItemRequest {
   productId: string;
   cartons: number;
