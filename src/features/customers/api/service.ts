@@ -915,6 +915,7 @@ export const customerService: ICustomerService = {
   // Customer Orders Integration
   async getCustomerOrders(customerId: string): Promise<any[]> {
     try {
+      console.log(customerId, 'Fetching orders for customer');
       const db = await getDatabase();
       
       const orders = await db.select<any[]>(
@@ -949,15 +950,15 @@ export const customerService: ICustomerService = {
             WHERE order_id = o.id AND transaction_type = 'SALE' LIMIT 1) as payment_due_date
          FROM orders o
          LEFT JOIN customer_credit_transactions cct ON o.id = cct.order_id
-         WHERE cct.customer_id = ? OR o.order_booker_id IN (
-           -- In case we need to match by order booker, include this fallback
-           SELECT id FROM order_bookers WHERE customer_id = ?
+         WHERE o.customer_id = ? OR cct.customer_id = ? OR o.order_booker_id IN (
+           -- In case the customer has a collection agent
+           SELECT collection_agent FROM customers WHERE id = ?
          )
          GROUP BY o.id
          ORDER BY o.order_date DESC`,
-        [customerId, customerId]
+        [customerId, customerId, customerId]
       );
-
+console.log(orders, 'Fetched orders for customer');
       return orders.map((row: any) => ({
         id: row.id,
         orderBookerId: row.order_booker_id,
@@ -977,6 +978,7 @@ export const customerService: ICustomerService = {
         updatedAt: new Date(row.updated_at)
       }));
     } catch (error) {
+      console.log(error, 'Error fetching customer orders');
       throw new CustomerServiceError(
         'Failed to get customer orders',
         'GET_CUSTOMER_ORDERS_FAILED',
@@ -1054,6 +1056,7 @@ export const customerService: ICustomerService = {
         customerArea: row.customer_area
       }));
     } catch (error) {
+      console.error(error, 'Error fetching customer alerts');
       throw new CustomerServiceError(
         'Failed to get customer alerts',
         'GET_CUSTOMER_ALERTS_FAILED',
