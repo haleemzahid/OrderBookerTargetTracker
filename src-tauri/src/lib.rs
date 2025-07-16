@@ -14,7 +14,7 @@ pub fn run() {
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(
             tauri_plugin_sql::Builder::default()
-                .add_migrations("sqlite:app3.db", migrations)
+                .add_migrations("sqlite:BI.db", migrations)
                 .build(),
         )
         .plugin(tauri_plugin_opener::init())

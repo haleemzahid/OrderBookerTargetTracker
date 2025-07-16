@@ -1,64 +1,9 @@
 use tauri_plugin_sql::Migration;
 
-mod migration_001_create_order_bookers_table;
-mod migration_002_create_daily_entries_table;
-mod migration_003_create_monthly_targets_table;
-mod migration_004_create_indexes;
-mod migration_005_create_triggers_for_auto_calculations;
-mod migration_006_insert_sample_data;
-mod migration_007_replace_with_july_2025_data;
-mod migration_008_remove_territory_and_monthly_target_columns;
-mod migration_009_add_carton_fields_to_daily_entries;
-pub mod migration_010_create_companies_table;
-pub mod migration_011_create_products_table;
-pub mod migration_012_transform_daily_entries_structure;
-pub mod migration_013_create_orders_table;
-pub mod migration_014_create_order_items_table;
-pub mod migration_015_create_order_triggers;
-pub mod migration_016_alter_order_items_columns;
-pub mod migration_017_fix_order_calculations;
-pub mod migration_018_drop_order_triggers;
-pub mod migration_019_create_stock_transactions_table;
-pub mod migration_020_add_stock_to_products;
-pub mod migration_021_create_stock_triggers;
-pub mod migration_022_create_customers_table;
-pub mod migration_023_create_customer_credit_transactions;
-pub mod migration_024_create_customer_credit_terms;
-pub mod migration_025_create_collection_alerts;
-pub mod migration_026_create_customer_credit_triggers;
-pub mod migration_027_alter_orders_for_customers;
-pub mod migration_028_update_customers_table;
+mod migration_001_initial;
 
-/// Returns all database migrations in order
 pub fn get_migrations() -> Vec<Migration> {
     vec![
-        migration_001_create_order_bookers_table::migration(),
-        migration_002_create_daily_entries_table::migration(),
-        migration_003_create_monthly_targets_table::migration(),
-        migration_004_create_indexes::migration(),
-        migration_005_create_triggers_for_auto_calculations::migration(),
-        migration_006_insert_sample_data::migration(),
-        migration_007_replace_with_july_2025_data::migration(),
-        migration_008_remove_territory_and_monthly_target_columns::migration(),
-        migration_009_add_carton_fields_to_daily_entries::migration(),
-        migration_010_create_companies_table::migration(),
-        migration_011_create_products_table::migration(),
-        migration_012_transform_daily_entries_structure::migration(),
-        migration_013_create_orders_table::migration(),
-        migration_014_create_order_items_table::migration(),
-        migration_015_create_order_triggers::migration(),
-        migration_016_alter_order_items_columns::migration(),
-        migration_017_fix_order_calculations::migration(),
-        migration_018_drop_order_triggers::migration(),
-        migration_019_create_stock_transactions_table::migration(),
-        migration_020_add_stock_to_products::migration(),
-        migration_021_create_stock_triggers::migration(),
-        migration_022_create_customers_table::migration(),
-        migration_023_create_customer_credit_transactions::migration(),
-        migration_024_create_customer_credit_terms::migration(),
-        migration_025_create_collection_alerts::migration(),
-        migration_026_create_customer_credit_triggers::migration(),
-        migration_027_alter_orders_for_customers::migration(),
-        migration_028_update_customers_table::migration(),
+        migration_001_initial::migration(),
     ]
 }
