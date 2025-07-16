@@ -33,6 +33,7 @@ export const OrderForm: React.FC<OrderFormProps> = ({
   const [showApprovalModal, setShowApprovalModal] = useState(false);
   const [showAlternativesModal, setShowAlternativesModal] = useState(false);
   const [approvalReason, setApprovalReason] = useState('');
+  const [paymentTerms, setPaymentTerms] = useState<string>('cash');
 
   const { data: orderBookers, isLoading: isLoadingOrderBookers } = useOrderBookers();
   const { data: products, isLoading: isLoadingProducts } = useProducts();
@@ -48,18 +49,21 @@ export const OrderForm: React.FC<OrderFormProps> = ({
 
   useEffect(() => {
     if (order) {
+      const paymentTermsValue = order.paymentTerms || 'cash';
       form.setFieldsValue({
         orderBookerId: order.orderBookerId,
         orderDate: dayjs(order.orderDate),
         notes: order.notes,
         customerId: order.customerId,
-        paymentTerms: order.paymentTerms || 'cash',
+        paymentTerms: paymentTermsValue,
       });
+      setPaymentTerms(paymentTermsValue);
     } else {
       form.setFieldsValue({
         orderDate: dayjs(),
         paymentTerms: 'cash',
       });
+      setPaymentTerms('cash');
       setOrderItems([]);
     }
   }, [order, form]);
@@ -162,6 +166,11 @@ export const OrderForm: React.FC<OrderFormProps> = ({
     setSelectedCustomer(customer);
   };
 
+  // Handle payment terms change
+  const handlePaymentTermsChange = (e: any) => {
+    setPaymentTerms(e.target.value);
+  };
+
   // Handle credit approval request
   const handleRequestApproval = () => {
     setShowApprovalModal(true);
@@ -244,7 +253,7 @@ export const OrderForm: React.FC<OrderFormProps> = ({
                 { required: true, message: 'Please select payment terms' },
               ]}
             >
-              <Radio.Group buttonStyle="solid">
+              <Radio.Group buttonStyle="solid" onChange={handlePaymentTermsChange}>
                 <Radio.Button value="cash">Cash</Radio.Button>
                 <Radio.Button value="credit">Credit</Radio.Button>
                 <Radio.Button value="advance">Advance</Radio.Button>
@@ -269,7 +278,7 @@ export const OrderForm: React.FC<OrderFormProps> = ({
       </Card>
 
       {/* Credit Validation Section - shown when customer is selected and payment terms are credit */}
-      {selectedCustomer && form.getFieldValue('paymentTerms') === 'credit' && (
+      {selectedCustomer && paymentTerms === 'credit' && (
         <div style={{ marginTop: '16px' }}>
           <OrderCreditValidation 
             customerId={selectedCustomer.id}
