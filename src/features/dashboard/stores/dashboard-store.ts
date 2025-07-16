@@ -66,7 +66,7 @@ const defaultWidgets: DashboardWidget[] = [
     title: 'Top Performers',
     type: 'table',
     size: 'medium',
-    position: { x: 0, y: 2, w: 3, h: 10 },
+    position: { x: 0, y: 0, w: 3, h: 10 },
     isVisible: true,
     refreshInterval: 900000, // 15 minutes
     priority: 'high'
@@ -76,7 +76,7 @@ const defaultWidgets: DashboardWidget[] = [
     title: 'Sales Trend',
     type: 'chart',
     size: 'large',
-    position: { x: 3, y: 2, w: 6, h: 7 },
+    position: { x: 0, y: 0, w: 3, h: 7 },
     isVisible: true,
     refreshInterval: 1800000, // 30 minutes
     priority: 'high'
@@ -236,12 +236,7 @@ export const useDashboardStore = create<DashboardStore>()(
           layout: {
             layouts: {
               lg: template.widgets.map(w => ({ ...w.position, i: w.id })),
-              md: template.widgets.map(w => ({
-                ...w.position,
-                i: w.id,
-                w: Math.max(2, Math.floor(w.position.w * 0.8)),
-                h: Math.max(2, Math.floor(w.position.h * 0.9))
-              })),
+              md: template.widgets.map(w => ({ ...w.position, i: w.id })),
               sm: template.widgets.map(w => ({
                 ...w.position,
                 i: w.id,

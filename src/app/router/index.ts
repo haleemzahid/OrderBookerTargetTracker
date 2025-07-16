@@ -32,12 +32,6 @@ const orderBookersRoute = createRoute({
   component: OrderBookersListPage,
 });
 
-const dailyEntriesRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/daily-entries',
-  component: OrderBookersListPage,
-});
-
 const monthlyTargetsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/monthly-targets',
@@ -73,12 +67,6 @@ const orderEditRoute = createRoute({
   component: OrderFormPage,
 });
 
-const dailySalesReportRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/daily-sales-report',
-  component: DailySalesReportListPage,
-});
-
 const dsrRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/dsr',
@@ -101,14 +89,12 @@ const routeTree = rootRoute.addChildren([
   dashboardRoute,
   biDashboardRoute,
   orderBookersRoute,
-  dailyEntriesRoute,
   monthlyTargetsRoute,
   companiesRoute,
   productsRoute,
   ordersRoute,
   orderCreateRoute,
   orderEditRoute,
-  dailySalesReportRoute,
   dsrRoute,
   stockOverviewRoute,
   stockTransactionsRoute

@@ -35,10 +35,9 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
     if (path === '/' || path === '/') return 'dashboard';
     if (path === '/bi-dashboard') return 'bi-dashboard';
     if (path.startsWith('/order-bookers')) return 'order-bookers';
-    if (path.startsWith('/daily-entries')) return 'daily-entries';
     if (path.startsWith('/monthly-targets')) return 'monthly-targets';
     if (path.startsWith('/orders')) return 'orders';
-    if (path.startsWith('/daily-sales-report') || path.startsWith('/dsr')) return 'daily-sales-report';
+    if (path.startsWith('/dsr')) return 'daily-sales-report';
     if (path.startsWith('/reports')) return 'reports';
     if (path.startsWith('/companies')) return 'companies';
     if (path.startsWith('/products')) return 'products';
@@ -69,7 +68,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
     }
     
     // Reports submenu
-    if (path.startsWith('/daily-sales-report') || path.startsWith('/dsr') || path.startsWith('/reports')) {
+    if (path.startsWith('/dsr') || path.startsWith('/reports')) {
       openKeys.push('reports-submenu');
     }
     
@@ -88,9 +87,6 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
       case 'order-bookers':
         navigate({ to: '/order-bookers' });
         break;
-      case 'daily-entries':
-        navigate({ to: '/daily-entries' });
-        break;
       case 'monthly-targets':
         navigate({ to: '/monthly-targets' });
         break;
@@ -98,14 +94,14 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
         navigate({ to: '/orders' });
         break;
       case 'daily-sales-report':
-        navigate({ to: '/daily-sales-report' });
+        navigate({ to: '/dsr' });
         break;
       case 'products':
         navigate({ to: '/products' });
         break;
       case 'reports':
-        // Navigate to daily sales report for now since reports route doesn't exist
-        navigate({ to: '/daily-sales-report' });
+        // Navigate to dsr for now since reports route doesn't exist
+        navigate({ to: '/dsr' });
         break;
       case 'companies':
         navigate({ to: '/companies' });
