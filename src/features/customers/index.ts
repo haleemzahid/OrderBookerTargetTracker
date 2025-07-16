@@ -4,6 +4,14 @@
 export * from './types';
 export * from './api/service-interface';
 export { default as customerService } from './api/service';
+export * from './api/queries';
+export * from './hooks';
+
+// Components
+export * from './components';
+
+// Utils
+export * from './utils/formatters';
 
 // Re-export commonly used types for convenience
 export type {

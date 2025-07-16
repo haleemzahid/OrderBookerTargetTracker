@@ -547,7 +547,6 @@ export const customerService: ICustomerService = {
   async createCreditTransaction(data: CreateCreditTransactionRequest): Promise<CustomerCreditTransaction> {
     const db = getDatabase();
     const transactionId = uuidv4();
-    const now = new Date().toISOString();
 
     // Get current customer balance
     const customer = await this.getById(data.customerId);
@@ -794,18 +793,93 @@ export const customerService: ICustomerService = {
   },
 
   async getDashboardStats(): Promise<CreditDashboardStats> {
-    // TODO: Implement comprehensive dashboard statistics
-    const summary = await this.getCreditSummary();
-    return {
-      todayCollections: 0, // TODO: Calculate from today's payments
-      pendingCollections: summary.totalOutstanding,
-      overdueCustomers: summary.riskDistribution.blocked + summary.riskDistribution.warning,
-      totalOutstanding: summary.totalOutstanding,
-      collectionTargetForMonth: 0, // TODO: Implement target system
-      collectionAchievedForMonth: 0, // TODO: Calculate from month's collections
-      alertsRequiringAction: 0, // TODO: Count from collection_alerts
-      highRiskCustomers: summary.riskDistribution.blocked
-    };
+    const db = getDatabase();
+
+    try {
+      // Get today's collections
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      const todayEnd = new Date();
+      todayEnd.setHours(23, 59, 59, 999);
+
+      const todayCollectionsResult = await db.select<[{ total: number }]>(
+        `SELECT COALESCE(SUM(amount), 0) as total 
+         FROM customer_credit_transactions 
+         WHERE transaction_type = 'PAYMENT' 
+         AND transaction_date >= ? AND transaction_date <= ?`,
+        [todayStart.toISOString(), todayEnd.toISOString()]
+      );
+
+      // Get overdue customers count and total outstanding
+      const overdueResult = await db.select<[{ count: number; total: number }]>(
+        `SELECT 
+           COUNT(DISTINCT c.id) as count,
+           COALESCE(SUM(c.current_outstanding), 0) as total
+         FROM customers c
+         LEFT JOIN customer_credit_transactions cct ON c.id = cct.customer_id
+         WHERE c.current_outstanding > 0 
+         AND c.credit_status IN ('warning', 'blocked')
+         AND EXISTS (
+           SELECT 1 FROM customer_credit_transactions sub_cct 
+           WHERE sub_cct.customer_id = c.id 
+           AND sub_cct.transaction_type = 'SALE'
+           AND sub_cct.due_date < date('now')
+         )`
+      );
+
+      // Get total outstanding
+      const totalOutstandingResult = await db.select<[{ total: number }]>(
+        `SELECT COALESCE(SUM(current_outstanding), 0) as total 
+         FROM customers 
+         WHERE current_outstanding > 0`
+      );
+
+      // Get high risk customers count
+      const highRiskResult = await db.select<[{ count: number }]>(
+        `SELECT COUNT(*) as count 
+         FROM customers 
+         WHERE credit_status = 'blocked' 
+         OR payment_behavior = 'problematic'`
+      );
+
+      // Get this month's collections
+      const currentMonth = new Date();
+      currentMonth.setDate(1);
+      currentMonth.setHours(0, 0, 0, 0);
+      
+      const monthCollectionsResult = await db.select<[{ total: number }]>(
+        `SELECT COALESCE(SUM(amount), 0) as total 
+         FROM customer_credit_transactions 
+         WHERE transaction_type = 'PAYMENT' 
+         AND transaction_date >= ?`,
+        [currentMonth.toISOString()]
+      );
+
+      // Get alerts requiring action count
+      const alertsResult = await db.select<[{ count: number }]>(
+        `SELECT COUNT(*) as count 
+         FROM collection_alerts 
+         WHERE status IN ('pending', 'in_progress') 
+         AND priority IN ('urgent', 'high')`
+      );
+
+      return {
+        todayCollections: todayCollectionsResult[0]?.total || 0,
+        pendingCollections: totalOutstandingResult[0]?.total || 0,
+        overdueCustomers: overdueResult[0]?.count || 0,
+        totalOutstanding: overdueResult[0]?.total || 0,
+        collectionTargetForMonth: 0, // TODO: Implement target system
+        collectionAchievedForMonth: monthCollectionsResult[0]?.total || 0,
+        alertsRequiringAction: alertsResult[0]?.count || 0,
+        highRiskCustomers: highRiskResult[0]?.count || 0
+      };
+    } catch (error) {
+      throw new CustomerServiceError(
+        'Failed to get dashboard stats',
+        'GET_DASHBOARD_STATS_FAILED',
+        { error: error instanceof Error ? error.message : 'Unknown error' }
+      );
+    }
   },
 
   async getPaymentTrends(customerId: string): Promise<any> {
