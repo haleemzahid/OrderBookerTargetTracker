@@ -324,7 +324,13 @@ export const CustomerDetailPage: React.FC = () => {
                     renderItem={(order: any) => (
                       <List.Item
                         actions={[
-                          <Button size="small" type="link">View Details</Button>
+                          <Button 
+                            size="small" 
+                            type="link"
+                            onClick={() => navigate({ to: `/orders/${order.id}/edit` })}
+                          >
+                            View Details
+                          </Button>
                         ]}
                       >
                         <List.Item.Meta
